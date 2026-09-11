@@ -45,7 +45,7 @@
     if(/Edg\//i.test(ua)) return 'Microsoft Edge';
     if(/Chrome\//i.test(ua)) return 'Chrome / Chromium';
     if(/Safari\//i.test(ua) && !/Chrome/i.test(ua)) return 'Safari';
-    if(/Firefox\//i.test(ua)) return 'Firefox';
+    if(/Firefox/i.test(ua)) return 'Firefox';
     return 'Browser';
   }
 
@@ -65,20 +65,15 @@
 
   if(typeof jobCardHtml === 'function'){
     jobCardHtml = function(j){
-      const hasPhone = !!j.customer_phone;
-      const phone = hasPhone ? esc(j.customer_phone) : 'No phone';
+      const phone = j.customer_phone
+        ? `<button class="compact-phone" type="button" aria-label="Contact ${esc(j.customer_name || 'customer')}">${esc(j.customer_phone)}</button>`
+        : '<span class="compact-phone missing">No phone</span>';
       return `<div class="swipe-row compact-swipe-row" data-id="${j.id}">
         <button class="swipe-delete swipe-delete-left" type="button" aria-label="Delete ${esc(j.customer_name || 'job')}">Delete</button>
         <article class="job-card compact-job-card" data-id="${j.id}">
-          <div class="compact-card-left">
-            <strong class="compact-customer">${esc(j.customer_name || 'No customer')}</strong>
-            <span class="compact-suburb">${esc(dashboardSuburb(j))}</span>
-            <span class="job-type-chip">${esc(j.title || 'Job')}</span>
-          </div>
-          <button class="phone-tap-zone ${hasPhone?'':'missing'}" type="button" ${hasPhone?'':'disabled'} aria-label="${hasPhone?`Contact ${esc(j.customer_name || 'customer')} on ${phone}`:'No customer phone number'}">
-            <span class="chip compact-status">${esc(dashboardStatus(j))}</span>
-            <span class="compact-phone ${hasPhone?'':'missing'}">${phone}</span>
-          </button>
+          <div class="compact-card-top"><strong>${esc(j.customer_name || 'No customer')}</strong><span class="chip compact-status">${esc(dashboardStatus(j))}</span></div>
+          <div class="compact-card-middle"><span class="compact-suburb">${esc(dashboardSuburb(j))}</span>${phone}</div>
+          <div class="compact-card-bottom"><span class="job-type-chip">${esc(j.title || 'Job')}</span></div>
         </article>
         <button class="swipe-delete swipe-delete-right" type="button" aria-label="Delete ${esc(j.customer_name || 'job')}">Delete</button>
       </div>`;
@@ -86,13 +81,8 @@
     if(typeof render === 'function') render();
   }
 
-  function getCustomOptions(){
-    try { return JSON.parse(localStorage.getItem(CUSTOM_OPTIONS_KEY) || '{}') || {}; }
-    catch(_) { return {}; }
-  }
-  function saveCustomOption(id, value){
-    const store = getCustomOptions(); store[id] = Array.from(new Set([...(store[id] || []), String(value)])).filter(Boolean); localStorage.setItem(CUSTOM_OPTIONS_KEY, JSON.stringify(store));
-  }
+  function getCustomOptions(){try{return JSON.parse(localStorage.getItem(CUSTOM_OPTIONS_KEY)||'{}')||{}}catch(_){return{}}}
+  function saveCustomOption(id,value){const store=getCustomOptions();store[id]=Array.from(new Set([...(store[id]||[]),String(value)])).filter(Boolean);localStorage.setItem(CUSTOM_OPTIONS_KEY,JSON.stringify(store))}
   function selectChoices(){return {jobTitle:['Battery','Solar','Battery + Solar'],description:['Installation','Replacement','Upgrade','Service / repair','Fault finding','Site inspection'],panelBrand:['Aiko','Canadian Solar','Jinko','LONGi','REC','Trina'],panelType:[],panelQuantity:['6','8','10','12','14','16','18','20','22','24','30','40'],solarCapacity:['3.3','5','6.6','8','10','13.2','15','20'],phaseType:['Single phase','Three phase'],batteryBrand:['BYD','Enphase','Sigenergy','Sungrow','Tesla'],batteryType:[],batteryCapacity:['5','10','13.5','20','25','30'],inverterBrand:['Enphase','Fronius','GoodWe','Huawei','Sigenergy','SMA','SolarEdge','Sungrow'],inverterCapacity:['5','6','8','10','15','20'],inverterType:[]}}
   const numericSelects=new Set(['panelQuantity','solarCapacity','batteryCapacity','inverterCapacity']);
   function addOption(select,value){if(!select||value===null||value===undefined||String(value).trim()==='')return;const v=String(value).trim();if(![...select.options].some(o=>o.value===v))select.add(new Option(v,v))}
