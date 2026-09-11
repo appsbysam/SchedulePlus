@@ -7,7 +7,7 @@
     dialog = document.createElement('dialog');
     dialog.id = 'phoneActionDialog';
     dialog.className = 'phone-action-dialog';
-    dialog.innerHTML = `<div class="phone-action-card"><div class="phone-action-head"><div><p class="eyebrow">CUSTOMER PHONE</p><h2 id="phoneActionTitle">Contact customer</h2></div><button id="phoneActionClose" class="ghost" type="button" aria-label="Close">✕</button></div><p id="phoneActionNumber" class="phone-action-number"></p><div class="phone-action-buttons"><button id="phoneActionCall" class="primary" type="button">Call customer</button><button id="phoneActionOpenJob" class="secondary phone-action-secondary" type="button">Open job card</button></div></div>`;
+    dialog.innerHTML = `<div class="phone-action-card"><div class="phone-action-head"><div><p class="eyebrow">CUSTOMER PHONE</p><h2 id="phoneActionTitle">Contact customer</h2></div><button id="phoneActionClose" class="ghost" type="button" aria-label="Close">✕</button></div><div class="phone-action-buttons"><button id="phoneActionCall" class="primary" type="button">Call customer</button><button id="phoneActionOpenJob" class="secondary phone-action-secondary" type="button">Open job card</button></div></div>`;
     document.body.appendChild(dialog);
     dialog.querySelector('#phoneActionClose').onclick = () => dialog.close();
     dialog.addEventListener('click', e => { if (e.target === dialog) dialog.close(); });
@@ -33,7 +33,6 @@
     selectedJobId = job.id;
     const dialog = ensureDialog();
     dialog.querySelector('#phoneActionTitle').textContent = `Contact ${job.customer_name || 'this customer'}`;
-    dialog.querySelector('#phoneActionNumber').textContent = job.customer_phone;
     dialog.querySelector('#phoneActionCall').textContent = `Call ${job.customer_phone}`;
     if (!dialog.open) dialog.showModal();
   }
@@ -46,17 +45,14 @@
     return {target,row};
   }
 
-  // Intercept at pointer-down capture phase, before the job-card swipe handler can
-  // mark the gesture as a normal card tap. This prevents the subsequent pointer-up
-  // from falling through to openJob().
+  // Stop the card/swipe gesture on pointer-down, but do not open the dialog until
+  // the completed click. Opening a modal during pointer-down can make the matching
+  // pointer-up/click land on the new backdrop and immediately close it on mobile.
   document.addEventListener('pointerdown', e => {
     const hit=phoneTarget(e); if(!hit)return;
-    e.preventDefault();
     e.stopImmediatePropagation();
-    openPhoneActions(hit.row.dataset.id);
   }, true);
 
-  // Also catch keyboard/mouse-generated clicks that do not begin with pointerdown.
   document.addEventListener('click', e => {
     const hit=phoneTarget(e); if(!hit)return;
     e.preventDefault();
