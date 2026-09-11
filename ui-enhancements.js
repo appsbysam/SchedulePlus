@@ -5,80 +5,28 @@
   const CUSTOM_OPTIONS_KEY = 'schedule_plus_custom_select_options';
   const ADD_NEW_VALUE = '__add_new__';
 
-  function esc(v){
-    return String(v ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
-  }
+  function esc(v){return String(v ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#039;'}[m]));}
+  function fallbackFriendlyName(email=''){const local=String(email||'').split('@')[0]||'Signed in';return local.replace(/[._-]+/g,' ').replace(/\b\w/g,m=>m.toUpperCase())}
+  function displayName(user){const saved=String(user?.user_metadata?.display_name||'').trim();return saved||fallbackFriendlyName(user?.email||'')}
+  function getDeviceId(){let id=localStorage.getItem(DEVICE_KEY);if(!id){const raw=(crypto?.randomUUID?.()||`${Date.now()}-${Math.random()}`).replace(/[^a-z0-9]/gi,'').toUpperCase();id=`SCH-${raw.slice(0,4)}-${raw.slice(4,8)}-${raw.slice(8,12)}`;localStorage.setItem(DEVICE_KEY,id)}return id}
+  function getDeviceType(){const ua=navigator.userAgent||'';if(/iPad|Tablet/i.test(ua))return'Tablet';if(/Android/i.test(ua)&&/Mobile/i.test(ua))return'Android phone';if(/iPhone/i.test(ua))return'iPhone';if(/Android/i.test(ua))return'Android device';if(/Windows/i.test(ua))return'Windows computer';if(/Macintosh|Mac OS/i.test(ua))return'Mac computer';return'Web browser'}
+  function getBrowserName(){const ua=navigator.userAgent||'';if(/Edg\//i.test(ua))return'Microsoft Edge';if(/Chrome\//i.test(ua))return'Chrome / Chromium';if(/Safari\//i.test(ua)&&!/Chrome/i.test(ua))return'Safari';if(/Firefox/i.test(ua))return'Firefox';return'Browser'}
+  function dashboardStatus(j){if(j.status==='waiting')return'Follow-Up';if(j.status==='completed')return'Completed';if(j.status==='in_progress')return'In progress';if(j.scheduled_date)return'Scheduled';return'Unscheduled'}
+  function dashboardSuburb(j){if(j.suburb)return j.suburb;if(typeof suburbFromAddress==='function')return suburbFromAddress(j.address_line||'')||'Suburb not set';return'Suburb not set'}
 
-  function fallbackFriendlyName(email=''){
-    const local = String(email || '').split('@')[0] || 'Signed in';
-    return local.replace(/[._-]+/g,' ').replace(/\b\w/g,m=>m.toUpperCase());
-  }
-
-  function displayName(user){
-    const saved = String(user?.user_metadata?.display_name || '').trim();
-    return saved || fallbackFriendlyName(user?.email || '');
-  }
-
-  function getDeviceId(){
-    let id = localStorage.getItem(DEVICE_KEY);
-    if(!id){
-      const raw = (crypto?.randomUUID?.() || `${Date.now()}-${Math.random()}`).replace(/[^a-z0-9]/gi,'').toUpperCase();
-      id = `SCH-${raw.slice(0,4)}-${raw.slice(4,8)}-${raw.slice(8,12)}`;
-      localStorage.setItem(DEVICE_KEY,id);
-    }
-    return id;
-  }
-
-  function getDeviceType(){
-    const ua = navigator.userAgent || '';
-    if(/iPad|Tablet/i.test(ua)) return 'Tablet';
-    if(/Android/i.test(ua) && /Mobile/i.test(ua)) return 'Android phone';
-    if(/iPhone/i.test(ua)) return 'iPhone';
-    if(/Android/i.test(ua)) return 'Android device';
-    if(/Windows/i.test(ua)) return 'Windows computer';
-    if(/Macintosh|Mac OS/i.test(ua)) return 'Mac computer';
-    return 'Web browser';
-  }
-
-  function getBrowserName(){
-    const ua = navigator.userAgent || '';
-    if(/Edg\//i.test(ua)) return 'Microsoft Edge';
-    if(/Chrome\//i.test(ua)) return 'Chrome / Chromium';
-    if(/Safari\//i.test(ua) && !/Chrome/i.test(ua)) return 'Safari';
-    if(/Firefox/i.test(ua)) return 'Firefox';
-    return 'Browser';
-  }
-
-  function dashboardStatus(j){
-    if(j.status === 'waiting') return 'Follow-Up';
-    if(j.status === 'completed') return 'Completed';
-    if(j.status === 'in_progress') return 'In progress';
-    if(j.scheduled_date) return 'Scheduled';
-    return 'Unscheduled';
-  }
-
-  function dashboardSuburb(j){
-    if(j.suburb) return j.suburb;
-    if(typeof suburbFromAddress === 'function') return suburbFromAddress(j.address_line || '') || 'Suburb not set';
-    return 'Suburb not set';
-  }
-
-  if(typeof jobCardHtml === 'function'){
-    jobCardHtml = function(j){
-      const phone = j.customer_phone
-        ? `<button class="compact-phone" type="button" aria-label="Contact ${esc(j.customer_name || 'customer')}">${esc(j.customer_phone)}</button>`
-        : '<span class="compact-phone missing">No phone</span>';
+  if(typeof jobCardHtml==='function'){
+    jobCardHtml=function(j){
+      const phone=j.customer_phone?`<button class="compact-phone" type="button" aria-label="Contact ${esc(j.customer_name||'customer')}">${esc(j.customer_phone)}</button>`:'<span class="compact-phone missing">No phone</span>';
       return `<div class="swipe-row compact-swipe-row" data-id="${j.id}">
-        <button class="swipe-delete swipe-delete-left" type="button" aria-label="Delete ${esc(j.customer_name || 'job')}">Delete</button>
+        <button class="swipe-delete swipe-delete-left" type="button" aria-label="Delete ${esc(j.customer_name||'job')}">Delete</button>
         <article class="job-card compact-job-card" data-id="${j.id}">
-          <div class="compact-card-top"><strong>${esc(j.customer_name || 'No customer')}</strong><span class="chip compact-status">${esc(dashboardStatus(j))}</span></div>
-          <div class="compact-card-middle"><span class="compact-suburb">${esc(dashboardSuburb(j))}</span>${phone}</div>
-          <div class="compact-card-bottom"><span class="job-type-chip">${esc(j.title || 'Job')}</span></div>
+          <div class="compact-card-top"><strong>${esc(j.customer_name||'No customer')}</strong><span class="compact-suburb">${esc(dashboardSuburb(j))}</span><span class="chip compact-status">${esc(dashboardStatus(j))}</span></div>
+          <div class="compact-card-bottom"><span class="job-type-chip">${esc(j.title||'Job')}</span>${phone}</div>
         </article>
-        <button class="swipe-delete swipe-delete-right" type="button" aria-label="Delete ${esc(j.customer_name || 'job')}">Delete</button>
+        <button class="swipe-delete swipe-delete-right" type="button" aria-label="Delete ${esc(j.customer_name||'job')}">Delete</button>
       </div>`;
     };
-    if(typeof render === 'function') render();
+    if(typeof render==='function')render();
   }
 
   function getCustomOptions(){try{return JSON.parse(localStorage.getItem(CUSTOM_OPTIONS_KEY)||'{}')||{}}catch(_){return{}}}
