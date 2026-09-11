@@ -35,16 +35,32 @@
     dialog.querySelector('#phoneActionTitle').textContent = `Contact ${job.customer_name || 'this customer'}`;
     dialog.querySelector('#phoneActionNumber').textContent = job.customer_phone;
     dialog.querySelector('#phoneActionCall').textContent = `Call ${job.customer_phone}`;
-    dialog.showModal();
+    if (!dialog.open) dialog.showModal();
   }
 
-  document.addEventListener('click', e => {
-    const target = e.target.closest('.phone-tap-zone, .compact-phone, .job-phone');
-    if (!target || target.classList.contains('missing') || target.disabled) return;
-    const row = target.closest('.swipe-row');
-    if (!row?.dataset.id) return;
+  function phoneTarget(e){
+    const target=e.target.closest('.compact-phone, .job-phone');
+    if(!target||target.classList.contains('missing')||target.disabled)return null;
+    const row=target.closest('.swipe-row');
+    if(!row?.dataset.id)return null;
+    return {target,row};
+  }
+
+  // Intercept at pointer-down capture phase, before the job-card swipe handler can
+  // mark the gesture as a normal card tap. This prevents the subsequent pointer-up
+  // from falling through to openJob().
+  document.addEventListener('pointerdown', e => {
+    const hit=phoneTarget(e); if(!hit)return;
     e.preventDefault();
     e.stopImmediatePropagation();
-    openPhoneActions(row.dataset.id);
+    openPhoneActions(hit.row.dataset.id);
+  }, true);
+
+  // Also catch keyboard/mouse-generated clicks that do not begin with pointerdown.
+  document.addEventListener('click', e => {
+    const hit=phoneTarget(e); if(!hit)return;
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    openPhoneActions(hit.row.dataset.id);
   }, true);
 })();
