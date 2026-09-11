@@ -6,11 +6,7 @@
     if (direct) return direct;
     if (typeof currentUser === 'undefined' || !currentUser?.id) return null;
 
-    const {data, error} = await supabaseClient
-      .from('business_users')
-      .select('business_id,is_active')
-      .eq('user_id', currentUser.id)
-      .eq('is_active', true);
+    const {data, error} = await supabaseClient.from('business_users').select('business_id,is_active').eq('user_id', currentUser.id).eq('is_active', true);
     if (error) throw error;
     const memberships = data || [];
     if (!memberships.length) return null;
@@ -23,22 +19,9 @@
 
   async function safeLoadJobs() {
     const businessId = await getActiveBusinessId();
-    if (!businessId) {
-      jobs = [];
-      if (typeof render === 'function') render();
-      if (typeof renderCalendar === 'function') renderCalendar();
-      return;
-    }
-    const {data,error} = await supabaseClient
-      .from('jobs')
-      .select('*')
-      .eq('business_id', businessId)
-      .order('scheduled_date',{ascending:true,nullsFirst:false})
-      .order('created_at',{ascending:false});
-    if (error) {
-      if (typeof jobsList !== 'undefined' && jobsList) jobsList.innerHTML = `<div class="empty">${typeof esc === 'function' ? esc(error.message) : error.message}</div>`;
-      return;
-    }
+    if (!businessId) { jobs = []; if (typeof render === 'function') render(); if (typeof renderCalendar === 'function') renderCalendar(); return; }
+    const {data,error} = await supabaseClient.from('jobs').select('*').eq('business_id', businessId).order('scheduled_date',{ascending:true,nullsFirst:false}).order('created_at',{ascending:false});
+    if (error) { if (typeof jobsList !== 'undefined' && jobsList) jobsList.innerHTML = `<div class="empty">${typeof esc === 'function' ? esc(error.message) : error.message}</div>`; return; }
     jobs = data || [];
     if (typeof render === 'function') render();
     if (typeof renderCalendar === 'function') renderCalendar();
@@ -56,15 +39,9 @@
   }
 
   function field(id) { return document.getElementById(id); }
-  function numberOrNull(v) {
-    const s = String(v ?? '').trim();
-    if (!s) return null;
-    const n = Number(s);
-    return Number.isFinite(n) ? n : null;
-  }
-  function addressParts(value) {
-    return typeof extractAddressParts === 'function' ? extractAddressParts(value) : {suburb:null,postcode:null};
-  }
+  function numberOrNull(v) { const s = String(v ?? '').trim(); if (!s) return null; const n = Number(s); return Number.isFinite(n) ? n : null; }
+  function addressParts(value) { return typeof extractAddressParts === 'function' ? extractAddressParts(value) : {suburb:null,postcode:null}; }
+  function selectedTimeOfDay(){ return document.querySelector('input[name="timeOfDayChoice"]:checked')?.value || null; }
 
   async function saveJob(e) {
     if (e.defaultPrevented) return;
@@ -78,7 +55,6 @@
 
       const id = field('jobId')?.value || '';
       const existing = id && typeof jobs !== 'undefined' ? jobs.find(j => j.id === id) : null;
-      const hours = Number(field('estimatedHours')?.value) || 0;
       const addressInput = field('addressLine');
       const address = addressInput?.value.trim() || '';
       const parsed = addressParts(address);
@@ -117,16 +93,14 @@
         priority: field('priority')?.value,
         scheduled_date: field('scheduledDate')?.value || null,
         scheduled_start: field('scheduledStart')?.value || null,
-        estimated_minutes: hours ? Math.round(hours * 60) : null,
+        time_of_day: selectedTimeOfDay(),
+        estimated_minutes: null,
         completed_at: field('status')?.value === 'completed' ? (existing?.completed_at || new Date().toISOString()) : null
       };
 
       let query;
-      if (id) {
-        query = supabaseClient.from('jobs').update(payload).eq('id', id).eq('business_id', businessId);
-      } else {
-        query = supabaseClient.from('jobs').insert({...payload, business_id:businessId, user_id:currentUser.id});
-      }
+      if (id) query = supabaseClient.from('jobs').update(payload).eq('id', id).eq('business_id', businessId);
+      else query = supabaseClient.from('jobs').insert({...payload, business_id:businessId, user_id:currentUser.id});
       const {error} = await query;
       if (error) { alert(error.message); return; }
       if (typeof dialog !== 'undefined' && dialog) dialog.close();
@@ -140,22 +114,11 @@
   function install() {
     if (window.__schedulePlusTenantSafetyInstalled) return;
     window.__schedulePlusTenantSafetyInstalled = true;
-
     if (typeof loadJobs === 'function') loadJobs = safeLoadJobs;
-    if (typeof deleteJobFromDashboard === 'function') {
-      deleteJobFromDashboard = async function(id) { await safeDeleteJob(id, true); };
-    }
-
-    const form = field('jobForm');
-    if (form) form.addEventListener('submit', saveJob, true);
-
+    if (typeof deleteJobFromDashboard === 'function') deleteJobFromDashboard = async function(id) { await safeDeleteJob(id, true); };
+    const form = field('jobForm'); if (form) form.addEventListener('submit', saveJob, true);
     const deleteBtn = field('deleteJobBtn');
-    if (deleteBtn) deleteBtn.onclick = async () => {
-      const id = field('jobId')?.value;
-      if (!id || !confirm('Delete this job?')) return;
-      await safeDeleteJob(id, false);
-    };
-
+    if (deleteBtn) deleteBtn.onclick = async () => { const id = field('jobId')?.value; if (!id || !confirm('Delete this job?')) return; await safeDeleteJob(id, false); };
     if (typeof currentUser !== 'undefined' && currentUser?.id) safeLoadJobs().catch(console.error);
   }
 
