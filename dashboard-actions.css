@@ -1,0 +1,7 @@
+.compact-phone{cursor:pointer}
+.phone-action-dialog{width:min(440px,calc(100% - 24px));border:1px solid #34343a;border-radius:20px;padding:0;background:#141416;color:#fff;box-shadow:0 28px 70px rgba(0,0,0,.65)}
+.phone-action-dialog::backdrop{background:rgba(0,0,0,.72)}
+.phone-action-card{padding:20px;display:grid;gap:16px}.phone-action-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}.phone-action-head h2{margin:0}.phone-action-number{margin:0;padding:13px 14px;border:1px solid #303036;border-radius:12px;background:#1b1b1f;font-size:1.05rem;font-weight:800;text-align:center}.phone-action-buttons{display:grid;grid-template-columns:1fr 1fr;gap:10px}.phone-action-buttons .primary,.phone-action-buttons .secondary{margin:0;width:100%;min-height:44px;border-radius:12px;padding:11px 13px;font-weight:800;cursor:pointer}.phone-action-secondary{border:1px solid #3b3b42!important;background:#242429!important;color:#fff!important}
+#businessSettingsDialog .dialog-actions #businessSettingsCancel{width:auto;margin:0;border:1px solid #3b3b42;border-radius:12px;padding:12px 16px;background:#242429!important;color:#fff!important;font-weight:800;cursor:pointer}
+#businessSettingsDialog .dialog-actions #businessSettingsCancel:hover{border-color:var(--tenant-accent)}
+@media(max-width:520px){.phone-action-buttons{grid-template-columns:1fr}.phone-action-card{padding:18px}}
