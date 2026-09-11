@@ -1,4 +1,4 @@
-const VERSION='0.6.7';
+const VERSION='0.6.8';
 const CACHE=`schedule-plus-v${VERSION}`;
 const CORE=['./','./index.html','./styles.css','./maps-autocomplete.css','./ui-enhancements.css','./business.css','./business-config.css','./dashboard-actions.css','./app.js','./maps-config.js','./maps-autocomplete.js','./ui-enhancements.js','./business.js','./business-config.js','./dashboard-actions.js','./update-check.js','./multi-tenant-safety.js','./supabase.js','./version.js','./manifest.webmanifest','./assets/icons/icon.svg'];
 self.addEventListener('install',e=>{self.skipWaiting();e.waitUntil(caches.open(CACHE).then(c=>c.addAll(CORE.map(u=>`${u}${u.includes('?')?'&':'?'}v=${VERSION}`))))});
