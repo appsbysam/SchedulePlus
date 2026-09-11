@@ -1,8 +1,9 @@
-const VERSION='0.6.1';
+const VERSION='0.6.4';
 const CACHE=`schedule-plus-v${VERSION}`;
-const CORE=['./','./index.html','./styles.css','./maps-autocomplete.css','./ui-enhancements.css','./business.css','./app.js','./maps-config.js','./maps-autocomplete.js','./ui-enhancements.js','./business.js','./multi-tenant-safety.js','./supabase.js','./version.js','./manifest.webmanifest','./assets/icons/icon.svg'];
+const CORE=['./','./index.html','./styles.css','./maps-autocomplete.css','./ui-enhancements.css','./business.css','./business-config.css','./dashboard-actions.css','./app.js','./maps-config.js','./maps-autocomplete.js','./ui-enhancements.js','./business.js','./business-config.js','./dashboard-actions.js','./update-check.js','./multi-tenant-safety.js','./supabase.js','./version.js','./manifest.webmanifest','./assets/icons/icon.svg'];
 self.addEventListener('install',e=>{self.skipWaiting();e.waitUntil(caches.open(CACHE).then(c=>c.addAll(CORE.map(u=>`${u}${u.includes('?')?'&':'?'}v=${VERSION}`))))});
 self.addEventListener('activate',e=>{e.waitUntil(Promise.all([caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))),self.clients.claim()]))});
+self.addEventListener('message',e=>{if(e.data?.type==='SKIP_WAITING')self.skipWaiting()});
 self.addEventListener('fetch',e=>{
   if(e.request.method!=='GET')return;
   const url=new URL(e.request.url);
