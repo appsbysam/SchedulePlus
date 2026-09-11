@@ -2,63 +2,24 @@
   const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
   const allJobs=()=>Array.isArray(window.jobs)?window.jobs:(typeof jobs!=='undefined'?jobs:[]);
   const statusText=j=>{const s=String(j?.status||'');const map={new:'New',to_schedule:'To schedule',scheduled:'Scheduled',in_progress:'In Progress',waiting:'Follow-Up',completed:'Completed'};return map[s]||s.replace(/[_-]+/g,' ').replace(/\b\w/g,m=>m.toUpperCase())||'Unscheduled'};
-  const toneFor=j=>{const x=statusText(j).toLowerCase();if(x.includes('site'))return'site';if(x.includes('progress'))return'progress';if(x.includes('follow')||x.includes('waiting'))return'followup';if(x.includes('complete'))return'completed';if(x.includes('schedule'))return'scheduled';if(x==='new')return'new';return'new'};
+  const toneFor=j=>{const x=statusText(j).toLowerCase();if(x.includes('site'))return'site';if(x.includes('progress'))return'progress';if(x.includes('follow')||x.includes('waiting'))return'followup';if(x.includes('complete'))return'completed';if(x.includes('schedule'))return'scheduled';return'new'};
   const suburb=j=>j?.suburb||(typeof suburbFromAddress==='function'?suburbFromAddress(j?.address_line||''):'')||'Suburb not set';
   const fmtDate=(v,tod='')=>{if(!v)return 'Unscheduled';const d=new Date(`${v}T12:00:00`);const base=new Intl.DateTimeFormat('en-AU',{weekday:'short',day:'2-digit',month:'short'}).format(d).replace(',','');return `${base}${tod?` [${tod}]`:''}`};
   const phoneSvg='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5.2 3.8 8.4 3l2.1 5-2 1.3a15.2 15.2 0 0 0 6.2 6.2l1.3-2 5 2.1-.8 3.2c-.3 1.1-1.3 1.9-2.5 1.8C10.2 20 4 13.8 3.4 6.3c-.1-1.2.7-2.2 1.8-2.5z"/></svg>';
-
-  function ensureMapButton(){
-    const form=document.getElementById('jobForm'),address=document.getElementById('addressLine');if(!form||!address||document.getElementById('viewOnMapBtn'))return;
-    const label=address.closest('label');if(!label)return;
-    const btn=document.createElement('button');btn.id='viewOnMapBtn';btn.className='sp-view-map-btn';btn.type='button';btn.innerHTML='<span>View on Map</span><span aria-hidden="true">›</span>';
-    label.insertAdjacentElement('afterend',btn);btn.onclick=openMapChooser;
-  }
-
-  function mapQuery(){
-    const address=document.getElementById('addressLine');
-    const lat=address?.dataset.mapsLatitude, lng=address?.dataset.mapsLongitude;
-    if(lat&&lng)return `${lat},${lng}`;
-    return String(address?.value||'').trim();
-  }
-  function ensureMapDialog(){
-    let d=document.getElementById('mapChooserDialog');if(d)return d;
-    d=document.createElement('dialog');d.id='mapChooserDialog';d.className='sp-map-dialog';
-    d.innerHTML='<div class="sp-map-card"><div class="sp-map-head"><div><p class="eyebrow">NAVIGATION</p><h2>View on Map</h2></div><button id="mapChooserClose" class="ghost" type="button">✕</button></div><div class="sp-map-options"><button data-map="google" type="button">Google Maps</button><button data-map="waze" type="button">Waze</button><button data-map="apple" type="button">Apple Maps</button></div></div>';
-    document.body.appendChild(d);d.querySelector('#mapChooserClose').onclick=()=>d.close();d.addEventListener('click',e=>{if(e.target===d)d.close()});d.querySelectorAll('[data-map]').forEach(b=>b.onclick=()=>openMap(b.dataset.map));return d;
-  }
+  const pinSvg='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s6-5.3 6-11a6 6 0 1 0-12 0c0 5.7 6 11 6 11z"/><circle cx="12" cy="10" r="2.2"/></svg>';
+  const googleIcon='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22s7-6.2 7-13A7 7 0 1 0 5 9c0 6.8 7 13 7 13z"/><circle cx="12" cy="9" r="2.4"/></svg>';
+  const wazeIcon='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 15c-1.5-1-2-2.2-2-3.7C3 6.8 6.7 4 11.8 4 17 4 21 7 21 11.4c0 4-3.4 7.1-8 7.1H9l-3.7 2 .8-3.7A7 7 0 0 1 5 15z"/><circle cx="9" cy="11" r=".8"/><circle cx="15" cy="11" r=".8"/><path d="M9 14c1.6 1.2 4.4 1.2 6 0"/></svg>';
+  const appleIcon='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4 3 6v15l5-2 8 2 5-2V4l-5 2zM8 4v15M16 6v15"/><path d="M12 8.5c1.7 0 3 1.3 3 3 0 2.7-3 5.5-3 5.5s-3-2.8-3-5.5c0-1.7 1.3-3 3-3z"/></svg>';
+  function ensureMapButton(){const form=document.getElementById('jobForm'),address=document.getElementById('addressLine');if(!form||!address||document.getElementById('viewOnMapBtn'))return;const label=address.closest('label');if(!label)return;const btn=document.createElement('button');btn.id='viewOnMapBtn';btn.className='sp-view-map-btn';btn.type='button';btn.innerHTML=`${pinSvg}<span>View</span>`;label.insertAdjacentElement('afterend',btn);btn.onclick=openMapChooser}
+  function mapQuery(){const address=document.getElementById('addressLine');const lat=address?.dataset.mapsLatitude,lng=address?.dataset.mapsLongitude;if(lat&&lng)return `${lat},${lng}`;return String(address?.value||'').trim()}
+  function ensureMapDialog(){let d=document.getElementById('mapChooserDialog');if(d)return d;d=document.createElement('dialog');d.id='mapChooserDialog';d.className='sp-map-dialog';d.innerHTML=`<div class="sp-map-card"><div class="sp-map-head"><div><p class="eyebrow">NAVIGATION</p><h2>View on Map</h2></div><button id="mapChooserClose" class="ghost" type="button">✕</button></div><div class="sp-map-options"><button class="sp-map-google" data-map="google" type="button"><span class="sp-map-brand-icon">${googleIcon}</span><span>Google Maps</span></button><button class="sp-map-waze" data-map="waze" type="button"><span class="sp-map-brand-icon">${wazeIcon}</span><span>Waze</span></button><button class="sp-map-apple" data-map="apple" type="button"><span class="sp-map-brand-icon">${appleIcon}</span><span>Apple Maps</span></button></div></div>`;document.body.appendChild(d);d.querySelector('#mapChooserClose').onclick=()=>d.close();d.addEventListener('click',e=>{if(e.target===d)d.close()});d.querySelectorAll('[data-map]').forEach(b=>b.onclick=()=>openMap(b.dataset.map));return d}
   function openMapChooser(){const q=mapQuery();if(!q){alert('Enter an address first.');return}ensureMapDialog().showModal()}
-  function openMap(which){
-    const q=encodeURIComponent(mapQuery());if(!q)return;
-    const urls={google:`https://www.google.com/maps/search/?api=1&query=${q}`,waze:`https://waze.com/ul?q=${q}&navigate=yes`,apple:`https://maps.apple.com/?q=${q}`};
-    ensureMapDialog().close();window.open(urls[which], '_blank', 'noopener');
-  }
-
-  function ensureCalendarList(){
-    const shell=document.querySelector('#calendarView .calendar-shell');if(!shell||document.getElementById('spCalendarJobs'))return;
-    const wrap=document.createElement('section');wrap.id='spCalendarJobs';wrap.className='sp-calendar-jobs';wrap.innerHTML='<h2 id="spCalendarJobsTitle">Select a day</h2><div id="spCalendarJobsList" class="sp-calendar-jobs-list"><div class="sp-calendar-empty">Tap a day to see its jobs.</div></div>';
-    shell.insertAdjacentElement('afterend',wrap);
-  }
-  function renderCalendarJobs(date){
-    ensureCalendarList();const title=document.getElementById('spCalendarJobsTitle'),root=document.getElementById('spCalendarJobsList');if(!title||!root)return;
-    const d=new Date(`${date}T12:00:00`);title.textContent=new Intl.DateTimeFormat('en-AU',{weekday:'short',day:'2-digit',month:'short',year:'numeric'}).format(d).replace(',','');
-    const js=allJobs().filter(j=>j.scheduled_date===date).sort((a,b)=>(a.scheduled_start||'99:99').localeCompare(b.scheduled_start||'99:99'));
-    root.innerHTML=js.length?js.map(calendarCard).join(''):'<div class="sp-calendar-empty">No jobs scheduled for this day.</div>';
-    root.querySelectorAll('.sp-calendar-job').forEach(card=>card.onclick=e=>{if(e.target.closest('.compact-phone'))return;const j=allJobs().find(x=>String(x.id)===String(card.dataset.id));if(j&&typeof openJob==='function')openJob(j)});
-  }
-  function calendarCard(j){
-    const phone=j.customer_phone?`<button class="compact-phone sp-phone-icon" type="button" aria-label="Contact ${esc(j.customer_name||'customer')}">${phoneSvg}</button>`:'<span class="compact-phone missing sp-phone-icon" aria-hidden="true"></span>';
-    return `<div class="swipe-row sp-calendar-row" data-id="${j.id}"><article class="sp-calendar-job" data-id="${j.id}"><div class="sp-calendar-job-top"><div><strong>${esc(j.customer_name||'No customer')}</strong><div class="sp-calendar-suburb">${esc(suburb(j))}</div></div><span class="sp-status" data-tone="${toneFor(j)}">${esc(statusText(j))}</span></div><div class="sp-calendar-job-bottom"><span>${esc(j.title||'Job')}</span><span class="sp-calendar-date">${esc(fmtDate(j.scheduled_date,j.time_of_day||''))}</span>${phone}</div></article></div>`;
-  }
-  function bindCalendarDays(){
-    ensureCalendarList();
-    document.querySelectorAll('#monthCalendar .month-day[data-date]').forEach(day=>{
-      day.onclick=e=>{e.preventDefault();e.stopPropagation();document.querySelectorAll('#monthCalendar .month-day').forEach(x=>x.classList.remove('selected'));day.classList.add('selected');renderCalendarJobs(day.dataset.date)};
-    });
-  }
-  function wrapCalendar(){
-    if(typeof renderCalendar!=='function'||renderCalendar.__inlineJobs)return;
-    const old=renderCalendar;renderCalendar=function(){old();setTimeout(bindCalendarDays,0)};renderCalendar.__inlineJobs=true;
-  }
+  function openMap(which){const q=encodeURIComponent(mapQuery());if(!q)return;const urls={google:`https://www.google.com/maps/search/?api=1&query=${q}`,waze:`https://waze.com/ul?q=${q}&navigate=yes`,apple:`https://maps.apple.com/?q=${q}`};ensureMapDialog().close();window.open(urls[which],'_blank','noopener')}
+  function ensureCalendarList(){const shell=document.querySelector('#calendarView .calendar-shell');if(!shell||document.getElementById('spCalendarJobs'))return;const wrap=document.createElement('section');wrap.id='spCalendarJobs';wrap.className='sp-calendar-jobs';wrap.innerHTML='<h2 id="spCalendarJobsTitle">Select a day</h2><div id="spCalendarJobsList" class="sp-calendar-jobs-list"><div class="sp-calendar-empty">Tap a day to see its jobs.</div></div>';shell.insertAdjacentElement('afterend',wrap)}
+  function renderCalendarJobs(date){ensureCalendarList();const title=document.getElementById('spCalendarJobsTitle'),root=document.getElementById('spCalendarJobsList');if(!title||!root)return;const d=new Date(`${date}T12:00:00`);title.textContent=new Intl.DateTimeFormat('en-AU',{weekday:'short',day:'2-digit',month:'short',year:'numeric'}).format(d).replace(',','');const js=allJobs().filter(j=>j.scheduled_date===date).sort((a,b)=>(a.scheduled_start||'99:99').localeCompare(b.scheduled_start||'99:99'));root.innerHTML=js.length?js.map(calendarCard).join(''):'<div class="sp-calendar-empty">No jobs scheduled for this day.</div>';root.querySelectorAll('.sp-calendar-job').forEach(card=>card.onclick=e=>{if(e.target.closest('.compact-phone'))return;const j=allJobs().find(x=>String(x.id)===String(card.dataset.id));if(j&&typeof openJob==='function')openJob(j)})}
+  function calendarCard(j){const phone=j.customer_phone?`<button class="compact-phone sp-phone-icon" type="button" aria-label="Contact ${esc(j.customer_name||'customer')}">${phoneSvg}</button>`:'<span class="compact-phone missing sp-phone-icon" aria-hidden="true"></span>';return `<div class="swipe-row sp-calendar-row" data-id="${j.id}"><article class="sp-calendar-job" data-id="${j.id}"><div class="sp-calendar-job-top"><div><strong>${esc(j.customer_name||'No customer')}</strong><div class="sp-calendar-suburb">${esc(suburb(j))}</div></div><span class="sp-status" data-tone="${toneFor(j)}">${esc(statusText(j))}</span></div><div class="sp-calendar-job-bottom"><span>${esc(j.title||'Job')}</span><span class="sp-calendar-date">${esc(fmtDate(j.scheduled_date,j.time_of_day||''))}</span>${phone}</div></article></div>`}
+  function bindCalendarDays(){ensureCalendarList();document.querySelectorAll('#monthCalendar .month-day[data-date]').forEach(day=>{day.onclick=e=>{e.preventDefault();e.stopPropagation();document.querySelectorAll('#monthCalendar .month-day').forEach(x=>x.classList.remove('selected'));day.classList.add('selected');renderCalendarJobs(day.dataset.date)}})}
+  function wrapCalendar(){if(typeof renderCalendar!=='function'||renderCalendar.__inlineJobs)return;const old=renderCalendar;renderCalendar=function(){old();setTimeout(bindCalendarDays,0)};renderCalendar.__inlineJobs=true}
   function boot(){ensureMapButton();ensureCalendarList();wrapCalendar();bindCalendarDays();let n=0;const t=setInterval(()=>{n++;ensureMapButton();ensureCalendarList();wrapCalendar();bindCalendarDays();if(n>30)clearInterval(t)},200)}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
