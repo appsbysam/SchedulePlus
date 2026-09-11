@@ -28,12 +28,13 @@
     dialog.querySelector('#phoneActionClose').onclick = () => dialog.close();
     dialog.addEventListener('click', e => { if (e.target === dialog) dialog.close(); });
 
-    dialog.querySelector('#phoneActionCall').onclick = () => {
+    dialog.querySelector('#phoneActionCall').onclick = async () => {
       const job = Array.isArray(jobs) ? jobs.find(j => String(j.id) === String(selectedJobId)) : null;
       if (!job?.customer_phone) return;
       const phone = String(job.customer_phone).replace(/\s+/g, '');
+      try { await navigator.clipboard?.writeText?.(phone); } catch (_) {}
       dialog.close();
-      window.location.href = `tel:${phone}`;
+      window.location.href = `tel:${encodeURIComponent(phone)}`;
     };
 
     dialog.querySelector('#phoneActionOpenJob').onclick = () => {
@@ -53,11 +54,12 @@
     const name = job.customer_name || 'this customer';
     dialog.querySelector('#phoneActionTitle').textContent = `Contact ${name}`;
     dialog.querySelector('#phoneActionNumber').textContent = job.customer_phone;
+    dialog.querySelector('#phoneActionCall').textContent = `Call ${job.customer_phone}`;
     dialog.showModal();
   }
 
   document.addEventListener('click', e => {
-    const phone = e.target.closest('.compact-phone');
+    const phone = e.target.closest('.compact-phone, .job-phone');
     if (!phone || phone.classList.contains('missing')) return;
     const row = phone.closest('.swipe-row');
     if (!row?.dataset.id) return;
