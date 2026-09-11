@@ -1,6 +1,8 @@
 (() => {
   const SENTINEL={AM:'12',PM:'24'};
   const $=id=>document.getElementById(id);
+  const PHONE_ICON='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.7 3.5 9.2 8l-1.8 1.7c1.3 2.8 3.1 4.6 5.9 5.9l1.7-1.8 4.5 2.5-.7 3.1c-.2.8-.9 1.4-1.8 1.4C9.3 20.8 3.2 14.7 3.2 7c0-.9.6-1.6 1.4-1.8z"/></svg>';
+  const CAL_ICON='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 2v4M18 2v4M3 9h18M5 4h14a2 2 0 0 1 2 2v15H3V6a2 2 0 0 1 2-2z"/></svg>';
 
   function formatDashboardDate(value,timeOfDay=''){
     if(!value)return '—';
@@ -9,14 +11,14 @@
     const weekday=new Intl.DateTimeFormat('en-AU',{weekday:'short'}).format(d);
     const day=String(d.getDate()).padStart(2,'0');
     const month=new Intl.DateTimeFormat('en-AU',{month:'short'}).format(d);
-    const suffix=timeOfDay?` [${timeOfDay}]`:'';
-    return `${weekday} ${day} ${month}${suffix}`;
+    return `${weekday} ${day} ${month}${timeOfDay?` [${timeOfDay}]`:''}`;
   }
   function statusLabel(value){
-    const map={new:'New',to_schedule:'To schedule',scheduled:'Scheduled',in_progress:'In progress',waiting:'Follow-Up',completed:'Completed'};
+    const map={new:'New',to_schedule:'To schedule',scheduled:'Scheduled',in_progress:'In Progress',waiting:'Follow-Up',completed:'Completed'};
     if(map[value])return map[value];
     return String(value||'').replace(/[_-]+/g,' ').replace(/\b\w/g,m=>m.toUpperCase())||'Unscheduled';
   }
+  function statusTone(value){const x=statusLabel(value).toLowerCase();if(x.includes('site'))return'site';if(x.includes('progress'))return'progress';if(x.includes('follow')||x.includes('waiting'))return'followup';if(x.includes('complete'))return'completed';if(x.includes('schedule'))return'scheduled';return'new'}
   function esc(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
 
   function buildTimeOfDay(){
@@ -45,9 +47,9 @@
       statusGrid.insertAdjacentElement('afterend',scheduleGrid);
       scheduleGrid.classList.add('job-schedule-grid');
     }
-    const battery=[...form.querySelectorAll('details.tech-section')].find(d=>(d.querySelector('summary')?.textContent||'').trim().toLowerCase().startsWith('battery'));
+    const inverter=[...form.querySelectorAll('details.tech-section')].find(d=>(d.querySelector('summary')?.textContent||'').trim().toLowerCase().startsWith('inverter'));
     const work=$('workInvolved')?.closest('label');
-    if(battery&&work)battery.insertAdjacentElement('afterend',work);
+    if(inverter&&work)inverter.insertAdjacentElement('afterend',work);
   }
 
   function syncTimeOfDay(job){
@@ -82,15 +84,15 @@
   function installDashboard(){
     if(typeof jobCardHtml!=='function'||jobCardHtml.__scheduleDateLayout)return false;
     const replacement=function(j){
-      const phone=j.customer_phone?`<button class="compact-phone" type="button" aria-label="Contact ${esc(j.customer_name||'customer')}">${esc(j.customer_phone)}</button>`:'<span class="compact-phone missing">No phone</span>';
+      const phone=j.customer_phone?`<button class="compact-phone icon-only" type="button" aria-label="Contact ${esc(j.customer_name||'customer')}">${PHONE_ICON}</button>`:'<span class="compact-phone icon-only missing" aria-label="No phone">${PHONE_ICON}</span>';
       const suburb=j.suburb||(typeof suburbFromAddress==='function'?suburbFromAddress(j.address_line||''):'')||'Suburb not set';
       const date=formatDashboardDate(j.scheduled_date,j.time_of_day||'');
       return `<div class="swipe-row compact-swipe-row" data-id="${j.id}">
         <button class="swipe-delete swipe-delete-left" type="button" aria-label="Delete ${esc(j.customer_name||'job')}">Delete</button>
-        <article class="job-card compact-job-card dashboard-three-line" data-id="${j.id}">
-          <div class="dashboard-line dashboard-line-one"><strong>${esc(j.customer_name||'No customer')}</strong><span class="chip compact-status">${esc(statusLabel(j.status))}</span></div>
-          <div class="dashboard-line dashboard-line-two"><span class="compact-suburb">${esc(suburb)}</span><span class="compact-date">${esc(date)}</span></div>
-          <div class="dashboard-line dashboard-line-three"><span class="job-type-chip">${esc(j.title||'Job')}</span>${phone}</div>
+        <article class="job-card compact-job-card sp-render-card" data-id="${j.id}">
+          <div class="sp-render-card-head"><strong>${esc(j.customer_name||'No customer')}</strong><span class="chip compact-status" data-tone="${statusTone(j.status)}">${esc(statusLabel(j.status))}</span></div>
+          <div class="sp-render-card-suburb">${esc(suburb)}</div>
+          <div class="sp-render-card-bottom"><span class="job-type-chip">${esc(j.title||'Job')}</span><span class="compact-date">${CAL_ICON}<span>${esc(date)}</span></span>${phone}</div>
         </article>
         <button class="swipe-delete swipe-delete-right" type="button" aria-label="Delete ${esc(j.customer_name||'job')}">Delete</button>
       </div>`;
