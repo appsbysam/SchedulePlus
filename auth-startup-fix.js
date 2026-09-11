@@ -1,5 +1,6 @@
 (() => {
   const RELEASE_KEY='schedule_plus_last_seen_version';
+  const FIRST_USE_KEY='schedule_plus_has_used_app';
   const appView=()=>document.getElementById('appView');
   const authView=()=>document.getElementById('authView');
   const loggedOutScreen=()=>{
@@ -20,7 +21,19 @@
     const modal=document.getElementById('updateModal');
     if(!modal || modal.open)return;
     const version=typeof APP_VERSION!=='undefined'?String(APP_VERSION):'';
-    if(!version || localStorage.getItem(RELEASE_KEY)===version)return;
+    if(!version)return;
+    const seen=localStorage.getItem(RELEASE_KEY);
+    const hasUsed=localStorage.getItem(FIRST_USE_KEY)==='1';
+
+    if(!hasUsed){
+      localStorage.setItem(FIRST_USE_KEY,'1');
+      if(!seen){
+        localStorage.setItem(RELEASE_KEY,version);
+        return;
+      }
+    }
+
+    if(seen===version)return;
     const versionLabel=document.getElementById('updateVersion');
     if(versionLabel)versionLabel.textContent=`Version ${version}`;
     try{modal.showModal()}catch(_){}
@@ -31,8 +44,6 @@
     else maybeShowWhatsNew();
   }
 
-  // ui-enhancements may attempt to open What's New during window.load.
-  // Run after all load handlers so a hidden modal can never block the login form.
   window.addEventListener('load',()=>{
     setTimeout(reconcile,0);
     setTimeout(reconcile,150);
