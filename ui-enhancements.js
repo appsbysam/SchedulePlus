@@ -5,7 +5,7 @@
   const CUSTOM_OPTIONS_KEY = 'schedule_plus_custom_select_options';
   const ADD_NEW_VALUE = '__add_new__';
 
-  function esc(v){return String(v ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#039;'}[m]));}
+  function esc(v){return String(v ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));}
   function fallbackFriendlyName(email=''){const local=String(email||'').split('@')[0]||'Signed in';return local.replace(/[._-]+/g,' ').replace(/\b\w/g,m=>m.toUpperCase())}
   function displayName(user){const saved=String(user?.user_metadata?.display_name||'').trim();return saved||fallbackFriendlyName(user?.email||'')}
   function getDeviceId(){let id=localStorage.getItem(DEVICE_KEY);if(!id){const raw=(crypto?.randomUUID?.()||`${Date.now()}-${Math.random()}`).replace(/[^a-z0-9]/gi,'').toUpperCase();id=`SCH-${raw.slice(0,4)}-${raw.slice(4,8)}-${raw.slice(8,12)}`;localStorage.setItem(DEVICE_KEY,id)}return id}
