@@ -1,0 +1,24 @@
+/* v0.7.9 targeted stability fixes */
+#dashboardView.sp-view.active{display:block!important;height:auto!important;min-height:0!important;overflow:visible!important}
+#dashboardView.sp-view.active>.sp-jobs-sticky{position:sticky;top:0;z-index:45;background:var(--sp-bg,#0b0d10);padding:2px 0 4px}
+#dashboardView.sp-view.active>.sp-jobs-sticky>.hero-row{margin-bottom:14px}
+#dashboardView.sp-view.active>.sp-jobs-sticky>.type-filters{margin-bottom:0!important}
+#dashboardView.sp-view.active>.sp-jobs-sticky>.toolbar{margin-bottom:10px!important}
+#dashboardView.sp-view.active #jobsList{display:grid!important;height:auto!important;max-height:none!important;min-height:0!important;overflow:visible!important;overscroll-behavior:auto!important;padding-bottom:30px!important}
+
+#calendarView.sp-view.active{width:100%!important;max-width:100%!important;min-width:0!important;overflow-x:hidden!important}
+#calendarView.sp-view.active .calendar-shell{width:100%!important;max-width:100%!important;min-width:0!important;margin-left:0!important;margin-right:0!important;padding-left:0!important;padding-right:0!important;overflow:hidden!important}
+#calendarView.sp-view.active .calendar-toolbar,#calendarView.sp-view.active .calendar-weekdays,#calendarView.sp-view.active #monthCalendar{width:100%!important;max-width:100%!important;min-width:0!important;margin-left:0!important;margin-right:0!important}
+#calendarView.sp-view.active .calendar-weekdays,#calendarView.sp-view.active #monthCalendar{display:grid!important;grid-template-columns:repeat(7,minmax(0,1fr))!important}
+#calendarView.sp-view.active .month-day{min-width:0!important;max-width:100%!important;width:auto!important}
+
+#viewOnMapBtn{justify-content:center!important;gap:0!important;white-space:nowrap!important}
+#viewOnMapBtn svg,#viewOnMapBtn .sp-map-pin,#viewOnMapBtn .sp-real-pin{display:none!important}
+
+.sp-unsaved-dialog{width:min(92vw,460px)!important;border:0!important;background:transparent!important;padding:12px!important}
+.sp-unsaved-dialog::backdrop{background:rgba(0,0,0,.72);backdrop-filter:blur(3px)}
+.sp-unsaved-card{background:#111419;border:1px solid #2d333c;border-radius:18px;padding:20px;box-shadow:0 18px 60px rgba(0,0,0,.55)}
+.sp-unsaved-card h2{margin:0 0 8px;font-size:1.2rem}.sp-unsaved-card p{margin:0;color:var(--sp-muted,#9aa3b2);line-height:1.45}
+.sp-unsaved-actions{display:grid;grid-template-columns:1fr;gap:9px;margin-top:18px}.sp-unsaved-actions button{width:100%;min-height:46px;border-radius:12px;font-weight:800;cursor:pointer}.sp-unsaved-actions [data-choice="keep"]{background:#242931;color:#eef2f7;border:1px solid #363d48}
+
+@media(max-width:560px){#dashboardView.sp-view.active>.sp-jobs-sticky{top:0;padding-top:0}.calendar-shell{margin-left:0!important;margin-right:0!important}.sp-unsaved-card{padding:18px}}
