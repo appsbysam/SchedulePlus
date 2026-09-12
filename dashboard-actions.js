@@ -38,16 +38,13 @@
   }
 
   function phoneTarget(e){
-    const target=e.target.closest('.compact-phone, .job-phone');
+    const target=e.target.closest('.compact-phone, .job-phone, .sp-phone');
     if(!target||target.classList.contains('missing')||target.disabled)return null;
-    const row=target.closest('.swipe-row');
-    if(!row?.dataset.id)return null;
-    return {target,row};
+    const holder=target.closest('.swipe-row, .sp-home-job');
+    if(!holder?.dataset.id)return null;
+    return {target,holder};
   }
 
-  // Stop the card/swipe gesture on pointer-down, but do not open the dialog until
-  // the completed click. Opening a modal during pointer-down can make the matching
-  // pointer-up/click land on the new backdrop and immediately close it on mobile.
   document.addEventListener('pointerdown', e => {
     const hit=phoneTarget(e); if(!hit)return;
     e.stopImmediatePropagation();
@@ -57,6 +54,6 @@
     const hit=phoneTarget(e); if(!hit)return;
     e.preventDefault();
     e.stopImmediatePropagation();
-    openPhoneActions(hit.row.dataset.id);
+    openPhoneActions(hit.holder.dataset.id);
   }, true);
 })();
