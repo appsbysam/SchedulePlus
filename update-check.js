@@ -29,6 +29,19 @@
     return match?.[1]||null;
   }
 
+  function compareVersions(a,b){
+    const pa=String(a||'').split('.').map(n=>Number(n));
+    const pb=String(b||'').split('.').map(n=>Number(n));
+    const len=Math.max(pa.length,pb.length);
+    for(let i=0;i<len;i++){
+      const na=Number.isFinite(pa[i])?pa[i]:0;
+      const nb=Number.isFinite(pb[i])?pb[i]:0;
+      if(na>nb)return 1;
+      if(na<nb)return -1;
+    }
+    return 0;
+  }
+
   async function remoteVersion(){
     const stamp=Date.now();
     try{
@@ -68,7 +81,7 @@
       const latest=await remoteVersion();
       lastChecked=Date.now();
       const current=typeof APP_VERSION!=='undefined'?String(APP_VERSION):'';
-      if(latest&&current&&latest!==current){
+      if(latest&&current&&compareVersions(latest,current)>0){
         toast('Update available',`Version ${latest} is ready.`,'Reload now',reloadLatest,0);
       }else if(manual){
         toast('You’re up to date',current?`Schedule+ v${current}`:'Latest version loaded.');
