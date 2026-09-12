@@ -1,6 +1,8 @@
 (()=>{
   let lastVisible=false;
   const updateReload=new URLSearchParams(location.search).has('update');
+  let updateLandingActive=updateReload;
+  let updateDialogObserver=null;
 
   function appVisible(){
     const app=document.getElementById('appView');
@@ -14,18 +16,21 @@
     return on;
   }
 
+  function closeDialog(id){
+    const d=document.getElementById(id);
+    if(d?.open){try{d.close()}catch(_){d.removeAttribute('open')}}
+  }
+
   function closeTransientViews(){
-    ['jobDialog','dayJobsDialog'].forEach(id=>{
-      const d=document.getElementById(id);
-      if(d?.open){try{d.close()}catch(_){}}
-    });
+    closeDialog('jobDialog');
+    closeDialog('dayJobsDialog');
   }
 
   function forceHome(){
     closeTransientViews();
     const homeBtn=document.querySelector('.sp-nav-btn[data-sp-view="home"]');
     if(homeBtn){
-      homeBtn.click();
+      if(!homeBtn.classList.contains('active'))homeBtn.click();
       return true;
     }
     const home=document.getElementById('spHomeView');
@@ -45,9 +50,40 @@
   }
 
   function finishUpdateLanding(){
-    if(!updateReload||!appVisible())return;
+    if(!updateLandingActive||!appVisible())return;
     forceHome();
     requestAnimationFrame(()=>selectTotalJobs());
+  }
+
+  function guardJobDialogDuringUpdate(){
+    if(!updateLandingActive)return;
+    const dialog=document.getElementById('jobDialog');
+    if(!dialog)return;
+    closeDialog('jobDialog');
+    updateDialogObserver?.disconnect();
+    updateDialogObserver=new MutationObserver(()=>{
+      if(updateLandingActive&&dialog.open){
+        closeDialog('jobDialog');
+        forceHome();
+        selectTotalJobs();
+      }
+    });
+    updateDialogObserver.observe(dialog,{attributes:true,attributeFilter:['open']});
+  }
+
+  function endUpdateLandingGuard(){
+    if(!updateLandingActive)return;
+    finishUpdateLanding();
+    closeTransientViews();
+    selectTotalJobs();
+    updateLandingActive=false;
+    updateDialogObserver?.disconnect();
+    updateDialogObserver=null;
+    try{
+      const url=new URL(location.href);
+      url.searchParams.delete('update');
+      history.replaceState(history.state,'',url.pathname+url.search+url.hash);
+    }catch(_){}
   }
 
   function onVisibilityChange(){
@@ -55,7 +91,7 @@
     if(visible&&!lastVisible){
       requestAnimationFrame(()=>setTimeout(()=>{
         forceHome();
-        if(updateReload)selectTotalJobs();
+        if(updateLandingActive)selectTotalJobs();
       },0));
     }
     lastVisible=visible;
@@ -74,10 +110,13 @@
     });
 
     if(updateReload){
-      // Update reloads can finish rendering asynchronously. Repeat only on this
-      // one update startup so later initialisers cannot restore an old job card.
-      [80,250,650,1200].forEach(ms=>setTimeout(finishUpdateLanding,ms));
-      window.addEventListener('load',()=>setTimeout(finishUpdateLanding,50),{once:true});
+      guardJobDialogDuringUpdate();
+      [80,250,650,1200,1800,2400].forEach(ms=>setTimeout(finishUpdateLanding,ms));
+      window.addEventListener('load',()=>{
+        guardJobDialogDuringUpdate();
+        setTimeout(finishUpdateLanding,50);
+      },{once:true});
+      setTimeout(endUpdateLandingGuard,2800);
     }
   }
 
