@@ -1,6 +1,7 @@
 (() => {
   let lastChecked = 0;
   const MIN_RECHECK_MS = 5 * 60 * 1000;
+  const RAW_VERSION_URL = 'https://raw.githubusercontent.com/appsbysam/SchedulePlus/main/version.js';
 
   function closeMenu(){
     document.getElementById('sideMenu')?.classList.remove('open');
@@ -23,21 +24,40 @@
     if(!actionLabel&&ttl)el._hideTimer=setTimeout(()=>el.classList.add('hidden'),ttl);
   }
 
-  async function remoteVersion(){
-    const response=await fetch(`version.js?check=${Date.now()}`,{cache:'no-store',headers:{'cache-control':'no-cache'}});
-    if(!response.ok)throw new Error(`Update check failed (${response.status})`);
-    const text=await response.text();
-    const match=text.match(/APP_VERSION\s*=\s*['\"]([^'\"]+)['\"]/);
+  function parseVersion(text){
+    const match=String(text||'').match(/APP_VERSION\s*=\s*['\"]([^'\"]+)['\"]/);
     return match?.[1]||null;
   }
 
-  async function reloadLatest(){
-    toast('Updating Schedule+…','Loading the latest version.');
+  async function remoteVersion(){
+    const stamp=Date.now();
     try{
-      const reg=await navigator.serviceWorker?.getRegistration?.();
-      if(reg){await reg.update(); if(reg.waiting)reg.waiting.postMessage?.({type:'SKIP_WAITING'});}
+      const response=await fetch(`${RAW_VERSION_URL}?check=${stamp}`,{cache:'no-store',mode:'cors'});
+      if(response.ok){
+        const version=parseVersion(await response.text());
+        if(version)return version;
+      }
     }catch(_){}
-    setTimeout(()=>location.reload(),250);
+    const response=await fetch(`version.js?check=${stamp}`,{cache:'reload',headers:{'cache-control':'no-cache','pragma':'no-cache'}});
+    if(!response.ok)throw new Error(`Update check failed (${response.status})`);
+    return parseVersion(await response.text());
+  }
+
+  async function reloadLatest(){
+    toast('Updating Schedule+…','Clearing the old app cache and loading the latest version.');
+    try{
+      const regs=await navigator.serviceWorker?.getRegistrations?.();
+      if(regs?.length)await Promise.all(regs.map(r=>r.unregister().catch(()=>false)));
+    }catch(_){}
+    try{
+      if('caches' in window){
+        const keys=await caches.keys();
+        await Promise.all(keys.filter(k=>k.startsWith('schedule-plus-v')).map(k=>caches.delete(k)));
+      }
+    }catch(_){}
+    const url=new URL(location.href);
+    url.searchParams.set('update',Date.now());
+    location.replace(url.toString());
   }
 
   async function checkForUpdates({manual=false}={}){
@@ -45,8 +65,6 @@
     const original=btn?.textContent||'Check for updates';
     if(btn&&manual){btn.disabled=true;btn.textContent='Checking…';}
     try{
-      const reg=await navigator.serviceWorker?.getRegistration?.();
-      if(reg)await reg.update();
       const latest=await remoteVersion();
       lastChecked=Date.now();
       const current=typeof APP_VERSION!=='undefined'?String(APP_VERSION):'';
