@@ -19,7 +19,7 @@
     return String(value||'').replace(/[_-]+/g,' ').replace(/\b\w/g,m=>m.toUpperCase())||'Unscheduled';
   }
   function statusTone(value){const x=statusLabel(value).toLowerCase();if(x.includes('site'))return'site';if(x.includes('progress'))return'progress';if(x.includes('follow')||x.includes('waiting'))return'followup';if(x.includes('complete'))return'completed';if(x.includes('schedule'))return'scheduled';return'new'}
-  function esc(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
+  function esc(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#039;'}[m]))}
 
   function buildTimeOfDay(){
     const select=$('estimatedHours');
@@ -81,26 +81,12 @@
     return true;
   }
 
+  // Jobs cards are now owned by the newer v0713 renderer.  This legacy module
+  // still handles the job form/time-of-day work, but must never replace the
+  // dashboard card renderer again.  The previous replacement raced the newer
+  // renderer after page load and broke card layout, filters, taps and swipe-delete.
   function installDashboard(){
-    if(typeof jobCardHtml!=='function'||jobCardHtml.__scheduleDateLayout)return false;
-    const replacement=function(j){
-      const phone=j.customer_phone?`<button class="compact-phone icon-only" type="button" aria-label="Contact ${esc(j.customer_name||'customer')}">${PHONE_ICON}</button>`:'<span class="compact-phone icon-only missing" aria-label="No phone">${PHONE_ICON}</span>';
-      const suburb=j.suburb||(typeof suburbFromAddress==='function'?suburbFromAddress(j.address_line||''):'')||'Suburb not set';
-      const date=formatDashboardDate(j.scheduled_date,j.time_of_day||'');
-      return `<div class="swipe-row compact-swipe-row" data-id="${j.id}">
-        <button class="swipe-delete swipe-delete-left" type="button" aria-label="Delete ${esc(j.customer_name||'job')}">Delete</button>
-        <article class="job-card compact-job-card sp-render-card" data-id="${j.id}">
-          <div class="sp-render-card-head"><strong>${esc(j.customer_name||'No customer')}</strong><span class="chip compact-status" data-tone="${statusTone(j.status)}">${esc(statusLabel(j.status))}</span></div>
-          <div class="sp-render-card-suburb">${esc(suburb)}</div>
-          <div class="sp-render-card-bottom"><span class="job-type-chip">${esc(j.title||'Job')}</span><span class="compact-date">${CAL_ICON}<span>${esc(date)}</span></span>${phone}</div>
-        </article>
-        <button class="swipe-delete swipe-delete-right" type="button" aria-label="Delete ${esc(j.customer_name||'job')}">Delete</button>
-      </div>`;
-    };
-    replacement.__scheduleDateLayout=true;
-    jobCardHtml=replacement;
-    if(typeof render==='function')render();
-    return true;
+    return typeof jobCardHtml==='function';
   }
 
   function boot(){
