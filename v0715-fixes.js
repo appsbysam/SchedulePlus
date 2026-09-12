@@ -1,5 +1,6 @@
 (()=>{
   let lastVisible=false;
+  const updateReload=new URLSearchParams(location.search).has('update');
 
   function appVisible(){
     const app=document.getElementById('appView');
@@ -33,10 +34,29 @@
     return true;
   }
 
+  function selectTotalJobs(){
+    const stats=document.getElementById('spStats');
+    if(!stats)return false;
+    const tiles=[...stats.querySelectorAll('.sp-stat-tile')];
+    const total=tiles.find(t=>t.dataset.homeFilter==='all'||/total\s*jobs/i.test(t.textContent||''));
+    if(!total)return false;
+    if(!total.classList.contains('selected'))total.click();
+    return true;
+  }
+
+  function finishUpdateLanding(){
+    if(!updateReload||!appVisible())return;
+    forceHome();
+    requestAnimationFrame(()=>selectTotalJobs());
+  }
+
   function onVisibilityChange(){
     const visible=syncScrollLock();
     if(visible&&!lastVisible){
-      requestAnimationFrame(()=>setTimeout(forceHome,0));
+      requestAnimationFrame(()=>setTimeout(()=>{
+        forceHome();
+        if(updateReload)selectTotalJobs();
+      },0));
     }
     lastVisible=visible;
   }
@@ -52,6 +72,13 @@
       syncScrollLock();
       requestAnimationFrame(()=>setTimeout(forceHome,0));
     });
+
+    if(updateReload){
+      // Update reloads can finish rendering asynchronously. Repeat only on this
+      // one update startup so later initialisers cannot restore an old job card.
+      [80,250,650,1200].forEach(ms=>setTimeout(finishUpdateLanding,ms));
+      window.addEventListener('load',()=>setTimeout(finishUpdateLanding,50),{once:true});
+    }
   }
 
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
