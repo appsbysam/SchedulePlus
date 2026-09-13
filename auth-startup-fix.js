@@ -6,14 +6,17 @@
   const loggedOutScreen=()=>{const app=appView(),auth=authView();return !!auth&&!auth.classList.contains('hidden')&&!!app&&app.classList.contains('hidden')};
   function closeUpdate(){const d=document.getElementById('updateModal');if(d?.open){try{d.close()}catch(_){d.removeAttribute('open')}}}
   function closeHiddenAppDialogs(){if(!loggedOutScreen())return;document.querySelectorAll('#appView dialog[open]').forEach(dialog=>{try{dialog.close()}catch(_){dialog.removeAttribute('open')}})}
-  function maybeShowWhatsNew(){
-    if(window.SchedulePlusBrowserSupported===false){closeUpdate();return}
-    const app=appView();if(!app||app.classList.contains('hidden'))return;const modal=document.getElementById('updateModal');if(!modal||modal.open)return;const version=typeof APP_VERSION!=='undefined'?String(APP_VERSION):'';if(!version)return;const seen=localStorage.getItem(RELEASE_KEY),hasUsed=localStorage.getItem(FIRST_USE_KEY)==='1';
-    if(!hasUsed){localStorage.setItem(FIRST_USE_KEY,'1');localStorage.setItem(RELEASE_KEY,version);return}
-    if(!seen){localStorage.setItem(RELEASE_KEY,version);return}
-    if(seen===version)return;const versionLabel=document.getElementById('updateVersion');if(versionLabel)versionLabel.textContent=`Version ${version}`;try{modal.showModal()}catch(_){}
+  function recordCurrentRelease(){
+    const version=typeof APP_VERSION!=='undefined'?String(APP_VERSION):'';
+    if(!version)return;
+    localStorage.setItem(FIRST_USE_KEY,'1');
+    localStorage.setItem(RELEASE_KEY,version);
   }
-  function reconcile(){if(window.SchedulePlusBrowserSupported===false){closeUpdate();return}if(loggedOutScreen())closeHiddenAppDialogs();else maybeShowWhatsNew()}
+  function reconcile(){
+    closeUpdate();
+    if(loggedOutScreen())closeHiddenAppDialogs();
+    else recordCurrentRelease();
+  }
   window.addEventListener('load',()=>{setTimeout(reconcile,0);setTimeout(reconcile,150)});
   document.addEventListener('DOMContentLoaded',()=>{const targets=[authView(),appView()].filter(Boolean);if(targets.length){const observer=new MutationObserver(()=>setTimeout(reconcile,0));targets.forEach(el=>observer.observe(el,{attributes:true,attributeFilter:['class']}))}setTimeout(reconcile,0)},{once:true});
   try{supabaseClient?.auth?.onAuthStateChange?.(()=>setTimeout(reconcile,75))}catch(_){}
