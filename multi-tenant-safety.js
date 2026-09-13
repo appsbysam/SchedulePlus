@@ -5,12 +5,10 @@
     const direct = window.SchedulePlusBusiness?.business?.id;
     if (direct) return direct;
     if (typeof currentUser === 'undefined' || !currentUser?.id) return null;
-
     const {data, error} = await supabaseClient.from('business_users').select('business_id,is_active').eq('user_id', currentUser.id).eq('is_active', true);
     if (error) throw error;
     const memberships = data || [];
     if (!memberships.length) return null;
-
     let id = localStorage.getItem(ACTIVE_BUSINESS_KEY);
     if (!memberships.some(m => m.business_id === id)) id = memberships[0].business_id;
     localStorage.setItem(ACTIVE_BUSINESS_KEY, id);
@@ -42,6 +40,8 @@
   function numberOrNull(v) { const s = String(v ?? '').trim(); if (!s) return null; const n = Number(s); return Number.isFinite(n) ? n : null; }
   function addressParts(value) { return typeof extractAddressParts === 'function' ? extractAddressParts(value) : {suburb:null,postcode:null}; }
   function selectedTimeOfDay(){ return document.querySelector('input[name="timeOfDayChoice"]:checked')?.value || null; }
+  function feature(key){ return window.SchedulePlusFeatures?.isEnabled?.(key) !== false; }
+  function keep(existing,prop,fallback=null){ return existing ? (existing[prop] ?? fallback) : fallback; }
 
   async function saveJob(e) {
     if (e.defaultPrevented) return;
@@ -55,49 +55,53 @@
 
       const id = field('jobId')?.value || '';
       const existing = id && typeof jobs !== 'undefined' ? jobs.find(j => j.id === id) : null;
+      const jobDetailsOn=feature('job_details'), customerOn=feature('customer_details'), schedulingOn=feature('scheduling'), solarOn=feature('solar'), batteryOn=feature('battery'), inverterOn=feature('inverter'), electricalOn=feature('electrical'), workflowOn=feature('workflow');
+      const selectedTitle=field('jobTitle')?.value?.trim() || '';
+      if(jobDetailsOn && !selectedTitle){ alert('Choose a Job type before saving.'); field('jobTitle')?.focus(); return; }
+
       const addressInput = field('addressLine');
-      const address = addressInput?.value.trim() || '';
+      const address = customerOn ? (addressInput?.value.trim() || '') : (keep(existing,'address_line','') || '');
       const parsed = addressParts(address);
       const selectedLat = numberOrNull(addressInput?.dataset.mapsLatitude);
       const selectedLng = numberOrNull(addressInput?.dataset.mapsLongitude);
       const addressUnchanged = !!existing && (existing.address_line || '') === address;
-      const latitude = selectedLat ?? (addressUnchanged ? existing?.latitude ?? null : null);
-      const longitude = selectedLng ?? (addressUnchanged ? existing?.longitude ?? null : null);
-      const suburb = addressInput?.dataset.mapsSuburb || parsed.suburb;
-      const postcode = addressInput?.dataset.mapsPostcode || parsed.postcode;
+      const latitude = customerOn ? (selectedLat ?? (addressUnchanged ? existing?.latitude ?? null : null)) : keep(existing,'latitude');
+      const longitude = customerOn ? (selectedLng ?? (addressUnchanged ? existing?.longitude ?? null : null)) : keep(existing,'longitude');
+      const suburb = customerOn ? (addressInput?.dataset.mapsSuburb || parsed.suburb) : keep(existing,'suburb');
+      const postcode = customerOn ? (addressInput?.dataset.mapsPostcode || parsed.postcode) : keep(existing,'postcode');
 
       const payload = {
-        title: field('jobTitle')?.value,
-        customer_name: field('customerName')?.value.trim() || null,
-        customer_phone: field('customerPhone')?.value.trim() || null,
-        customer_email: field('customerEmail')?.value.trim() || null,
-        nmi: field('jobNmi')?.value.trim() || null,
+        title: jobDetailsOn ? selectedTitle : (keep(existing,'title','Job') || 'Job'),
+        customer_name: customerOn ? (field('customerName')?.value.trim() || null) : keep(existing,'customer_name'),
+        customer_phone: customerOn ? (field('customerPhone')?.value.trim() || null) : keep(existing,'customer_phone'),
+        customer_email: customerOn ? (field('customerEmail')?.value.trim() || null) : keep(existing,'customer_email'),
+        nmi: customerOn ? (field('jobNmi')?.value.trim() || null) : keep(existing,'nmi'),
         address_line: address || null,
         suburb: suburb || null,
         postcode: postcode || null,
         latitude,
         longitude,
-        description: field('description')?.value.trim() || null,
-        notes: null,
-        panel_brand: field('panelBrand')?.value.trim() || null,
-        panel_type: field('panelType')?.value.trim() || null,
-        panel_quantity: numberOrNull(field('panelQuantity')?.value),
-        solar_capacity_kw: numberOrNull(field('solarCapacity')?.value),
-        battery_brand: field('batteryBrand')?.value.trim() || null,
-        battery_type: field('batteryType')?.value.trim() || null,
-        battery_capacity_kwh: numberOrNull(field('batteryCapacity')?.value),
-        phase_type: field('phaseType')?.value || null,
-        inverter_brand: field('inverterBrand')?.value.trim() || null,
-        inverter_type: field('inverterType')?.value.trim() || null,
-        inverter_capacity_kw: numberOrNull(field('inverterCapacity')?.value),
-        work_involved: field('workInvolved')?.value.trim() || null,
-        status: field('status')?.value,
-        priority: field('priority')?.value,
-        scheduled_date: field('scheduledDate')?.value || null,
-        scheduled_start: field('scheduledStart')?.value || null,
-        time_of_day: selectedTimeOfDay(),
-        estimated_minutes: null,
-        completed_at: field('status')?.value === 'completed' ? (existing?.completed_at || new Date().toISOString()) : null
+        description: jobDetailsOn ? (field('description')?.value.trim() || null) : keep(existing,'description'),
+        notes: keep(existing,'notes'),
+        panel_brand: solarOn ? (field('panelBrand')?.value.trim() || null) : keep(existing,'panel_brand'),
+        panel_type: solarOn ? (field('panelType')?.value.trim() || null) : keep(existing,'panel_type'),
+        panel_quantity: solarOn ? numberOrNull(field('panelQuantity')?.value) : keep(existing,'panel_quantity'),
+        solar_capacity_kw: solarOn ? numberOrNull(field('solarCapacity')?.value) : keep(existing,'solar_capacity_kw'),
+        battery_brand: batteryOn ? (field('batteryBrand')?.value.trim() || null) : keep(existing,'battery_brand'),
+        battery_type: batteryOn ? (field('batteryType')?.value.trim() || null) : keep(existing,'battery_type'),
+        battery_capacity_kwh: batteryOn ? numberOrNull(field('batteryCapacity')?.value) : keep(existing,'battery_capacity_kwh'),
+        phase_type: electricalOn ? (field('phaseType')?.value || null) : keep(existing,'phase_type'),
+        inverter_brand: inverterOn ? (field('inverterBrand')?.value.trim() || null) : keep(existing,'inverter_brand'),
+        inverter_type: inverterOn ? (field('inverterType')?.value.trim() || null) : keep(existing,'inverter_type'),
+        inverter_capacity_kw: inverterOn ? numberOrNull(field('inverterCapacity')?.value) : keep(existing,'inverter_capacity_kw'),
+        work_involved: jobDetailsOn ? (field('workInvolved')?.value.trim() || null) : keep(existing,'work_involved'),
+        status: workflowOn ? (field('status')?.value || 'new') : (keep(existing,'status','new') || 'new'),
+        priority: workflowOn ? (field('priority')?.value || 'normal') : (keep(existing,'priority','normal') || 'normal'),
+        scheduled_date: schedulingOn ? (field('scheduledDate')?.value || null) : keep(existing,'scheduled_date'),
+        scheduled_start: schedulingOn ? (field('scheduledStart')?.value || null) : keep(existing,'scheduled_start'),
+        time_of_day: schedulingOn ? selectedTimeOfDay() : keep(existing,'time_of_day'),
+        estimated_minutes: schedulingOn ? numberOrNull(field('estimatedHours')?.value) * 60 || null : keep(existing,'estimated_minutes'),
+        completed_at: workflowOn ? ((field('status')?.value === 'completed') ? (existing?.completed_at || new Date().toISOString()) : null) : keep(existing,'completed_at')
       };
 
       let query;
@@ -118,7 +122,7 @@
     window.__schedulePlusTenantSafetyInstalled = true;
     if (typeof loadJobs === 'function') loadJobs = safeLoadJobs;
     if (typeof deleteJobFromDashboard === 'function') deleteJobFromDashboard = async function(id) { await safeDeleteJob(id, true); };
-    const form = field('jobForm'); if (form) form.addEventListener('submit', saveJob, true);
+    const form = field('jobForm'); if (form) { form.noValidate=true; form.addEventListener('submit', saveJob, true); }
     const deleteBtn = field('deleteJobBtn');
     if (deleteBtn) deleteBtn.onclick = async () => { const id = field('jobId')?.value; if (!id || !confirm('Delete this job?')) return; await safeDeleteJob(id, false); };
     if (typeof currentUser !== 'undefined' && currentUser?.id) safeLoadJobs().catch(console.error);
