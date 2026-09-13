@@ -1,0 +1,29 @@
+(()=>{
+ const $=s=>document.querySelector(s), esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
+ let isAdmin=false,lastTouch=0;
+ const fmt=v=>v?new Intl.DateTimeFormat('en-AU',{day:'numeric',month:'short',year:'numeric',hour:'numeric',minute:'2-digit'}).format(new Date(v)):'—';
+ const rel=v=>{if(!v)return'—';const d=(Date.now()-new Date(v))/1000;if(d<60)return'just now';if(d<3600)return`${Math.floor(d/60)} min ago`;if(d<86400)return`${Math.floor(d/3600)} hr ago`;if(d<604800)return`${Math.floor(d/86400)} d ago`;return fmt(v)};
+ function closeMenu(){document.getElementById('sideMenu')?.classList.remove('open');document.getElementById('drawerBackdrop')?.classList.add('hidden')}
+ function ensureUi(){
+   if(!$('#platformAdminBtn')){const host=$('.menu-profile-actions');if(host){const b=document.createElement('button');b.id='platformAdminBtn';b.type='button';b.textContent='Admin dashboard';b.className='hidden';b.onclick=openDashboard;host.appendChild(b)}}
+   if($('#platformAdminDialog'))return;
+   const d=document.createElement('dialog');d.id='platformAdminDialog';d.className='platform-admin-dialog';d.innerHTML=`<div class="platform-admin-card"><div class="dialog-head"><div><p class="eyebrow">SCHEDULE+ ADMIN</p><h2>Platform activity</h2></div><button id="platformAdminClose" class="ghost" type="button">✕</button></div><div id="platformAdminBody"><div class="platform-admin-loading">Loading activity…</div></div></div>`;(document.getElementById('appView')||document.body).appendChild(d);$('#platformAdminClose').onclick=()=>d.close();
+ }
+ async function checkAdmin(){ensureUi();const{data,error}=await supabaseClient.rpc('is_platform_admin');isAdmin=!error&&data===true;$('#platformAdminBtn')?.classList.toggle('hidden',!isAdmin)}
+ async function touch(force=false){
+   const now=Date.now();if(!force&&now-lastTouch<240000)return;
+   const {data:{session}}=await supabaseClient.auth.getSession();if(!session)return;
+   const bid=window.SchedulePlusBusiness?.business?.id||null;
+   try{await supabaseClient.rpc('touch_app_activity',{p_business_id:bid});lastTouch=now}catch(_){ }
+ }
+ function summaryCard(label,value){return`<div class="platform-admin-stat"><strong>${esc(value)}</strong><span>${esc(label)}</span></div>`}
+ function render(data){
+   const s=data?.summary||{}, businesses=data?.businesses||[], users=data?.users||[];
+   $('#platformAdminBody').innerHTML=`<div class="platform-admin-stats">${summaryCard('Users',s.users??0)}${summaryCard('Businesses',s.businesses??0)}${summaryCard('Jobs',s.jobs??0)}${summaryCard('Active 7 days',s.active_7d??0)}${summaryCard('Active 30 days',s.active_30d??0)}</div>
+   <section class="platform-admin-section"><div class="platform-admin-section-head"><h3>Businesses</h3><span>${businesses.length}</span></div><div class="platform-admin-list">${businesses.map(b=>`<div class="platform-admin-row"><div class="platform-admin-main"><strong>${esc(b.business_name||'Unnamed business')}</strong><small>${esc(b.owners||'No owner email')}</small></div><div class="platform-admin-metrics"><span>${Number(b.user_count||0)} user${Number(b.user_count||0)===1?'':'s'}</span><span>${Number(b.job_count||0)} job${Number(b.job_count||0)===1?'':'s'}</span></div><div class="platform-admin-last">Last active: ${esc(rel(b.last_active_at||b.last_sign_in_at))}</div></div>`).join('')||'<div class="platform-admin-empty">No businesses yet.</div>'}</div></section>
+   <section class="platform-admin-section"><div class="platform-admin-section-head"><h3>Registrations</h3><span>${users.length}</span></div><div class="platform-admin-list">${users.map(u=>`<div class="platform-admin-row"><div class="platform-admin-main"><strong>${esc(u.email||'Unknown user')}</strong><small>${esc(u.businesses||'No business yet')}</small></div><div class="platform-admin-metrics"><span>${u.email_confirmed_at?'Confirmed':'Unconfirmed'}</span><span>Joined ${esc(fmt(u.created_at))}</span></div><div class="platform-admin-last">Last active: ${esc(rel(u.last_active_at||u.last_sign_in_at))}</div></div>`).join('')||'<div class="platform-admin-empty">No registrations yet.</div>'}</div></section>`;
+ }
+ async function openDashboard(){closeMenu();ensureUi();const d=$('#platformAdminDialog');d.showModal();$('#platformAdminBody').innerHTML='<div class="platform-admin-loading">Loading activity…</div>';await touch(true);const{data,error}=await supabaseClient.rpc('get_platform_admin_dashboard');if(error){$('#platformAdminBody').innerHTML=`<div class="platform-admin-empty">${esc(error.message||'Could not load admin dashboard.')}</div>`;return}render(data)}
+ async function init(){ensureUi();await checkAdmin();await touch(true);setInterval(()=>{if(document.visibilityState==='visible')touch()},300000);document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')touch()});supabaseClient.auth.onAuthStateChange((e,s)=>{if(e==='SIGNED_IN'){setTimeout(()=>{checkAdmin();touch(true)},300)}if(e==='SIGNED_OUT'){$('#platformAdminBtn')?.classList.add('hidden');isAdmin=false}})}
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
+})();
