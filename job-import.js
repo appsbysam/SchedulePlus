@@ -29,9 +29,11 @@
     if(result.systemDetails){
       const parts=result.systemDetails.split(/[;|]/).map(x=>x.trim()).filter(Boolean);
       const all=result.systemDetails.toLowerCase();
-      if(/battery\s*\+\s*solar|solar\s*\+\s*battery/.test(all))result.jobTitle='Battery + Solar';
-      else if(all.includes('battery'))result.jobTitle='Battery';
-      else if(all.includes('solar'))result.jobTitle='Solar';
+      const hasBattery=/\bbattery\b|\bess\b|energy\s*storage|\bstorage\b|\bkwh\b/.test(all);
+      const hasSolar=/\bsolar\b|\bpanel(s)?\b|\bmodule(s)?\b|\btrina\b|\bjinko\b|\baiko\b|\blongi\b|\brec\b|canadian\s+solar|\d+\s*[x×]\s*[a-z0-9 .-]+\s*\d{3,4}\s*w\b/i.test(result.systemDetails);
+      if(/battery\s*\+\s*solar|solar\s*\+\s*battery/.test(all)||(hasBattery&&hasSolar))result.jobTitle='Battery + Solar';
+      else if(hasBattery)result.jobTitle='Battery';
+      else if(hasSolar)result.jobTitle='Solar';
       const leftovers=parts.filter(p=>!/^\s*(battery\s*\+\s*solar|solar\s*\+\s*battery|battery|solar)\s*$/i.test(p));
       if(leftovers.length)result.workInvolved=leftovers.join('; ');
     }
@@ -69,61 +71,17 @@
     }
   }
 
-  function openBlankForm(){
-    ensureExtraFields();
-    if(typeof openJob==='function')openJob(null,pendingDate);
-  }
-
-  function openPrefilledForm(data){
-    ensureExtraFields();
-    if(typeof openJob!=='function')return;
-    openJob(null,pendingDate);
-    requestAnimationFrame(()=>{
-      setValue('customerName',data.customerName||'');
-      setValue('customerPhone',data.customerPhone||'');
-      setValue('customerEmail',data.customerEmail||'');
-      setValue('jobNmi',data.nmi||'');
-      setValue('addressLine',data.addressLine||'');
-      if(data.jobTitle)setValue('jobTitle',data.jobTitle);
-      if(data.workInvolved)setValue('workInvolved',data.workInvolved);
-    });
-  }
+  function openBlankForm(){ensureExtraFields();if(typeof openJob==='function')openJob(null,pendingDate)}
+  function openPrefilledForm(data){ensureExtraFields();if(typeof openJob!=='function')return;openJob(null,pendingDate);requestAnimationFrame(()=>{setValue('customerName',data.customerName||'');setValue('customerPhone',data.customerPhone||'');setValue('customerEmail',data.customerEmail||'');setValue('jobNmi',data.nmi||'');setValue('addressLine',data.addressLine||'');if(data.jobTitle)setValue('jobTitle',data.jobTitle);if(data.workInvolved)setValue('workInvolved',data.workInvolved)})}
 
   async function readClipboard(){
     const choice=$('#addJobChoiceDialog');
-    try{
-      const text=await navigator.clipboard.readText();
-      const parsed=parseClipboardText(text);
-      if(!text.trim()||!Object.keys(parsed).length)throw new Error('No recognised clipboard text');
-      choice?.close();
-      openPrefilledForm(parsed);
-    }catch(_){
-      choice?.close();
-      const d=$('#pasteJobTextDialog');
-      $('#pasteJobText').value='';$('#pasteJobMessage').textContent='';
-      d?.showModal();
-      setTimeout(()=>$('#pasteJobText')?.focus(),50);
-    }
+    try{const text=await navigator.clipboard.readText();const parsed=parseClipboardText(text);if(!text.trim()||!Object.keys(parsed).length)throw new Error('No recognised clipboard text');choice?.close();openPrefilledForm(parsed)}catch(_){choice?.close();const d=$('#pasteJobTextDialog');$('#pasteJobText').value='';$('#pasteJobMessage').textContent='';d?.showModal();setTimeout(()=>$('#pasteJobText')?.focus(),50)}
   }
 
-  function showChoice(date=null){
-    pendingDate=date||null;
-    ensureExtraFields();ensureDialogs();
-    const d=$('#addJobChoiceDialog');if(d&&!d.open)d.showModal();
-  }
-
-  function wireButtons(){
-    const bind=(id,getDate)=>{const b=document.getElementById(id);if(!b||b.dataset.spImportBound)return;b.dataset.spImportBound='1';b.onclick=e=>{e.preventDefault();e.stopPropagation();if(id==='dayAddJobBtn')$('#dayJobsDialog')?.close();showChoice(getDate?getDate(b):null)}};
-    bind('newJobBtn');bind('calendarNewJobBtn');bind('dayAddJobBtn',b=>b.dataset.date||null);
-  }
-
-  function wrapOpenJob(){
-    if(typeof openJob!=='function'||openJob.__spImportWrapped)return;
-    const original=openJob;
-    const wrapped=function(j=null,defaultDate=null){ensureExtraFields();const r=original(j,defaultDate);requestAnimationFrame(()=>{setValue('customerEmail',j?.customer_email||'');setValue('jobNmi',j?.nmi||'')});return r};
-    wrapped.__spImportWrapped=true;openJob=wrapped;
-  }
-
+  function showChoice(date=null){pendingDate=date||null;ensureExtraFields();ensureDialogs();const d=$('#addJobChoiceDialog');if(d&&!d.open)d.showModal()}
+  function wireButtons(){const bind=(id,getDate)=>{const b=document.getElementById(id);if(!b||b.dataset.spImportBound)return;b.dataset.spImportBound='1';b.onclick=e=>{e.preventDefault();e.stopPropagation();if(id==='dayAddJobBtn')$('#dayJobsDialog')?.close();showChoice(getDate?getDate(b):null)}};bind('newJobBtn');bind('calendarNewJobBtn');bind('dayAddJobBtn',b=>b.dataset.date||null)}
+  function wrapOpenJob(){if(typeof openJob!=='function'||openJob.__spImportWrapped)return;const original=openJob;const wrapped=function(j=null,defaultDate=null){ensureExtraFields();const r=original(j,defaultDate);requestAnimationFrame(()=>{setValue('customerEmail',j?.customer_email||'');setValue('jobNmi',j?.nmi||'')});return r};wrapped.__spImportWrapped=true;openJob=wrapped}
   function install(){ensureExtraFields();ensureDialogs();wrapOpenJob();wireButtons();setTimeout(()=>{wrapOpenJob();wireButtons()},500)}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();
 })();
