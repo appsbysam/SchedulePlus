@@ -56,6 +56,13 @@
     return parseVersion(await response.text());
   }
 
+  async function refreshServiceWorkerSilently(){
+    try{
+      const reg=await navigator.serviceWorker?.getRegistration?.();
+      if(reg)await reg.update();
+    }catch(_){}
+  }
+
   async function reloadLatest(){
     toast('Updating Schedule+…','Clearing the old app cache and loading the latest version.');
     try{
@@ -82,7 +89,8 @@
       lastChecked=Date.now();
       const current=typeof APP_VERSION!=='undefined'?String(APP_VERSION):'';
       if(latest&&current&&compareVersions(latest,current)>0){
-        toast('Update available',`Version ${latest} is ready.`,'Reload now',reloadLatest,0);
+        if(manual)toast('Update available',`Version ${latest} is ready.`,'Reload now',reloadLatest,0);
+        else await refreshServiceWorkerSilently();
       }else if(manual){
         toast('You’re up to date',current?`Schedule+ v${current}`:'Latest version loaded.');
       }
