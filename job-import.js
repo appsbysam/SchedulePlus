@@ -19,7 +19,7 @@
     for(const raw of lines){
       const line=raw.trim();
       if(!line)continue;
-      const m=line.match(/^([^:]{1,40}):\s*(.*)$/);
+      const m=line.match(/^(.{1,40}?)\s*(?::|[-–—])\s*(.*)$/);
       if(m){
         const key=aliases[normaliseLabel(m[1])];
         if(key){currentKey=key;result[key]=m[2].trim();continue}
