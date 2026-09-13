@@ -2,6 +2,7 @@
   let lastChecked = 0;
   const MIN_RECHECK_MS = 5 * 60 * 1000;
   const RAW_VERSION_URL = 'https://raw.githubusercontent.com/appsbysam/SchedulePlus/main/version.js';
+  const SILENT_VERSION='0.7.28';
 
   function closeMenu(){
     document.getElementById('sideMenu')?.classList.remove('open');
@@ -89,8 +90,8 @@
       lastChecked=Date.now();
       const current=typeof APP_VERSION!=='undefined'?String(APP_VERSION):'';
       if(latest&&current&&compareVersions(latest,current)>0){
-        if(manual)toast('Update available',`Version ${latest} is ready.`,'Reload now',reloadLatest,0);
-        else await refreshServiceWorkerSilently();
+        if(!manual&&latest===SILENT_VERSION)await refreshServiceWorkerSilently();
+        else toast('Update available',`Version ${latest} is ready.`,'Reload now',reloadLatest,0);
       }else if(manual){
         toast('You’re up to date',current?`Schedule+ v${current}`:'Latest version loaded.');
       }
