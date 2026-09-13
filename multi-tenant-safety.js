@@ -70,6 +70,8 @@
         title: field('jobTitle')?.value,
         customer_name: field('customerName')?.value.trim() || null,
         customer_phone: field('customerPhone')?.value.trim() || null,
+        customer_email: field('customerEmail')?.value.trim() || null,
+        nmi: field('jobNmi')?.value.trim() || null,
         address_line: address || null,
         suburb: suburb || null,
         postcode: postcode || null,
