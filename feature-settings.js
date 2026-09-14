@@ -1,42 +1,33 @@
 (()=>{
-  const DEFAULTS={job_details:true,customer_details:true,scheduling:true,solar:true,battery:true,inverter:true,electrical:true,workflow:true};
+  const DEFAULTS={job_details:true,solar:true,battery:true,inverter:true};
   let state={...DEFAULTS},observer=null,applyQueued=false;
   const business=()=>window.SchedulePlusBusiness?.business||null;
   const enabled=k=>state[k]!==false;
   const setHidden=(el,hide)=>{if(!el)return;el.classList.toggle('sp-feature-hidden',!!hide)};
   const closestLabel=id=>document.getElementById(id)?.closest('label');
   const detailsFor=id=>document.getElementById(id)?.closest('details');
-  const fieldGroup=id=>document.getElementById(id)?.closest('.grid2,.grid3');
 
   function applyForm(){
     const form=document.getElementById('jobForm');if(!form)return;
-    const job=enabled('job_details'),customer=enabled('customer_details'),sched=enabled('scheduling'),solar=enabled('solar'),battery=enabled('battery'),inv=enabled('inverter'),elec=enabled('electrical'),workflow=enabled('workflow');
-    setHidden(fieldGroup('customerName'),!customer);setHidden(closestLabel('addressLine'),!customer);setHidden(document.querySelector('.sp-import-extra-fields'),!customer);
-    setHidden(closestLabel('jobTitle'),!job);setHidden(closestLabel('description'),!job);setHidden(closestLabel('workInvolved'),!job);
-    setHidden(detailsFor('panelBrand'),!solar);setHidden(detailsFor('batteryBrand'),!battery);setHidden(detailsFor('inverterBrand'),!inv);setHidden(closestLabel('phaseType'),!elec);
-    setHidden(fieldGroup('scheduledDate'),!sched);setHidden(document.querySelector('.job-time-of-day,.job-time-period,.time-of-day-row'),!sched);setHidden(document.getElementById('removeCalendarBtn'),!sched);
-    setHidden(fieldGroup('status'),!workflow);
+    const job=enabled('job_details'),system=enabled('solar'),battery=enabled('battery'),inv=enabled('inverter');
+    setHidden(closestLabel('jobTitle'),!job);setHidden(closestLabel('description'),!job);
+    setHidden(detailsFor('panelBrand'),!system);setHidden(closestLabel('phaseType'),!system);
+    setHidden(detailsFor('batteryBrand'),!battery);setHidden(detailsFor('inverterBrand'),!inv);
     const title=document.getElementById('jobTitle');if(title)title.required=false;
   }
 
   function applyCards(){
     document.querySelectorAll('.job-type-line,.job-description').forEach(el=>setHidden(el,!enabled('job_details')));
-    document.querySelectorAll('.status-chip').forEach(el=>setHidden(el,!enabled('workflow')));
     document.querySelectorAll('.system-detail').forEach(el=>{
       const label=(el.querySelector('span')?.textContent||'').trim().toLowerCase();
       let key=null;
-      if(label==='panels'||label==='solar size')key='solar';else if(label==='battery')key='battery';else if(label==='inverter')key='inverter';else if(label==='phase')key='electrical';else if(label==='work involved')key='job_details';
+      if(label==='panels'||label==='solar size'||label==='phase')key='solar';else if(label==='battery')key='battery';else if(label==='inverter')key='inverter';
       if(key)setHidden(el,!enabled(key));
     });
   }
 
   function applyDashboard(){
     setHidden(document.querySelector('.type-filters'),!enabled('job_details'));
-    setHidden(document.getElementById('statusFilter'),!enabled('workflow'));
-    document.querySelectorAll('.sp-stat-tile.progress,.sp-stat-tile.followup,.sp-stat-tile.completed').forEach(el=>setHidden(el,!enabled('workflow')));
-    document.querySelectorAll('.sp-stat-tile.scheduled,.sp-stat-tile.overdue').forEach(el=>setHidden(el,!enabled('scheduling')));
-    const calNav=document.querySelector('.sp-nav-btn[data-sp-view="calendar"]');setHidden(calNav,!enabled('scheduling'));
-    if(!enabled('scheduling')&&document.querySelector('.sp-view[data-sp-view="calendar"].active'))document.querySelector('.sp-nav-btn[data-sp-view="home"]')?.click();
   }
 
   function apply(){applyQueued=false;applyForm();applyCards();applyDashboard();document.documentElement.dataset.spFeatures=Object.entries(state).filter(([,v])=>v!==false).map(([k])=>k).join(',')}
