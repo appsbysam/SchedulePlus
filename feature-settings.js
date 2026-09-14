@@ -10,7 +10,8 @@
   function applyForm(){
     const form=document.getElementById('jobForm');if(!form)return;
     const job=enabled('job_details'),system=enabled('solar'),battery=enabled('battery'),inv=enabled('inverter');
-    setHidden(closestLabel('jobTitle'),!job);setHidden(closestLabel('description'),!job);
+    const jobDetails=detailsFor('jobTitle')||detailsFor('description');
+    if(jobDetails)setHidden(jobDetails,!job);else{setHidden(closestLabel('jobTitle'),!job);setHidden(closestLabel('description'),!job)}
     setHidden(detailsFor('panelBrand'),!system);setHidden(closestLabel('phaseType'),!system);
     setHidden(detailsFor('batteryBrand'),!battery);setHidden(detailsFor('inverterBrand'),!inv);
     const title=document.getElementById('jobTitle');if(title)title.required=false;
