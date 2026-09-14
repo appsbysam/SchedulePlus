@@ -6,7 +6,7 @@
   battery:{label:'Battery',sub:'Battery brand, model and size',categories:['battery_brand','battery_type','battery_capacity']},
   inverter:{label:'Inverter',sub:'Inverter brand, size and model',categories:['inverter_brand','inverter_capacity','inverter_type']}
  };
- let rows=[],features={},openGroup=null; const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#039;'}[m])); const business=()=>window.SchedulePlusBusiness?.business||null;
+ let rows=[],features={},openGroup=null; const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m])); const business=()=>window.SchedulePlusBusiness?.business||null;
  async function loadRows(){const b=business();if(!b)return;const[{data,error},{data:fs,error:fe}]=await Promise.all([supabaseClient.from('business_dropdown_options').select('*').eq('business_id',b.id).order('category').order('sort_order').order('value'),supabaseClient.from('business_feature_settings').select('feature_key,is_enabled').eq('business_id',b.id)]);if(error)throw error;if(fe)throw fe;rows=data||[];features={};(fs||[]).forEach(r=>features[r.feature_key]=r.is_enabled!==false)}
  function groupEnabled(k){return features[k]!==false}
  function vals(c){return rows.filter(r=>r.category===c&&r.is_active).sort((a,b)=>a.sort_order-b.sort_order||a.value.localeCompare(b.value))}
