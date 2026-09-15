@@ -7,6 +7,7 @@
   const canManage=()=>['owner','admin'].includes(window.SchedulePlusBusiness?.membership?.role);
   const validTheme=v=>['system','dark','light'].includes(v)?v:'system';
   const actualTheme=()=>{const p=validTheme(localStorage.getItem(THEME_KEY)||'system');return p==='system'?(matchMedia('(prefers-color-scheme: light)').matches?'light':'dark'):p};
+  const validHex=v=>/^#[0-9a-f]{6}$/i.test(String(v||''))?v:null;
 
   function applyTheme(preference){
     const p=validTheme(preference||localStorage.getItem(THEME_KEY)||'system');
@@ -14,7 +15,6 @@
     const theme=p==='system'?(matchMedia('(prefers-color-scheme: light)').matches?'light':'dark'):p;
     document.documentElement.dataset.theme=theme;
     document.documentElement.dataset.themePreference=p;
-    const meta=document.querySelector('meta[name="theme-color"]');if(meta)meta.content=theme==='light'?'#f4f5f7':'#0b0b0d';
     updateBrandLogo();
     const select=$('appearanceMode');if(select&&select.value!==p)select.value=p;
   }
@@ -25,92 +25,28 @@
     return {url:b.logo_dark_url||b.logo_url||b.logo_light_url||DEFAULT_LOGO,shape:b.logo_dark_shape||'square'};
   }
 
-  function setLogoFrame(img,shape){
-    img.dataset.logoShape=shape;
-    img.classList.toggle('tenant-logo-landscape',shape==='landscape');
-    img.classList.toggle('tenant-logo-square',shape!=='landscape');
-  }
+  function setLogoFrame(img,shape){img.dataset.logoShape=shape;img.classList.toggle('tenant-logo-landscape',shape==='landscape');img.classList.toggle('tenant-logo-square',shape!=='landscape')}
 
   function updateBrandLogo(){
     const b=getBusiness(),theme=actualTheme(),choice=chooseBusinessLogo(b,theme);
-    document.querySelectorAll('.topbar .brand img,.side-menu-head img,.auth-logo').forEach(img=>{img.src=choice.url;img.alt=`${b?.business_name||'Schedule+'} logo`;setLogoFrame(img,choice.shape)});
+    document.querySelectorAll('.topbar .brand img,.side-menu-head img,.auth-logo,#spHomeLogo').forEach(img=>{img.src=choice.url;img.alt=`${b?.business_name||'Schedule+'} logo`;setLogoFrame(img,choice.shape)});
+    const meta=document.querySelector('meta[name="theme-color"]');if(meta)meta.content=validHex(b?.accent_color)||(theme==='light'?'#f4f5f7':'#0b0b0d');
   }
 
   function buildUi(){
-    if(state.ready)return true;
-    const form=$('businessSettingsForm'),legacy=$('businessLogoFile')?.closest('.tenant-logo-row');
-    if(!form||!legacy)return false;
-    state.ready=true;
-    legacy.classList.add('logo-legacy-hidden');
-    const panel=document.createElement('section');panel.className='logo-settings-panel';panel.innerHTML=`
-      <div class="logo-settings-heading"><div><strong>Business logos</strong><small>Crop each logo to fit the app header.</small></div></div>
-      <div class="logo-mode-grid">
-        <div class="logo-mode-card"><div class="logo-mode-title"><strong>Dark mode</strong><span id="darkLogoShapeLabel">Square</span></div><div id="darkLogoFrame" class="logo-preview-frame square"><img id="darkLogoPreview" src="${DEFAULT_LOGO}" alt="Dark mode logo preview"></div><button id="chooseDarkLogo" class="secondary logo-choose" type="button">Choose & crop</button></div>
-        <div class="logo-mode-card"><div class="logo-mode-title"><strong>Light mode</strong><span id="lightLogoShapeLabel">Square</span></div><div id="lightLogoFrame" class="logo-preview-frame light square"><img id="lightLogoPreview" src="${DEFAULT_LOGO}" alt="Light mode logo preview"></div><button id="chooseLightLogo" class="secondary logo-choose" type="button">Choose & crop</button><button id="removeLightLogo" class="logo-link" type="button">Use dark-mode logo instead</button></div>
-      </div>
-      <input id="darkLogoFilePicker" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" hidden>
-      <input id="lightLogoFilePicker" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" hidden>`;
-    legacy.insertAdjacentElement('afterend',panel);
-
-    const appearance=document.createElement('section');appearance.className='appearance-settings';appearance.innerHTML=`<label>Appearance<select id="appearanceMode"><option value="system">System default</option><option value="dark">Dark mode</option><option value="light">Light mode</option></select></label><small>Applies to this device. System default follows your phone or computer.</small>`;
-    panel.insertAdjacentElement('afterend',appearance);
-
+    if(state.ready)return true;const form=$('businessSettingsForm'),legacy=$('businessLogoFile')?.closest('.tenant-logo-row');if(!form||!legacy)return false;state.ready=true;legacy.classList.add('logo-legacy-hidden');
+    const panel=document.createElement('section');panel.className='logo-settings-panel';panel.innerHTML=`<div class="logo-settings-heading"><div><strong>Business logos</strong><small>Crop each logo to fit the app header.</small></div></div><div class="logo-mode-grid"><div class="logo-mode-card"><div class="logo-mode-title"><strong>Dark mode</strong><span id="darkLogoShapeLabel">Square</span></div><div id="darkLogoFrame" class="logo-preview-frame square"><img id="darkLogoPreview" src="${DEFAULT_LOGO}" alt="Dark mode logo preview"></div><button id="chooseDarkLogo" class="secondary logo-choose" type="button">Choose & crop</button></div><div class="logo-mode-card"><div class="logo-mode-title"><strong>Light mode</strong><span id="lightLogoShapeLabel">Square</span></div><div id="lightLogoFrame" class="logo-preview-frame light square"><img id="lightLogoPreview" src="${DEFAULT_LOGO}" alt="Light mode logo preview"></div><button id="chooseLightLogo" class="secondary logo-choose" type="button">Choose & crop</button><button id="removeLightLogo" class="logo-link" type="button">Use dark-mode logo instead</button></div></div><input id="darkLogoFilePicker" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" hidden><input id="lightLogoFilePicker" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" hidden>`;legacy.insertAdjacentElement('afterend',panel);
+    const appearance=document.createElement('section');appearance.className='appearance-settings';appearance.innerHTML=`<label>Appearance<select id="appearanceMode"><option value="system">System default</option><option value="dark">Dark mode</option><option value="light">Light mode</option></select></label><small>Applies to this device. System default follows your phone or computer.</small>`;panel.insertAdjacentElement('afterend',appearance);
     document.body.insertAdjacentHTML('beforeend',`<dialog id="logoCropDialog" class="logo-crop-dialog"><div class="logo-crop-card"><div class="dialog-head"><h2>Crop logo</h2><button id="logoCropClose" class="ghost" type="button">✕</button></div><div class="crop-shape-toggle"><button type="button" data-crop-shape="square" class="active">Square</button><button type="button" data-crop-shape="landscape">Landscape 2:1</button></div><div id="logoCropStage" class="logo-crop-stage square"><canvas id="logoCropCanvas" width="900" height="900"></canvas></div><label class="crop-zoom">Zoom<input id="logoCropZoom" type="range" min="1" max="3" step="0.01" value="1"></label><p class="crop-help">Drag the logo to position it. Use zoom to fill the frame.</p><div class="dialog-actions"><button id="logoCropCancel" class="secondary" type="button">Cancel</button><button id="logoCropApply" class="primary" type="button">Apply crop</button></div></div></dialog>`);
-
-    $('chooseDarkLogo').onclick=()=>pickLogo('dark');$('chooseLightLogo').onclick=()=>pickLogo('light');
-    $('removeLightLogo').onclick=()=>{state.lightFile=null;state.removeLight=true;refreshPreviews()};
-    $('darkLogoFilePicker').onchange=e=>startCrop(e.target.files?.[0],'dark');$('lightLogoFilePicker').onchange=e=>startCrop(e.target.files?.[0],'light');
-    $('appearanceMode').value=validTheme(localStorage.getItem(THEME_KEY)||'system');$('appearanceMode').onchange=e=>applyTheme(e.target.value);
-    $('logoCropClose').onclick=closeCrop;$('logoCropCancel').onclick=closeCrop;$('logoCropApply').onclick=applyCrop;
-    document.querySelectorAll('[data-crop-shape]').forEach(btn=>btn.onclick=()=>setCropShape(btn.dataset.cropShape));
-    $('logoCropZoom').oninput=e=>{state.scale=state.baseScale*Number(e.target.value);drawCrop()};
-    const stage=$('logoCropStage');stage.addEventListener('pointerdown',startDrag);stage.addEventListener('pointermove',drag);stage.addEventListener('pointerup',endDrag);stage.addEventListener('pointercancel',endDrag);
-    form.onsubmit=saveEnhancedSettings;
-    new MutationObserver(()=>{if($('businessSettingsDialog')?.open)refreshSettingsUi()}).observe($('businessSettingsDialog'),{attributes:true,attributeFilter:['open']});
-    refreshSettingsUi();
-    return true;
+    $('chooseDarkLogo').onclick=()=>pickLogo('dark');$('chooseLightLogo').onclick=()=>pickLogo('light');$('removeLightLogo').onclick=()=>{state.lightFile=null;state.removeLight=true;refreshPreviews()};$('darkLogoFilePicker').onchange=e=>startCrop(e.target.files?.[0],'dark');$('lightLogoFilePicker').onchange=e=>startCrop(e.target.files?.[0],'light');$('appearanceMode').value=validTheme(localStorage.getItem(THEME_KEY)||'system');$('appearanceMode').onchange=e=>applyTheme(e.target.value);$('logoCropClose').onclick=closeCrop;$('logoCropCancel').onclick=closeCrop;$('logoCropApply').onclick=applyCrop;document.querySelectorAll('[data-crop-shape]').forEach(btn=>btn.onclick=()=>setCropShape(btn.dataset.cropShape));$('logoCropZoom').oninput=e=>{state.scale=state.baseScale*Number(e.target.value);drawCrop()};const stage=$('logoCropStage');stage.addEventListener('pointerdown',startDrag);stage.addEventListener('pointermove',drag);stage.addEventListener('pointerup',endDrag);stage.addEventListener('pointercancel',endDrag);form.onsubmit=saveEnhancedSettings;new MutationObserver(()=>{if($('businessSettingsDialog')?.open)refreshSettingsUi()}).observe($('businessSettingsDialog'),{attributes:true,attributeFilter:['open']});refreshSettingsUi();return true
   }
-
   function pickLogo(target){if(!canManage())return;state.target=target;const input=$(target==='dark'?'darkLogoFilePicker':'lightLogoFilePicker');input.value='';input.click()}
-  function startCrop(file,target){
-    if(!file)return;if(file.size>2097152){alert('Logo must be 2 MB or smaller.');return}
-    state.target=target;state.imageUrl&&URL.revokeObjectURL(state.imageUrl);state.imageUrl=URL.createObjectURL(file);const img=new Image();state.image=img;
-    img.onload=()=>{setCropShape(target==='dark'?state.darkShape:state.lightShape,true);$('logoCropDialog').showModal()};img.onerror=()=>alert('That image could not be opened.');img.src=state.imageUrl;
-  }
+  function startCrop(file,target){if(!file)return;if(file.size>2097152){alert('Logo must be 2 MB or smaller.');return}state.target=target;state.imageUrl&&URL.revokeObjectURL(state.imageUrl);state.imageUrl=URL.createObjectURL(file);const img=new Image();state.image=img;img.onload=()=>{setCropShape(target==='dark'?state.darkShape:state.lightShape,true);$('logoCropDialog').showModal()};img.onerror=()=>alert('That image could not be opened.');img.src=state.imageUrl}
   function cropDimensions(shape){return shape==='landscape'?{w:1400,h:700}:{w:900,h:900}}
-  function setCropShape(shape,reset=true){
-    shape=shape==='landscape'?'landscape':'square';if(state.target==='dark')state.darkShape=shape;else state.lightShape=shape;
-    document.querySelectorAll('[data-crop-shape]').forEach(b=>b.classList.toggle('active',b.dataset.cropShape===shape));
-    const {w,h}=cropDimensions(shape),canvas=$('logoCropCanvas');canvas.width=w;canvas.height=h;$('logoCropStage').className=`logo-crop-stage ${shape}`;
-    if(state.image&&reset){state.baseScale=Math.max(w/state.image.naturalWidth,h/state.image.naturalHeight);state.scale=state.baseScale;state.offsetX=(w-state.image.naturalWidth*state.scale)/2;state.offsetY=(h-state.image.naturalHeight*state.scale)/2;$('logoCropZoom').value='1'}drawCrop();
-  }
-  function drawCrop(){const c=$('logoCropCanvas'),ctx=c?.getContext('2d');if(!ctx||!state.image)return;ctx.clearRect(0,0,c.width,c.height);ctx.drawImage(state.image,state.offsetX,state.offsetY,state.image.naturalWidth*state.scale,state.image.naturalHeight*state.scale)}
-  function startDrag(e){if(!state.image)return;state.drag=true;state.lastX=e.clientX;state.lastY=e.clientY;e.currentTarget.setPointerCapture?.(e.pointerId)}
-  function drag(e){if(!state.drag)return;const c=$('logoCropCanvas'),r=c.getBoundingClientRect();state.offsetX+=(e.clientX-state.lastX)*(c.width/r.width);state.offsetY+=(e.clientY-state.lastY)*(c.height/r.height);state.lastX=e.clientX;state.lastY=e.clientY;drawCrop()}
-  function endDrag(){state.drag=false}
-  function closeCrop(){$('logoCropDialog')?.close()}
-  function applyCrop(){const c=$('logoCropCanvas');c.toBlob(blob=>{if(!blob){alert('Could not crop this logo.');return}const file=new File([blob],`scheduleplus-${state.target}-logo.webp`,{type:'image/webp'});if(state.target==='dark')state.darkFile=file;else{state.lightFile=file;state.removeLight=false}refreshPreviews();closeCrop()},'image/webp',0.94)}
-
-  function previewUrl(file,fallback){return file?URL.createObjectURL(file):fallback}
-  function setPreview(target,url,shape){const img=$(target==='dark'?'darkLogoPreview':'lightLogoPreview'),frame=$(target==='dark'?'darkLogoFrame':'lightLogoFrame'),label=$(target==='dark'?'darkLogoShapeLabel':'lightLogoShapeLabel');if(img)img.src=url||DEFAULT_LOGO;if(frame)frame.className=`logo-preview-frame ${target==='light'?'light ':''}${shape}`;if(label)label.textContent=shape==='landscape'?'Landscape 2:1':'Square'}
-  function refreshPreviews(){const b=getBusiness()||{};const darkUrl=state.darkFile?previewUrl(state.darkFile,''):b.logo_dark_url||b.logo_url||DEFAULT_LOGO;const lightUrl=state.removeLight?darkUrl:(state.lightFile?previewUrl(state.lightFile,''):b.logo_light_url||darkUrl);setPreview('dark',darkUrl,state.darkShape||b.logo_dark_shape||'square');setPreview('light',lightUrl,state.removeLight?(state.darkShape||'square'):(state.lightShape||b.logo_light_shape||state.darkShape||'square'))}
-  function refreshSettingsUi(){const b=getBusiness();if(!b)return;state.darkShape=b.logo_dark_shape||'square';state.lightShape=b.logo_light_shape||state.darkShape||'square';state.darkFile=null;state.lightFile=null;state.removeLight=false;refreshPreviews();const editable=canManage();document.querySelectorAll('#chooseDarkLogo,#chooseLightLogo,#removeLightLogo').forEach(el=>el.disabled=!editable);const mode=$('appearanceMode');if(mode)mode.disabled=false;updateBrandLogo()}
-
+  function setCropShape(shape,reset=true){shape=shape==='landscape'?'landscape':'square';if(state.target==='dark')state.darkShape=shape;else state.lightShape=shape;document.querySelectorAll('[data-crop-shape]').forEach(b=>b.classList.toggle('active',b.dataset.cropShape===shape));const {w,h}=cropDimensions(shape),canvas=$('logoCropCanvas');canvas.width=w;canvas.height=h;$('logoCropStage').className=`logo-crop-stage ${shape}`;if(state.image&&reset){state.baseScale=Math.max(w/state.image.naturalWidth,h/state.image.naturalHeight);state.scale=state.baseScale;state.offsetX=(w-state.image.naturalWidth*state.scale)/2;state.offsetY=(h-state.image.naturalHeight*state.scale)/2;$('logoCropZoom').value='1'}drawCrop()}
+  function drawCrop(){const c=$('logoCropCanvas'),ctx=c?.getContext('2d');if(!ctx||!state.image)return;ctx.clearRect(0,0,c.width,c.height);ctx.drawImage(state.image,state.offsetX,state.offsetY,state.image.naturalWidth*state.scale,state.image.naturalHeight*state.scale)}function startDrag(e){if(!state.image)return;state.drag=true;state.lastX=e.clientX;state.lastY=e.clientY;e.currentTarget.setPointerCapture?.(e.pointerId)}function drag(e){if(!state.drag)return;const c=$('logoCropCanvas'),r=c.getBoundingClientRect();state.offsetX+=(e.clientX-state.lastX)*(c.width/r.width);state.offsetY+=(e.clientY-state.lastY)*(c.height/r.height);state.lastX=e.clientX;state.lastY=e.clientY;drawCrop()}function endDrag(){state.drag=false}function closeCrop(){$('logoCropDialog')?.close()}function applyCrop(){const c=$('logoCropCanvas');c.toBlob(blob=>{if(!blob){alert('Could not crop this logo.');return}const file=new File([blob],`scheduleplus-${state.target}-logo.webp`,{type:'image/webp'});if(state.target==='dark')state.darkFile=file;else{state.lightFile=file;state.removeLight=false}refreshPreviews();closeCrop()},'image/webp',0.94)}
+  function previewUrl(file,fallback){return file?URL.createObjectURL(file):fallback}function setPreview(target,url,shape){const img=$(target==='dark'?'darkLogoPreview':'lightLogoPreview'),frame=$(target==='dark'?'darkLogoFrame':'lightLogoFrame'),label=$(target==='dark'?'darkLogoShapeLabel':'lightLogoShapeLabel');if(img)img.src=url||DEFAULT_LOGO;if(frame)frame.className=`logo-preview-frame ${target==='light'?'light ':''}${shape}`;if(label)label.textContent=shape==='landscape'?'Landscape 2:1':'Square'}function refreshPreviews(){const b=getBusiness()||{};const darkUrl=state.darkFile?previewUrl(state.darkFile,''):b.logo_dark_url||b.logo_url||DEFAULT_LOGO;const lightUrl=state.removeLight?darkUrl:(state.lightFile?previewUrl(state.lightFile,''):b.logo_light_url||darkUrl);setPreview('dark',darkUrl,state.darkShape||b.logo_dark_shape||'square');setPreview('light',lightUrl,state.removeLight?(state.darkShape||'square'):(state.lightShape||b.logo_light_shape||state.darkShape||'square'))}function refreshSettingsUi(){const b=getBusiness();if(!b)return;state.darkShape=b.logo_dark_shape||'square';state.lightShape=b.logo_light_shape||state.darkShape||'square';state.darkFile=null;state.lightFile=null;state.removeLight=false;refreshPreviews();const editable=canManage();document.querySelectorAll('#chooseDarkLogo,#chooseLightLogo,#removeLightLogo').forEach(el=>el.disabled=!editable);const mode=$('appearanceMode');if(mode)mode.disabled=false;updateBrandLogo()}
   async function uploadLogo(file,kind){if(!file)return null;const b=getBusiness();if(!b)throw new Error('Business not loaded.');const path=`${b.id}/logo-${kind}-${Date.now()}.webp`;const {error}=await supabaseClient.storage.from('business-logos').upload(path,file,{cacheControl:'3600',upsert:false,contentType:'image/webp'});if(error)throw error;return supabaseClient.storage.from('business-logos').getPublicUrl(path).data.publicUrl}
-  async function saveEnhancedSettings(e){
-    e.preventDefault();const b=getBusiness();if(!b||!canManage())return;const save=$('businessSettingsSave'),message=$('businessSettingsMessage'),name=$('businessNameInput').value.trim();if(name.length<2){message.textContent='Business name must be at least 2 characters.';return}
-    save.disabled=true;save.textContent='Saving…';message.classList.remove('ok');
-    try{
-      const darkUploaded=state.darkFile?await uploadLogo(state.darkFile,'dark'):null,lightUploaded=state.lightFile?await uploadLogo(state.lightFile,'light'):null;
-      const darkUrl=darkUploaded||b.logo_dark_url||b.logo_url||null;const lightUrl=state.removeLight?null:(lightUploaded||b.logo_light_url||null);
-      const payload={business_name:name,phone:$('businessPhoneInput').value.trim()||null,email:$('businessEmailInput').value.trim()||null,address:$('businessAddressInput').value.trim()||null,accent_color:$('businessAccentText').value,secondary_color:$('businessSecondaryText').value,logo_url:darkUrl||lightUrl,logo_dark_url:darkUrl,logo_light_url:lightUrl,logo_dark_shape:state.darkShape,logo_light_shape:state.lightShape};
-      const {error}=await supabaseClient.from('businesses').update(payload).eq('id',b.id);if(error)throw error;
-      state.darkFile=null;state.lightFile=null;state.removeLight=false;await window.SchedulePlusBusiness.reload();updateBrandLogo();message.textContent='Business settings saved.';message.classList.add('ok');setTimeout(()=>$('businessSettingsDialog')?.close(),500);
-    }catch(err){message.textContent=err?.message||'Could not save business settings.'}finally{save.disabled=false;save.textContent='Save business'}
-  }
-
-  const mq=matchMedia('(prefers-color-scheme: light)');mq.addEventListener?.('change',()=>{if(validTheme(localStorage.getItem(THEME_KEY)||'system')==='system')applyTheme('system')});
-  applyTheme(localStorage.getItem(THEME_KEY)||'system');
-  let tries=0;const timer=setInterval(()=>{tries++;buildUi();updateBrandLogo();if(state.ready&&getBusiness()||tries>200)clearInterval(timer)},50);
-  window.SchedulePlusAppearance={applyTheme,updateBrandLogo};
+  async function saveEnhancedSettings(e){e.preventDefault();const b=getBusiness();if(!b||!canManage())return;const save=$('businessSettingsSave'),message=$('businessSettingsMessage'),name=$('businessNameInput').value.trim();if(name.length<2){message.textContent='Business name must be at least 2 characters.';return}save.disabled=true;save.textContent='Saving…';message.classList.remove('ok');try{const darkUploaded=state.darkFile?await uploadLogo(state.darkFile,'dark'):null,lightUploaded=state.lightFile?await uploadLogo(state.lightFile,'light'):null;const darkUrl=darkUploaded||b.logo_dark_url||b.logo_url||null;const lightUrl=state.removeLight?null:(lightUploaded||b.logo_light_url||null);const payload={business_name:name,phone:$('businessPhoneInput').value.trim()||null,email:$('businessEmailInput').value.trim()||null,address:$('businessAddressInput').value.trim()||null,accent_color:$('businessAccentText').value,secondary_color:$('businessSecondaryText').value,logo_url:darkUrl||lightUrl,logo_dark_url:darkUrl,logo_light_url:lightUrl,logo_dark_shape:state.darkShape,logo_light_shape:state.lightShape};const {error}=await supabaseClient.from('businesses').update(payload).eq('id',b.id);if(error)throw error;state.darkFile=null;state.lightFile=null;state.removeLight=false;await window.SchedulePlusBusiness.reload();updateBrandLogo();message.textContent='Business settings saved.';message.classList.add('ok');setTimeout(()=>$('businessSettingsDialog')?.close(),500)}catch(err){message.textContent=err?.message||'Could not save business settings.'}finally{save.disabled=false;save.textContent='Save business'}}
+  const mq=matchMedia('(prefers-color-scheme: light)');mq.addEventListener?.('change',()=>{if(validTheme(localStorage.getItem(THEME_KEY)||'system')==='system')applyTheme('system')});applyTheme(localStorage.getItem(THEME_KEY)||'system');let tries=0;const timer=setInterval(()=>{tries++;buildUi();updateBrandLogo();if(state.ready&&getBusiness()||tries>200)clearInterval(timer)},50);window.SchedulePlusAppearance={applyTheme,updateBrandLogo};
 })();
