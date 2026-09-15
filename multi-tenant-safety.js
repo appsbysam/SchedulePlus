@@ -58,6 +58,8 @@
       const jobDetailsOn=feature('job_details'), customerOn=feature('customer_details'), schedulingOn=feature('scheduling'), solarOn=feature('solar'), batteryOn=feature('battery'), inverterOn=feature('inverter'), electricalOn=feature('electrical'), workflowOn=feature('workflow');
       const selectedTitle=field('jobTitle')?.value?.trim() || '';
       if(jobDetailsOn && !selectedTitle){ alert('Choose a Job type before saving.'); field('jobTitle')?.focus(); return; }
+      const selectedDate=field('scheduledDate')?.value?.trim() || '';
+      if(!selectedDate){ alert('Please enter a date before saving.'); field('scheduledDate')?.focus(); return; }
 
       const addressInput = field('addressLine');
       const address = customerOn ? (addressInput?.value.trim() || '') : (keep(existing,'address_line','') || '');
@@ -97,7 +99,7 @@
         work_involved: jobDetailsOn ? (field('workInvolved')?.value.trim() || null) : keep(existing,'work_involved'),
         status: workflowOn ? (field('status')?.value || 'new') : (keep(existing,'status','new') || 'new'),
         priority: workflowOn ? (field('priority')?.value || 'normal') : (keep(existing,'priority','normal') || 'normal'),
-        scheduled_date: schedulingOn ? (field('scheduledDate')?.value || null) : keep(existing,'scheduled_date'),
+        scheduled_date: selectedDate,
         scheduled_start: schedulingOn ? (field('scheduledStart')?.value || null) : keep(existing,'scheduled_start'),
         time_of_day: schedulingOn ? selectedTimeOfDay() : keep(existing,'time_of_day'),
         estimated_minutes: schedulingOn ? numberOrNull(field('estimatedHours')?.value) * 60 || null : keep(existing,'estimated_minutes'),
