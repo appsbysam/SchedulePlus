@@ -15,7 +15,7 @@
   "prefer_related_applications": false,
   "icons": [
     {
-      "src": "../assets/icons/icon.svg",
+      "src": "assets/icons/icon.svg",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any maskable"
