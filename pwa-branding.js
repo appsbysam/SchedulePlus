@@ -20,16 +20,8 @@
   }
 
   function applyTenantManifest(){
-    const b=business();if(!b)return;
-    const base=new URL('./',location.href).href;
-    const name=b.business_name||'Schedule+';
-    const manifest={name:'Schedule+',short_name:'Schedule+',description:`${name} job scheduling powered by Schedule+.`,id:'/SchedulePlus/schedule-plus',start_url:`${base}?app=schedule-plus`,scope:base,display:'standalone',display_override:['standalone','minimal-ui'],background_color:b.app_icon_background_color||'#0b0b0d',theme_color:b.accent_color||'#0b0b0d',prefer_related_applications:false,icons:[{src:abs(iconChoice(b,192)),sizes:'192x192',type:b.app_icon_192_url?'image/png':'image/svg+xml',purpose:'any'},{src:abs(iconChoice(b,512)),sizes:'512x512',type:b.app_icon_512_url?'image/png':'image/svg+xml',purpose:'any'},{src:abs(iconChoice(b,'maskable')),sizes:'512x512',type:b.app_icon_maskable_url?'image/png':'image/svg+xml',purpose:'maskable'}]};
-    if(state.manifestUrl)URL.revokeObjectURL(state.manifestUrl);
-    state.manifestUrl=URL.createObjectURL(new Blob([JSON.stringify(manifest)],{type:'application/manifest+json'}));
-    let link=document.querySelector('link[rel="manifest"]');if(!link){link=document.createElement('link');link.rel='manifest';document.head.appendChild(link)}link.href=state.manifestUrl;
-    let apple=document.querySelector('link[rel="apple-touch-icon"]');if(!apple){apple=document.createElement('link');apple.rel='apple-touch-icon';document.head.appendChild(apple)}apple.href=abs(iconChoice(b,512));
-    let title=document.querySelector('meta[name="apple-mobile-web-app-title"]');if(!title){title=document.createElement('meta');title.name='apple-mobile-web-app-title';document.head.appendChild(title)}title.content=name;
-    let appName=document.querySelector('meta[name="application-name"]');if(!appName){appName=document.createElement('meta');appName.name='application-name';document.head.appendChild(appName)}appName.content=name;
+    // Installed PWA identity is intentionally fixed by the page manifest.
+    // Tenant branding is applied inside Schedule+ after authentication only.
     refreshInstallUi();
   }
 
@@ -70,14 +62,14 @@
   function canvasBlob(canvas,type='image/png',quality){return new Promise(resolve=>canvas.toBlob(resolve,type,quality))}
   async function resizedBlob(size,maskable=false){const src=$('pwaCropCanvas'),out=document.createElement('canvas');out.width=out.height=size;const ctx=out.getContext('2d');ctx.fillStyle=state.bgColor;ctx.fillRect(0,0,size,size);if(maskable){const pad=Math.round(size*.1);ctx.drawImage(src,pad,pad,size-pad*2,size-pad*2)}else ctx.drawImage(src,0,0,size,size);return await canvasBlob(out,'image/png')}
   async function uploadBlob(blob,name){const b=business();const path=`${b.id}/${name}-${Date.now()}.png`;const {error}=await supabaseClient.storage.from('business-logos').upload(path,blob,{cacheControl:'3600',upsert:false,contentType:'image/png'});if(error)throw error;return supabaseClient.storage.from('business-logos').getPublicUrl(path).data.publicUrl}
-  async function saveCrop(){const b=business();if(!b||!canManage())return;const btn=$('pwaCropApply'),status=$('pwaBrandingStatus');btn.disabled=true;btn.textContent='Saving…';status.textContent='Generating app icons…';status.classList.remove('ok');try{const b192=await resizedBlob(192,false),b512=await resizedBlob(512,false),bMask=await resizedBlob(512,true);const [u192,u512,uMask]=await Promise.all([uploadBlob(b192,'app-icon-192'),uploadBlob(b512,'app-icon-512'),uploadBlob(bMask,'app-icon-maskable')]);const {error}=await supabaseClient.from('businesses').update({app_icon_192_url:u192,app_icon_512_url:u512,app_icon_maskable_url:uMask,app_icon_background_color:state.bgColor}).eq('id',b.id);if(error)throw error;await window.SchedulePlusBusiness.reload();status.textContent='App icon saved and ready for new installations.';status.classList.add('ok');refreshSettingsPreview();applyTenantManifest();closeCrop()}catch(err){status.textContent=err?.message||'Could not save the app icon.'}finally{btn.disabled=false;btn.textContent='Save app icon'}}
+  async function saveCrop(){const b=business();if(!b||!canManage())return;const btn=$('pwaCropApply'),status=$('pwaBrandingStatus');btn.disabled=true;btn.textContent='Saving…';status.textContent='Generating app icons…';status.classList.remove('ok');try{const b192=await resizedBlob(192,false),b512=await resizedBlob(512,false),bMask=await resizedBlob(512,true);const [u192,u512,uMask]=await Promise.all([uploadBlob(b192,'app-icon-192'),uploadBlob(b512,'app-icon-512'),uploadBlob(bMask,'app-icon-maskable')]);const {error}=await supabaseClient.from('businesses').update({app_icon_192_url:u192,app_icon_512_url:u512,app_icon_maskable_url:uMask,app_icon_background_color:state.bgColor}).eq('id',b.id);if(error)throw error;await window.SchedulePlusBusiness.reload();status.textContent='Business branding saved. The installed Schedule+ icon remains generic.';status.classList.add('ok');refreshSettingsPreview();applyTenantManifest();closeCrop()}catch(err){status.textContent=err?.message||'Could not save the app icon.'}finally{btn.disabled=false;btn.textContent='Save app icon'}}
 
   function dismissKey(){const b=business();return `schedule_plus_install_dismissed_${b?.id||'default'}`}
   function dismissedRecently(){const t=Number(localStorage.getItem(dismissKey())||0);return t&&Date.now()-t<DISMISS_DAYS*86400000}
   function dismissInstall(){localStorage.setItem(dismissKey(),String(Date.now()));$('pwaInstallBanner')?.classList.add('hidden')}
   function refreshInstallUi(){
     const banner=$('pwaInstallBanner');if(!banner)return;const b=business();if(!b||standalone()||dismissedRecently()){banner.classList.add('hidden');return}
-    $('pwaInstallIcon').src=iconChoice(b,512);$('pwaInstallTitle').textContent=`Install ${b.business_name||'Schedule+'}`;
+    $('pwaInstallIcon').src=DEFAULT_ICON;$('pwaInstallTitle').textContent='Install Schedule+';
     if(isIos()){$('pwaInstallText').textContent='Add this app to your Home Screen for the full app experience.';$('pwaInstallButton').textContent='How'}
     else if(state.deferred){$('pwaInstallText').textContent=supportedBrowser()?'Install the app for a standalone window, home-screen icon and faster access.':`Install anyway in ${browserName()}. The browser icon may be used and some PWA features may be limited.`;$('pwaInstallButton').textContent=supportedBrowser()?'Install':'Install anyway'}
     else{$('pwaInstallText').textContent=supportedBrowser()?'Install this app from your browser menu for the full app experience.':`You can still install from ${browserName()}'s menu, but the browser icon may be used and some features may be limited.`;$('pwaInstallButton').textContent='How'}
