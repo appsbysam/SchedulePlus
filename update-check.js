@@ -1,7 +1,7 @@
 (() => {
   let lastChecked = 0;
   const MIN_RECHECK_MS = 5 * 60 * 1000;
-  const RAW_VERSION_URL = 'https://raw.githubusercontent.com/appsbysam/SchedulePlus/main/version.js';
+  const RELOAD_ATTEMPT_KEY='schedule_plus_update_reload_attempt';
   const SILENT_VERSION='0.7.28';
 
   function closeMenu(){
@@ -44,17 +44,20 @@
   }
 
   async function remoteVersion(){
+    // Check the actual published site, not GitHub main: Pages can deploy later than the commit.
     const stamp=Date.now();
-    try{
-      const response=await fetch(`${RAW_VERSION_URL}?check=${stamp}`,{cache:'no-store',mode:'cors'});
-      if(response.ok){
-        const version=parseVersion(await response.text());
-        if(version)return version;
-      }
-    }catch(_){}
-    const response=await fetch(`version.js?check=${stamp}`,{cache:'reload',headers:{'cache-control':'no-cache','pragma':'no-cache'}});
-    if(!response.ok)throw new Error(`Update check failed (${response.status})`);
-    return parseVersion(await response.text());
+    const opts={cache:'no-store',headers:{'cache-control':'no-cache','pragma':'no-cache'}};
+    const [versionResponse,htmlResponse]=await Promise.all([
+      fetch(`./version.js?check=${stamp}`,opts),
+      fetch(`./index.html?check=${stamp}`,opts)
+    ]);
+    if(!versionResponse.ok||!htmlResponse.ok)throw new Error('Published update is not ready');
+    const version=parseVersion(await versionResponse.text());
+    const html=await htmlResponse.text();
+    const bootstrap=html.match(/(?:src=["'][^"']*\/)?version\.js\?v=([0-9.]+)/)?.[1];
+    // Both the published bootstrap and version file must agree before offering an update.
+    if(!version||!bootstrap||version!==bootstrap)throw new Error('Published update is still deploying');
+    return version;
   }
 
   async function refreshServiceWorkerSilently(){
@@ -65,6 +68,8 @@
   }
 
   async function reloadLatest(){
+    const current=typeof APP_VERSION!=='undefined'?String(APP_VERSION):'';
+    localStorage.setItem(RELOAD_ATTEMPT_KEY,JSON.stringify({from:current,at:Date.now()}));
     toast('Updating Schedule+…','Clearing the old app cache and loading the latest version.');
     try{
       const regs=await navigator.serviceWorker?.getRegistrations?.();
@@ -89,7 +94,14 @@
       const latest=await remoteVersion();
       lastChecked=Date.now();
       const current=typeof APP_VERSION!=='undefined'?String(APP_VERSION):'';
+      const attempt=JSON.parse(localStorage.getItem(RELOAD_ATTEMPT_KEY)||'null');
+      if(attempt&&compareVersions(current,attempt.from)>0)localStorage.removeItem(RELOAD_ATTEMPT_KEY);
+      const recentlyRetried=attempt&&attempt.from===current&&Date.now()-attempt.at<10*60*1000;
       if(latest&&current&&compareVersions(latest,current)>0){
+        if(recentlyRetried){
+          if(manual)toast('Update not loaded yet','Open Schedule+ from its website once, then return to the app.');
+          return;
+        }
         if(!manual&&latest===SILENT_VERSION)await refreshServiceWorkerSilently();
         else toast('Update available',`Version ${latest} is ready.`,'Reload now',reloadLatest,0);
       }else if(manual){
