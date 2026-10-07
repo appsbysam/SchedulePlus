@@ -1,0 +1,16 @@
+/* Jayco customer enquiries */
+.enquiries-shell{display:grid;gap:14px}
+.enquiry-toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+.enquiry-toolbar input,.enquiry-toolbar select{min-height:44px;border:1px solid #d8dde3;border-radius:10px;padding:0 12px;background:#fff}
+.enquiry-toolbar input{flex:1;min-width:210px}
+.enquiries-list{display:grid;gap:12px}
+.enquiry-card{background:#fff;border:1px solid #e4e8ec;border-radius:14px;padding:16px;box-shadow:0 3px 12px rgba(0,0,0,.04)}
+.enquiry-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+.enquiry-head strong{font-size:18px}.enquiry-time{color:#707780;font-size:12px;margin-top:3px}
+.enquiry-contact{display:flex;gap:12px;flex-wrap:wrap;margin:11px 0}.enquiry-contact a{font-weight:700;color:inherit}
+.enquiry-type{display:inline-block;background:#eef6e7;border-radius:999px;padding:6px 10px;font-weight:800;font-size:12px}
+.enquiry-notes{margin:12px 0;white-space:pre-wrap;line-height:1.45;color:#3d454d}
+.enquiry-actions{display:flex;gap:9px;align-items:center;flex-wrap:wrap;border-top:1px solid #edf0f2;padding-top:12px}
+.enquiry-actions label{font-size:12px;font-weight:700}.enquiry-actions select{border:1px solid #d8dde3;border-radius:9px;padding:9px;background:#fff}
+.enquiry-badge{display:inline-flex;min-width:20px;height:20px;padding:0 6px;align-items:center;justify-content:center;border-radius:999px;background:#e53935;color:#fff;font-size:11px;font-weight:800;margin-left:6px}
+@media(max-width:600px){.enquiry-head{align-items:flex-start}.enquiry-toolbar{display:grid}.enquiry-toolbar input{width:100%}}
