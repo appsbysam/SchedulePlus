@@ -25,7 +25,7 @@
   function nav(){
     if(document.getElementById('spBottomNav'))return;
     const n=document.createElement('nav');n.id='spBottomNav';n.className='sp-bottom-nav';n.setAttribute('aria-label','Main navigation');
-    n.innerHTML=[['home','Home'],['calendar','Calendar'],['jobs','Jobs'],['settings','Settings'],['profile','Profile']].map(([k,l])=>`<button class="sp-nav-btn${k==='home'?' active':''}" data-sp-view="${k}" type="button">${ICONS[k]}<span>${l}</span></button>`).join('');
+    n.innerHTML=[['home','Home'],['calendar','Calendar'],['jobs','Jobs'],['settings','Settings']].map(([k,l])=>`<button class="sp-nav-btn${k==='home'?' active':''}" data-sp-view="${k}" type="button">${ICONS[k]}<span>${l}</span></button>`).join('');
     enableJaycoEnquiriesNav(n);
     document.getElementById('appView')?.appendChild(n);
     n.querySelectorAll('button').forEach(b=>b.onclick=()=>showView(b.dataset.spView));
@@ -56,7 +56,7 @@
     }
     if(!document.getElementById('spSettingsView')){
       const s=document.createElement('section');s.id='spSettingsView';s.className='sp-view';s.dataset.spView='settings';
-      s.innerHTML=`<div class="sp-screen-head"><div><h1>Settings</h1><p>All app preferences and configuration</p></div></div><div class="sp-settings-list">${settingCard('business','Business settings','Business details, preferences','spBusinessSettings','sp-ico-business')}${settingCard('config','Configuration','Job types, statuses, priorities','spConfig','sp-ico-config')}${settingCard('users','Users & Staff','Manage team access','spUsers','sp-ico-users')}${settingCard('news',"What's New",'See the latest updates','spWhatsNew','sp-ico-news')}${settingCard('update','Check for Updates',`Current version: ${typeof APP_VERSION!=='undefined'?APP_VERSION:'—'}`,'spUpdates','sp-ico-update')}</div>`;
+      s.innerHTML=`<div class="sp-screen-head"><div><h1>Settings</h1><p>All app preferences and configuration</p></div></div><div class="sp-settings-list">${settingCard('profile','Profile','Your account and personal details','spProfileSettings','sp-ico-profile')}${settingCard('business','Business settings','Business details, preferences','spBusinessSettings','sp-ico-business')}${settingCard('config','Configuration','Job types, statuses, priorities','spConfig','sp-ico-config')}${settingCard('users','Users & Staff','Manage team access','spUsers','sp-ico-users')}${settingCard('news',"What's New",'See the latest updates','spWhatsNew','sp-ico-news')}${settingCard('update','Check for Updates',`Current version: ${typeof APP_VERSION!=='undefined'?APP_VERSION:'—'}`,'spUpdates','sp-ico-update')}</div>`;
       main.appendChild(s);bindSettings();
     }
     if(!document.getElementById('spProfileView')){
@@ -66,7 +66,7 @@
     }
   }
   function settingCard(icon,title,sub,id,cls){return `<button class="sp-setting-card" id="${id}" type="button"><span class="sp-setting-icon ${cls}">${ICONS[icon]}</span><span class="sp-setting-copy"><strong>${title}</strong><small>${sub}</small></span><span class="sp-chevron">›</span></button>`}
-  function bindSettings(){const bind=(id,target)=>{const b=document.getElementById(id);if(b)b.onclick=()=>{const el=document.getElementById(target);if(el)el.click();else setTimeout(()=>document.getElementById(target)?.click(),150)}};bind('spBusinessSettings','businessSettingsBtn');bind('spConfig','businessConfigBtn');bind('spUsers','businessUsersBtn');bind('spWhatsNew','whatsNewBtn');bind('spUpdates','checkUpdatesBtn')}
+  function bindSettings(){const profile=document.getElementById('spProfileSettings');if(profile)profile.onclick=()=>showView('profile');const bind=(id,target)=>{const b=document.getElementById(id);if(b)b.onclick=()=>{const el=document.getElementById(target);if(el)el.click();else setTimeout(()=>document.getElementById(target)?.click(),150)}};bind('spBusinessSettings','businessSettingsBtn');bind('spConfig','businessConfigBtn');bind('spUsers','businessUsersBtn');bind('spWhatsNew','whatsNewBtn');bind('spUpdates','checkUpdatesBtn')}
   function showView(name){
     ensureViews();
     document.querySelectorAll('.sp-view').forEach(v=>{v.classList.remove('hidden');v.classList.toggle('active',v.dataset.spView===name)});
