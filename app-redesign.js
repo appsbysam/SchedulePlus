@@ -4,7 +4,7 @@
     calendar:'<svg viewBox="0 0 24 24"><path d="M6 2v4M18 2v4M3 9h18M5 4h14a2 2 0 0 1 2 2v15H3V6a2 2 0 0 1 2-2z"/></svg>',
     jobs:'<svg viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>',
     settings:'<svg viewBox="0 0 24 24"><path d="M12 8.2a3.8 3.8 0 1 0 0 7.6 3.8 3.8 0 0 0 0-7.6z"/><path d="m19.4 15 .9 1.7-2 3.5-1.7-.7a8 8 0 0 1-2 .8L13.4 21H10.6L10 19.2a8 8 0 0 1-2-.8l-1.7.9-2.6-2.6.9-1.7a8 8 0 0 1-.8-2L2 12.4V9.6L3.8 9a8 8 0 0 1 .8-2l-.9-1.7 2.6-2.6 1.7.9a8 8 0 0 1 2-.8L10.6 1h2.8l.6 1.8a8 8 0 0 1 2 .8l1.7-.9 2.6 2.6-.9 1.7a8 8 0 0 1 .8 2l1.8.6v2.8l-1.8.6a8 8 0 0 1-.8 2z"/></svg>',
-    profile:'<svg viewBox="0 0 24 24"><circle cx="12" cy="7.5" r="3.5"/><path d="M4.5 21c.6-4.3 3.1-6.5 7.5-6.5s6.9 2.2 7.5 6.5"/></svg>',
+    profile:'<svg viewBox="0 0 24 24"><circle cx="12" cy="7.5" r="3.5"/><path d="M4.5 21c.6-4.3 3.1-6.5 7.5-6.5s6.9 2.2 7.5 6.5"/></svg>',\n    enquiries:'<svg viewBox="0 0 24 24"><path d="M4 4h16v13H8l-4 3z"/><path d="M8 8h8M8 12h6"/></svg>',
     business:'<svg viewBox="0 0 24 24"><path d="M4 21V5h7v16M11 9h9v12M7 8h1M7 12h1M7 16h1M14 12h2M14 16h2"/></svg>',
     config:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="m19 13.5 1.5 1-2 3.5-1.7-.7a8.2 8.2 0 0 1-2.6 1.5L14 21h-4l-.2-2.2a8.2 8.2 0 0 1-2.6-1.5l-1.7.7-2-3.5 1.5-1a8.4 8.4 0 0 1 0-3l-1.5-1 2-3.5 1.7.7a8.2 8.2 0 0 1 2.6-1.5L10 3h4l.2 2.2a8.2 8.2 0 0 1 2.6 1.5l1.7-.7 2 3.5-1.5 1a8.4 8.4 0 0 1 0 3z"/></svg>',
     users:'<svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.3"/><path d="M3.5 20c.4-4 2.2-6 5.5-6s5.1 2 5.5 6M14.2 14.7c3.7-.6 5.8 1.1 6.3 5.3"/></svg>',
@@ -24,12 +24,24 @@
   function nav(){
     if(document.getElementById('spBottomNav'))return;
     const n=document.createElement('nav');n.id='spBottomNav';n.className='sp-bottom-nav';n.setAttribute('aria-label','Main navigation');
-    n.innerHTML=[['home','Home'],['calendar','Calendar'],['jobs','Jobs'],['settings','Settings'],['profile','Profile']].map(([k,l])=>`<button class="sp-nav-btn${k==='home'?' active':''}" data-sp-view="${k}" type="button">${ICONS[k]}<span>${l}</span></button>`).join('');
+    n.innerHTML=[['home','Home'],['calendar','Calendar'],['jobs','Jobs'],['settings','Settings'],['profile','Profile']].map(([k,l])=>`<button class="sp-nav-btn${k==='home'?' active':''}" data-sp-view="${k}" type="button">${ICONS[k]}<span>${l}</span></button>`).join('');\n    enableJaycoEnquiriesNav(n);
     document.getElementById('appView')?.appendChild(n);
     n.querySelectorAll('button').forEach(b=>b.onclick=()=>showView(b.dataset.spView));
   }
 
-  function ensureViews(){
+
+  async function enableJaycoEnquiriesNav(n){
+    try{
+      const {data:{session}}=await supabaseClient.auth.getSession(); if(!session?.user)return;
+      const {data}=await supabaseClient.from('business_users').select('business_id').eq('user_id',session.user.id).eq('business_id','9359127c-6929-4b2c-b25e-b9bd835d567c').eq('is_active',true).maybeSingle();
+      if(!data||n.querySelector('[data-sp-view="enquiries"]'))return;
+      const b=document.createElement('button');b.className='sp-nav-btn';b.dataset.spView='enquiries';b.type='button';b.innerHTML=ICONS.enquiries+'<span>Enquiries</span><i id="spEnquiryBadge" class="sp-enquiry-badge hidden">0</i>';b.onclick=()=>showView('enquiries');
+      n.insertBefore(b,n.querySelector('[data-sp-view="settings"]'));
+      n.classList.add('sp-bottom-nav-six');
+      window.dispatchEvent(new CustomEvent('scheduleplus:enquiries-enabled'));
+    }catch(e){console.warn('Enquiries navigation unavailable',e)}
+  }
+\n  function ensureViews(){
     const main=document.querySelector('#appView>main');if(!main)return;
     const dash=document.getElementById('dashboardView'),cal=document.getElementById('calendarView');
     if(dash){dash.classList.add('sp-view');dash.classList.remove('hidden');dash.dataset.spView='jobs';}
