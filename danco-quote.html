@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Get a Free Solar Quote | Danco Electrical</title>
+<meta name="description" content="Request a personalised solar or battery quote from Danco Electrical.">
+<style>
+:root{--green:#79b82a;--green-dark:#5e961b;--navy:#18252f;--ink:#26343d;--muted:#66747d;--line:#dce3e7;--bg:#f4f7f5}
+*{box-sizing:border-box}body{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--ink)}
+.top{height:7px;background:var(--green)}.wrap{max-width:620px;margin:auto;padding:24px 18px 42px}
+.brand{text-align:center;margin:4px 0 22px}.brandmark{font-size:31px;font-weight:800;letter-spacing:.5px;color:var(--navy)}.brandmark span{color:var(--green)}.tag{font-size:13px;color:var(--muted);margin-top:4px}
+.card{background:#fff;border-radius:18px;padding:28px 22px;box-shadow:0 8px 28px rgba(24,37,47,.09)}
+h1{font-size:28px;line-height:1.15;margin:0 0 8px;color:var(--navy)}.intro{margin:0 0 25px;color:var(--muted);line-height:1.5}
+label,legend{font-weight:700;font-size:14px;color:var(--navy)}.req{color:var(--green-dark)}
+.field{margin:0 0 19px}input,textarea{width:100%;margin-top:7px;border:1.5px solid var(--line);border-radius:10px;padding:14px;font:inherit;color:var(--ink);background:#fff}
+input:focus,textarea:focus{outline:3px solid rgba(121,184,42,.16);border-color:var(--green)}textarea{min-height:105px;resize:vertical}
+fieldset{border:0;padding:0;margin:0 0 20px}.choices{display:grid;gap:9px;margin-top:9px}.choice{display:flex;align-items:center;gap:10px;border:1.5px solid var(--line);border-radius:11px;padding:13px;cursor:pointer;font-weight:600}.choice:has(input:checked){border-color:var(--green);background:#f5faee}.choice input{width:auto;margin:0;accent-color:var(--green)}
+button{width:100%;border:0;border-radius:11px;background:var(--green);color:#fff;font-size:17px;font-weight:800;padding:15px;cursor:pointer}button:hover{background:var(--green-dark)}button:disabled{opacity:.6;cursor:wait}
+.small{font-size:12px;color:var(--muted);text-align:center;margin:14px 0 0}.msg{display:none;margin-top:16px;padding:13px;border-radius:10px;font-weight:700}.ok{display:block;background:#eff8e5;color:#355d12}.err{display:block;background:#fff0f0;color:#9b2525}
+.hp{position:absolute;left:-9999px;opacity:0}.contact{text-align:center;color:var(--muted);font-size:13px;margin-top:20px}.contact a{color:var(--navy);font-weight:700;text-decoration:none}
+@media(max-width:480px){.wrap{padding:18px 13px 30px}.card{padding:24px 17px}h1{font-size:25px}}
+</style></head>
+<body><div class="top"></div><main class="wrap">
+<header class="brand"><div class="brandmark"><span>DANCO</span> ELECTRICAL</div><div class="tag">Australian Owned &amp; Operated</div></header>
+<section class="card"><h1>Get your personalised quote</h1><p class="intro">Tell us what you're interested in and one of our solar consultants will be in touch.</p>
+<form id="quoteForm">
+<div class="field"><label for="name">Name <span class="req">*</span></label><input id="name" name="name" autocomplete="name" maxlength="120" required></div>
+<div class="field"><label for="phone">Contact number <span class="req">*</span></label><input id="phone" name="phone" type="tel" autocomplete="tel" maxlength="40" required></div>
+<div class="field"><label for="email">Email <span style="font-weight:400;color:var(--muted)">(optional)</span></label><input id="email" name="email" type="email" autocomplete="email" maxlength="254"></div>
+<fieldset><legend>What are you interested in? <span class="req">*</span></legend><div class="choices">
+<label class="choice"><input type="radio" name="enquiry_type" value="solar" required> Solar</label>
+<label class="choice"><input type="radio" name="enquiry_type" value="solar_battery"> Solar + Battery</label>
+<label class="choice"><input type="radio" name="enquiry_type" value="battery_only"> Battery Only</label>
+</div></fieldset>
+<div class="field"><label for="notes">Additional notes <span style="font-weight:400;color:var(--muted)">(optional)</span></label><textarea id="notes" name="notes" maxlength="3000" placeholder="Anything else you'd like us to know?"></textarea></div>
+<div class="hp" aria-hidden="true"><label>Website<input name="website" tabindex="-1" autocomplete="off"></label></div>
+<button id="submitBtn" type="submit">Submit Enquiry</button><div id="message" class="msg" role="status" aria-live="polite"></div>
+<p class="small">By submitting this form, you agree to be contacted by Danco Electrical about your enquiry.</p>
+</form></section>
+<div class="contact">Prefer to call? <a href="tel:0416722400">0416 722 400</a> &nbsp;·&nbsp; <a href="mailto:info@dancoelectrical.com.au">info@dancoelectrical.com.au</a></div>
+</main>
+<script>
+const endpoint="https://otrzmqyqbyovjggdswzn.supabase.co/functions/v1/submit-danco-enquiry";
+const form=document.getElementById("quoteForm"), btn=document.getElementById("submitBtn"), msg=document.getElementById("message");
+form.addEventListener("submit",async(e)=>{e.preventDefault();btn.disabled=true;btn.textContent="Submitting…";msg.className="msg";
+ const fd=new FormData(form); const payload=Object.fromEntries(fd.entries());
+ try{const res=await fetch(endpoint,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});const data=await res.json();
+ if(!res.ok)throw new Error(data.error||"Unable to submit");
+ msg.textContent="Thanks! Your enquiry has been received. Danco Electrical will be in touch.";msg.className="msg ok";form.reset();msg.scrollIntoView({behavior:"smooth",block:"nearest"});
+ }catch(err){msg.textContent=err.message||"We couldn't submit your enquiry. Please try again.";msg.className="msg err";}
+ finally{btn.disabled=false;btn.textContent="Submit Enquiry";}
+});
+</script></body></html>
