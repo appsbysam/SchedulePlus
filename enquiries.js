@@ -10,8 +10,8 @@ async function setup(){
  if(!window.supabaseClient){setTimeout(setup,200);return}
  const {data:{session}}=await supabaseClient.auth.getSession(); if(!session?.user){setTimeout(setup,300);return}
  enabled=true; setupDone=true;
- const main=document.querySelector('#appView main'); if(main&&!$e('#enquiriesView')) main.insertAdjacentHTML('beforeend',`<section id="enquiriesView" class="sp-view" data-sp-view="enquiries"><div class="sp-screen-head"><div><h1>Enquiries</h1><p>DanCo customer leads</p></div></div><div class="enquiry-toolbar"><input id="enquirySearch" type="search" placeholder="Search name, phone, email or notes…"><select id="enquiryStatusFilter"><option value="">All statuses</option><option value="new">New</option><option value="contacted">Contacted</option><option value="quoted">Quoted</option><option value="won">Won</option><option value="lost">Lost</option></select></div><div id="enquiriesList" class="enquiries-list"></div></section>`);
- $e('#enquirySearch').oninput=render; $e('#enquiryStatusFilter').onchange=render; await load();
+ const main=document.querySelector('#appView main')||document.querySelector('#appView')||document.querySelector('main'); if(main&&!$e('#enquiriesView')) main.insertAdjacentHTML('beforeend',`<section id="enquiriesView" class="sp-view" data-sp-view="enquiries"><div class="sp-screen-head"><div><h1>Enquiries</h1><p>DanCo customer leads</p></div></div><div class="enquiry-toolbar"><input id="enquirySearch" type="search" placeholder="Search name, phone, email or notes…"><select id="enquiryStatusFilter"><option value="">All statuses</option><option value="new">New</option><option value="contacted">Contacted</option><option value="quoted">Quoted</option><option value="won">Won</option><option value="lost">Lost</option></select></div><div id="enquiriesList" class="enquiries-list"></div></section>`);
+ if(!$e('#enquiriesView')){setupDone=false;setTimeout(setup,250);return} $e('#enquirySearch').oninput=render; $e('#enquiryStatusFilter').onchange=render; await load();
 }
 function bindNav(){
  const b=$e('[data-view="enquiries"]'); if(!b)return;
@@ -39,5 +39,5 @@ function card(x){
 async function setStatus(id,status){const {error}=await supabaseClient.from('customer_enquiries').update({status,updated_at:new Date().toISOString()}).eq('id',id).eq('business_id',JAYCO_BUSINESS_ID);if(error){alert(error.message);await load();return}const x=enquiries.find(e=>e.id===id);if(x)x.status=status;updateBadge();render()}
 window.addEventListener('scheduleplus:enquiries-enabled',()=>{setup().then(load);});
 window.addEventListener('scheduleplus:show-enquiries',()=>{setup().then(load);});
-window.addEventListener('load',setup);
+if(document.readyState==='loading')window.addEventListener('DOMContentLoaded',setup,{once:true});else setTimeout(setup,0);
 })();
