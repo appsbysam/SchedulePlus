@@ -29,14 +29,20 @@ function render(){
  const root=$e('#enquiriesList');if(!root)return;const q=($e('#enquirySearch')?.value||'').toLowerCase().trim(),st=$e('#enquiryStatusFilter')?.value||'';
  const rows=enquiries.filter(x=>(!st||x.status===st)&&(!q||`${x.customer_name} ${x.customer_phone} ${x.customer_email||''} ${x.notes||''} ${typeLabel(x.enquiry_type)}`.toLowerCase().includes(q)));
  root.innerHTML=rows.length?rows.map(card).join(''):'<div class="empty">No enquiries here yet.</div>';
- root.querySelectorAll('.enquiry-status').forEach(s=>s.onchange=()=>setStatus(s.dataset.id,s.value)); root.querySelectorAll('.enquiry-read-toggle').forEach(b=>b.onclick=()=>setRead(b.dataset.id,b.dataset.read!=='true'));
+ root.querySelectorAll('.enquiry-status').forEach(s=>s.onchange=()=>setStatus(s.dataset.id,s.value)); root.querySelectorAll('.enquiry-read-toggle').forEach(b=>b.onclick=()=>setRead(b.dataset.id,b.dataset.read!=='true')); root.querySelectorAll('.enquiry-delete').forEach(b=>b.onclick=()=>deleteEnquiry(b.dataset.id));
 }
 function card(x){
  const when=new Intl.DateTimeFormat('en-AU',{dateStyle:'medium',timeStyle:'short'}).format(new Date(x.created_at));
  const email=x.customer_email?`<a href="mailto:${escE(x.customer_email)}">${escE(x.customer_email)}</a>`:'';
- return `<article class="enquiry-card ${x.read_at?'is-read':'is-unread'}"><div class="enquiry-head"><div><strong>${escE(x.customer_name)}</strong><div class="enquiry-time">Received ${escE(when)}</div></div><span class="enquiry-type">${escE(typeLabel(x.enquiry_type))}</span></div><div class="enquiry-contact"><a href="tel:${escE(x.customer_phone.replace(/\s+/g,''))}">${escE(x.customer_phone)}</a>${email}</div>${x.notes?`<div class="enquiry-notes">${escE(x.notes)}</div>`:''}<div class="enquiry-actions"><button type="button" class="enquiry-read-toggle" data-id="${x.id}" data-read="${x.read_at?'true':'false'}">${x.read_at?'Mark unread':'Mark read'}</button><label>Status <select class="enquiry-status" data-id="${x.id}">${['new','contacted','quoted','won','lost'].map(s=>`<option value="${s}" ${x.status===s?'selected':''}>${statusLabel(s)}</option>`).join('')}</select></label></div></article>`;
+ return `<article class="enquiry-card ${x.read_at?'is-read':'is-unread'}"><div class="enquiry-head"><div><strong>${escE(x.customer_name)}</strong><div class="enquiry-time">Received ${escE(when)}</div></div><span class="enquiry-type">${escE(typeLabel(x.enquiry_type))}</span></div><div class="enquiry-contact"><a href="tel:${escE(x.customer_phone.replace(/\s+/g,''))}">${escE(x.customer_phone)}</a>${email}</div>${x.notes?`<div class="enquiry-notes">${escE(x.notes)}</div>`:''}<div class="enquiry-actions"><div class="enquiry-action-buttons"><button type="button" class="enquiry-read-toggle" data-id="${x.id}" data-read="${x.read_at?'true':'false'}">${x.read_at?'Mark unread':'Mark read'}</button><button type="button" class="enquiry-delete" data-id="${x.id}">Delete</button></div><label>Status <select class="enquiry-status" data-id="${x.id}">${['new','contacted','quoted','won','lost'].map(s=>`<option value="${s}" ${x.status===s?'selected':''}>${statusLabel(s)}</option>`).join('')}</select></label></div></article>`;
 }
 async function setRead(id,read){const {error}=await supabaseClient.from('customer_enquiries').update({read_at:read?new Date().toISOString():null,updated_at:new Date().toISOString()}).eq('id',id).eq('business_id',JAYCO_BUSINESS_ID);if(error){alert(error.message);return}const x=enquiries.find(e=>e.id===id);if(x)x.read_at=read?new Date().toISOString():null;updateBadge();render()}
+async function deleteEnquiry(id){
+ if(!confirm('Are you sure you want to delete this record? This cannot be undone.'))return;
+ const {error}=await supabaseClient.from('customer_enquiries').delete().eq('id',id).eq('business_id',JAYCO_BUSINESS_ID);
+ if(error){alert('Could not delete this enquiry: '+error.message);return}
+ enquiries=enquiries.filter(e=>e.id!==id); updateBadge(); render();
+}
 async function setStatus(id,status){const {error}=await supabaseClient.from('customer_enquiries').update({status,updated_at:new Date().toISOString()}).eq('id',id).eq('business_id',JAYCO_BUSINESS_ID);if(error){alert(error.message);await load();return}const x=enquiries.find(e=>e.id===id);if(x)x.status=status;updateBadge();render()}
 window.addEventListener('scheduleplus:enquiries-enabled',()=>{setup().then(load);});
 window.addEventListener('scheduleplus:show-enquiries',()=>{setup().then(load);});
