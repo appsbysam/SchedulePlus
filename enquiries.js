@@ -9,8 +9,7 @@ async function setup(){
  if(setupDone)return;
  if(!window.supabaseClient){setTimeout(setup,200);return}
  const {data:{session}}=await supabaseClient.auth.getSession(); if(!session?.user){setTimeout(setup,300);return}
- const {data}=await supabaseClient.from('business_users').select('business_id').eq('user_id',session.user.id).eq('business_id',JAYCO_BUSINESS_ID).eq('is_active',true).maybeSingle();
- if(!data)return; enabled=true; setupDone=true;
+ enabled=true; setupDone=true;
  const main=document.querySelector('#appView main'); if(main&&!$e('#enquiriesView')) main.insertAdjacentHTML('beforeend',`<section id="enquiriesView" class="sp-view" data-sp-view="enquiries"><div class="sp-screen-head"><div><h1>Enquiries</h1><p>DanCo customer leads</p></div></div><div class="enquiry-toolbar"><input id="enquirySearch" type="search" placeholder="Search name, phone, email or notes…"><select id="enquiryStatusFilter"><option value="">All statuses</option><option value="new">New</option><option value="contacted">Contacted</option><option value="quoted">Quoted</option><option value="won">Won</option><option value="lost">Lost</option></select></div><div id="enquiriesList" class="enquiries-list"></div></section>`);
  $e('#enquirySearch').oninput=render; $e('#enquiryStatusFilter').onchange=render; await load();
 }
