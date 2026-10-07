@@ -72,7 +72,7 @@
     document.querySelectorAll('.sp-view').forEach(v=>{v.classList.remove('hidden');v.classList.toggle('active',v.dataset.spView===name)});
     document.querySelectorAll('.sp-nav-btn').forEach(b=>b.classList.toggle('active',b.dataset.spView===name));
     if(name==='calendar'&&typeof renderCalendar==='function'){renderCalendar();setTimeout(decorateCalendar,0)}
-    if(name==='home')renderHome();if(name==='profile')renderProfile();window.scrollTo({top:0,behavior:'instant'});
+    if(name==='home')renderHome();if(name==='profile')renderProfile();if(name==='enquiries')window.dispatchEvent(new CustomEvent('scheduleplus:show-enquiries'));window.scrollTo({top:0,behavior:'instant'});
   }
 
   async function renderProfile(){try{const u=(await supabaseClient.auth.getUser()).data?.user||window.currentUser;const name=String(u?.user_metadata?.display_name||u?.email?.split('@')[0]||'User').replace(/[._-]+/g,' ').replace(/\b\w/g,m=>m.toUpperCase());const initials=name.split(/\s+/).map(x=>x[0]).join('').slice(0,2).toUpperCase();document.getElementById('spProfileName').textContent=name;document.getElementById('spProfileEmail').textContent=u?.email||'';document.getElementById('spAvatar').textContent=initials||'U'}catch(_){}}
