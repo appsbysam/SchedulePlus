@@ -8,7 +8,7 @@
 :root{--green:#79b82a;--green-dark:#5e961b;--navy:#18252f;--ink:#26343d;--muted:#66747d;--line:#dce3e7;--bg:#f4f7f5}
 *{box-sizing:border-box}body{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--ink)}
 .top{height:7px;background:var(--green)}.wrap{max-width:620px;margin:auto;padding:24px 18px 42px}
-.brand{text-align:center;margin:4px 0 22px}.brandmark{font-size:31px;font-weight:800;letter-spacing:.5px;color:var(--navy)}.brandmark span{color:var(--green)}.tag{font-size:13px;color:var(--muted);margin-top:4px}
+.brand{text-align:center;margin:2px 0 22px}.brand-logo{display:block;width:min(100%,520px);height:auto;margin:0 auto}
 .card{background:#fff;border-radius:18px;padding:28px 22px;box-shadow:0 8px 28px rgba(24,37,47,.09)}
 h1{font-size:28px;line-height:1.15;margin:0 0 8px;color:var(--navy)}.intro{margin:0 0 25px;color:var(--muted);line-height:1.5}
 label,legend{font-weight:700;font-size:14px;color:var(--navy)}.req{color:var(--green-dark)}
@@ -21,7 +21,13 @@ button{width:100%;border:0;border-radius:11px;background:var(--green);color:#fff
 @media(max-width:480px){.wrap{padding:18px 13px 30px}.card{padding:24px 17px}h1{font-size:25px}}
 </style></head>
 <body><div class="top"></div><main class="wrap">
-<header class="brand"><div class="brandmark"><span>DANCO</span> ELECTRICAL</div><div class="tag">Australian Owned &amp; Operated</div></header>
+<header class="brand"><svg class="brand-logo" viewBox="0 0 1000 300" role="img" aria-label="Danco Electrical — Solar & Battery specialist" xmlns="http://www.w3.org/2000/svg">
+<defs><linearGradient id="db" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#00b9ff"/><stop offset="1" stop-color="#087ad8"/></linearGradient></defs>
+<g transform="translate(18 18)"><circle cx="125" cy="125" r="112" fill="none" stroke="url(#db)" stroke-width="15"/><circle cx="125" cy="125" r="90" fill="url(#db)"/><path d="M125 23v204M35 125h180M55 45v160M195 45v160" stroke="#fff" stroke-width="14" fill="none"/><path d="M125 125h90" stroke="#fff" stroke-width="14"/></g>
+<text x="275" y="130" font-family="Arial,Helvetica,sans-serif" font-size="112" font-weight="500" fill="#050505" letter-spacing="2">DANCO</text>
+<text x="278" y="205" font-family="Arial,Helvetica,sans-serif" font-size="58" font-weight="400" fill="#078fdf" letter-spacing="17">ELECTRICAL</text>
+<text x="390" y="273" font-family="Georgia,'Times New Roman',serif" font-size="48" font-style="italic" font-weight="700" fill="#080808">Solar &amp; Battery specialist</text>
+</svg></header>
 <section class="card"><h1>Get your personalised quote</h1><p class="intro">Tell us what you're interested in and one of our solar consultants will be in touch.</p>
 <form id="quoteForm">
 <div class="field"><label for="name">Name <span class="req">*</span></label><input id="name" name="name" autocomplete="name" maxlength="120" required></div>
