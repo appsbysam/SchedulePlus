@@ -10,9 +10,9 @@ async function setup(){
  const {data:{session}}=await supabaseClient.auth.getSession(); if(!session?.user)return;
  const {data}=await supabaseClient.from('business_users').select('business_id').eq('user_id',session.user.id).eq('business_id',JAYCO_BUSINESS_ID).eq('is_active',true).maybeSingle();
  if(!data)return; enabled=true;
- const nav=document.querySelector('#sideMenu nav'); if(nav&&!$e('[data-view="enquiries"]')) nav.insertAdjacentHTML('beforeend','<button class="nav-item" data-view="enquiries">Enquiries <span id="enquiryBadge" class="enquiry-badge hidden">0</span></button>');
+
  const main=document.querySelector('#appView main'); if(main&&!$e('#enquiriesView')) main.insertAdjacentHTML('beforeend',`<section id="enquiriesView" class="hidden"><section class="hero-row"><div><p class="eyebrow">DANCO LEADS</p><h1>Enquiries</h1></div></section><div class="enquiry-toolbar"><input id="enquirySearch" type="search" placeholder="Search name, phone, email or notes…"><select id="enquiryStatusFilter"><option value="">All statuses</option><option value="new">New</option><option value="contacted">Contacted</option><option value="quoted">Quoted</option><option value="won">Won</option><option value="lost">Lost</option></select></div><div id="enquiriesList" class="enquiries-list"></div></section>`);
- bindNav(); $e('#enquirySearch').oninput=render; $e('#enquiryStatusFilter').onchange=render; await load();
+ $e('#enquirySearch').oninput=render; $e('#enquiryStatusFilter').onchange=render; await load();
 }
 function bindNav(){
  const b=$e('[data-view="enquiries"]'); if(!b)return;
@@ -38,5 +38,5 @@ function card(x){
  return `<article class="enquiry-card"><div class="enquiry-head"><div><strong>${escE(x.customer_name)}</strong><div class="enquiry-time">Received ${escE(when)}</div></div><span class="enquiry-type">${escE(typeLabel(x.enquiry_type))}</span></div><div class="enquiry-contact"><a href="tel:${escE(x.customer_phone.replace(/\s+/g,''))}">${escE(x.customer_phone)}</a>${email}</div>${x.notes?`<div class="enquiry-notes">${escE(x.notes)}</div>`:''}<div class="enquiry-actions"><label>Status <select class="enquiry-status" data-id="${x.id}">${['new','contacted','quoted','won','lost'].map(s=>`<option value="${s}" ${x.status===s?'selected':''}>${statusLabel(s)}</option>`).join('')}</select></label></div></article>`;
 }
 async function setStatus(id,status){const {error}=await supabaseClient.from('customer_enquiries').update({status,updated_at:new Date().toISOString()}).eq('id',id).eq('business_id',JAYCO_BUSINESS_ID);if(error){alert(error.message);await load();return}const x=enquiries.find(e=>e.id===id);if(x)x.status=status;updateBadge();render()}
-window.addEventListener('load',setup);
+window.addEventListener('scheduleplus:enquiries-enabled',()=>{load();});\nwindow.addEventListener('load',setup);
 })();
