@@ -39,5 +39,6 @@ function card(x){
 }
 async function setStatus(id,status){const {error}=await supabaseClient.from('customer_enquiries').update({status,updated_at:new Date().toISOString()}).eq('id',id).eq('business_id',JAYCO_BUSINESS_ID);if(error){alert(error.message);await load();return}const x=enquiries.find(e=>e.id===id);if(x)x.status=status;updateBadge();render()}
 window.addEventListener('scheduleplus:enquiries-enabled',()=>{setup().then(load);});
+window.addEventListener('scheduleplus:show-enquiries',()=>{setup().then(load);});
 window.addEventListener('load',setup);
 })();
