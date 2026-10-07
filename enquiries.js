@@ -21,7 +21,7 @@ function bindNav(){
 }
 async function load(){
  if(!enabled)return;
- const {data,error}=await supabaseClient.from('customer_enquiries').select('*').eq('business_id',JAYCO_BUSINESS_ID).order('created_at',{ascending:false});
+ const {data,error}=await supabaseClient.rpc('get_my_customer_enquiries',{p_business_id:JAYCO_BUSINESS_ID});
  if(error){if($e('#enquiriesList'))$e('#enquiriesList').innerHTML='<div class="empty">'+escE(error.message)+'</div>';return}
  enquiries=data||[]; render(); updateBadge();
 }
