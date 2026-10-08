@@ -16,23 +16,18 @@ label,legend{font-weight:700;font-size:14px;color:var(--navy)}.req{color:var(--g
 input:focus,textarea:focus{outline:3px solid rgba(121,184,42,.16);border-color:var(--green)}textarea{min-height:105px;resize:vertical}
 fieldset{border:0;padding:0;margin:0 0 20px}.choices{display:grid;gap:9px;margin-top:9px}.choice{display:flex;align-items:center;gap:10px;border:1.5px solid var(--line);border-radius:11px;padding:13px;cursor:pointer;font-weight:600}.choice:has(input:checked){border-color:var(--green);background:#f5faee}.choice input{width:auto;margin:0;accent-color:var(--green)}
 button{width:100%;border:0;border-radius:11px;background:var(--green);color:#fff;font-size:17px;font-weight:800;padding:15px;cursor:pointer}button:hover{background:var(--green-dark)}button:disabled{opacity:.6;cursor:wait}
-.small{font-size:12px;color:var(--muted);text-align:center;margin:14px 0 0}.msg{display:none;margin-top:16px;padding:13px;border-radius:10px;font-weight:700}.ok{display:block;background:#eff8e5;color:#355d12}.err{display:block;background:#fff0f0;color:#9b2525}
+.field-help{font-size:12px;line-height:1.4;color:var(--muted);margin:7px 2px 0}.small{font-size:12px;color:var(--muted);text-align:center;margin:14px 0 0}.msg{display:none;margin-top:16px;padding:13px;border-radius:10px;font-weight:700}.ok{display:block;background:#eff8e5;color:#355d12}.err{display:block;background:#fff0f0;color:#9b2525}
 .hp{position:absolute;left:-9999px;opacity:0}.contact{text-align:center;color:var(--muted);font-size:13px;margin-top:20px}.contact a{color:var(--navy);font-weight:700;text-decoration:none}
 @media(max-width:480px){.wrap{padding:18px 13px 30px}.card{padding:24px 17px}h1{font-size:25px}}
 </style></head>
 <body><div class="top"></div><main class="wrap">
-<header class="brand"><svg class="brand-logo" viewBox="0 0 1000 300" role="img" aria-label="Danco Electrical — Solar & Battery specialist" xmlns="http://www.w3.org/2000/svg">
-<defs><linearGradient id="db" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#00b9ff"/><stop offset="1" stop-color="#087ad8"/></linearGradient></defs>
-<g transform="translate(18 18)"><circle cx="125" cy="125" r="112" fill="none" stroke="url(#db)" stroke-width="15"/><circle cx="125" cy="125" r="90" fill="url(#db)"/><path d="M125 23v204M35 125h180M55 45v160M195 45v160" stroke="#fff" stroke-width="14" fill="none"/><path d="M125 125h90" stroke="#fff" stroke-width="14"/></g>
-<text x="275" y="130" font-family="Arial,Helvetica,sans-serif" font-size="112" font-weight="500" fill="#050505" letter-spacing="2">DANCO</text>
-<text x="278" y="205" font-family="Arial,Helvetica,sans-serif" font-size="58" font-weight="400" fill="#078fdf" letter-spacing="17">ELECTRICAL</text>
-<text x="355" y="270" font-family="Georgia,'Times New Roman',serif" font-size="40" font-style="italic" font-weight="700" fill="#080808">Solar &amp; Battery specialists</text>
-</svg></header>
+<header class="brand"><img class="brand-logo" src="assets/danco-logo.jpg" alt="Danco Electrical — Solar & Battery specialist"></header>
 <section class="card"><h1>Get your personalised quote</h1><p class="intro">Tell us what you're interested in and one of our solar consultants will be in touch.</p>
 <form id="quoteForm">
 <div class="field"><label for="name">Name <span class="req">*</span></label><input id="name" name="name" autocomplete="name" maxlength="120" required></div>
 <div class="field"><label for="phone">Contact number <span class="req">*</span></label><input id="phone" name="phone" type="tel" autocomplete="tel" maxlength="40" required></div>
 <div class="field"><label for="email">Email <span style="font-weight:400;color:var(--muted)">(optional)</span></label><input id="email" name="email" type="email" autocomplete="email" maxlength="254"></div>
+<div class="field"><label for="property_address">Property address <span class="req">*</span></label><input id="property_address" name="property_address" autocomplete="street-address" maxlength="500" required><p class="field-help">Required so our solar team can assess your property and prepare a more accurate recommendation before contacting you.</p></div>
 <fieldset><legend>What are you interested in? <span class="req">*</span></legend><div class="choices">
 <label class="choice"><input type="radio" name="enquiry_type" value="solar" required> Solar</label>
 <label class="choice"><input type="radio" name="enquiry_type" value="solar_battery"> Solar + Battery</label>
