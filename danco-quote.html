@@ -55,8 +55,10 @@ button{width:100%;border:0;border-radius:11px;background:var(--green);color:#fff
    const places=await google.maps.importLibrary("places");
    AutocompleteSuggestion=places.AutocompleteSuggestion;
    AutocompleteSessionToken=places.AutocompleteSessionToken;
-  }catch(err){console.warn("Address suggestions unavailable; manual entry works.",err);}
+   if(address.value.trim().length>=3) address.dispatchEvent(new Event("input",{bubbles:true}));
+  }catch(err){console.warn("Address suggestions unavailable; manual entry works.",err);showStatus("Address suggestions are unavailable. Please enter your address manually.");}
  };
+ function showStatus(message){const help=document.getElementById("address-help");help.textContent=message;}
  address.addEventListener("input",()=>{
   clearTimeout(timer);const requestId=++sequence;hide();
   const input=address.value.trim();
@@ -88,7 +90,7 @@ button{width:100%;border:0;border-radius:11px;background:var(--green);color:#fff
      suggestions.appendChild(option);
     }
     suggestions.style.display=items.length?"block":"none";
-   }catch(err){hide();console.warn("Address suggestions unavailable; manual entry works.",err);}
+   }catch(err){hide();console.warn("Address suggestions unavailable; manual entry works.",err);showStatus("Google address suggestions are unavailable. Please type your address manually.");}
   },300);
  });
  address.addEventListener("keydown",e=>{if(e.key==="Escape")hide();});
@@ -96,7 +98,7 @@ button{width:100%;border:0;border-radius:11px;background:var(--green);color:#fff
  const script=document.createElement("script");
  script.src="https://maps.googleapis.com/maps/api/js?key="+encodeURIComponent(key)+"&loading=async&callback=initDancoAddressAutocomplete&v=weekly";
  script.async=true;
- script.onerror=()=>console.warn("Google Maps unavailable; manual address entry works.");
+ script.onerror=()=>{console.warn("Google Maps unavailable; manual address entry works.");showStatus("Google address suggestions are unavailable. Please type your address manually.");};
  document.head.appendChild(script);
 })();
 const endpoint="https://otrzmqyqbyovjggdswzn.supabase.co/functions/v1/submit-danco-enquiry";
