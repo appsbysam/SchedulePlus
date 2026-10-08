@@ -27,7 +27,7 @@ button{width:100%;border:0;border-radius:11px;background:var(--green);color:#fff
 <div class="field"><label for="name">Name <span class="req">*</span></label><input id="name" name="name" autocomplete="name" maxlength="120" required></div>
 <div class="field"><label for="phone">Contact number <span class="req">*</span></label><input id="phone" name="phone" type="tel" autocomplete="tel" maxlength="40" required></div>
 <div class="field"><label for="email">Email <span style="font-weight:400;color:var(--muted)">(optional)</span></label><input id="email" name="email" type="email" autocomplete="email" maxlength="254"></div>
-<div class="field"><label for="property_address">Property address <span class="req">*</span></label><input id="property_address" name="property_address" autocomplete="street-address" maxlength="500" required><p class="field-help">Required so our solar team can assess your property and prepare a more accurate recommendation before contacting you.</p></div>
+<div class="field"><label for="property_address">Property address <span class="req">*</span></label><input id="property_address" name="property_address" autocomplete="street-address" maxlength="500" required><p class="field-help" id="address-help">Start typing to see address suggestions, or enter the address manually. Required so our solar team can assess your property and prepare a more accurate recommendation before contacting you.</p></div>
 <fieldset><legend>What are you interested in? <span class="req">*</span></legend><div class="choices">
 <label class="choice"><input type="radio" name="enquiry_type" value="solar" required> Solar</label>
 <label class="choice"><input type="radio" name="enquiry_type" value="solar_battery"> Solar + Battery</label>
@@ -40,7 +40,32 @@ button{width:100%;border:0;border-radius:11px;background:var(--green);color:#fff
 </form></section>
 <div class="contact">Prefer to call? <a href="tel:0416722400">0416 722 400</a> &nbsp;·&nbsp; <a href="mailto:info@dancoelectrical.com.au">info@dancoelectrical.com.au</a></div>
 </main>
+<script src="./maps-config.js"></script>
 <script>
+(function setupAddressAutocomplete(){
+ const address=document.getElementById("property_address");
+ const key=typeof GOOGLE_MAPS_API_KEY!=="undefined" ? GOOGLE_MAPS_API_KEY : "";
+ if(!key || !/^AIza[\w-]+$/.test(key)) return; // Manual entry always remains available.
+ window.initDancoAddressAutocomplete=function(){
+  try {
+   if(!window.google?.maps?.places?.Autocomplete) return;
+   const autocomplete=new google.maps.places.Autocomplete(address,{
+    componentRestrictions:{country:"au"},
+    fields:["formatted_address","name"],
+    types:["address"]
+   });
+   autocomplete.addListener("place_changed",()=>{
+    const place=autocomplete.getPlace();
+    if(place?.formatted_address) address.value=place.formatted_address;
+   });
+  } catch(error){console.warn("Address suggestions unavailable; manual entry remains enabled.",error);}
+ };
+ const script=document.createElement("script");
+ script.src="https://maps.googleapis.com/maps/api/js?key="+encodeURIComponent(key)+"&libraries=places&callback=initDancoAddressAutocomplete&loading=async";
+ script.async=true;
+ script.onerror=()=>console.warn("Google Maps unavailable; manual address entry remains enabled.");
+ document.head.appendChild(script);
+})();
 const endpoint="https://otrzmqyqbyovjggdswzn.supabase.co/functions/v1/submit-danco-enquiry";
 const form=document.getElementById("quoteForm"), btn=document.getElementById("submitBtn"), msg=document.getElementById("message");
 form.addEventListener("submit",async(e)=>{e.preventDefault();btn.disabled=true;btn.textContent="Submitting…";msg.className="msg";
