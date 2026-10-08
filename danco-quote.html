@@ -28,7 +28,7 @@ button{width:100%;border:0;border-radius:11px;background:var(--green);color:#fff
 <div class="field"><label for="name">Name <span class="req">*</span></label><input id="name" name="name" autocomplete="name" maxlength="120" required></div>
 <div class="field"><label for="phone">Contact number <span class="req">*</span></label><input id="phone" name="phone" type="tel" autocomplete="tel" maxlength="40" required></div>
 <div class="field"><label for="email">Email <span style="font-weight:400;color:var(--muted)">(optional)</span></label><input id="email" name="email" type="email" autocomplete="email" maxlength="254"></div>
-<div class="field"><label for="property_address">Property address <span class="req">*</span></label><input id="property_address" name="property_address" autocomplete="street-address" maxlength="500" required><div id="address-suggestions" class="address-suggestions" role="listbox" aria-label="Suggested addresses"></div><p class="field-help" id="address-help">Start typing to see address suggestions, or enter the address manually. Required so our solar team can assess your property and prepare a more accurate recommendation before contacting you.</p></div>
+<div class="field"><label for="property_address">Property address <span class="req">*</span></label><input id="property_address" name="property_address" autocomplete="street-address" maxlength="500" required><div id="address-suggestions" class="address-suggestions" role="listbox" aria-label="Suggested addresses"></div><p class="field-help" id="address-help">Start typing to see NSW address suggestions, or enter the address manually. Required so our solar team can assess your property and prepare a more accurate recommendation before contacting you.</p></div>
 <fieldset><legend>What are you interested in? <span class="req">*</span></legend><div class="choices">
 <label class="choice"><input type="radio" name="enquiry_type" value="solar" required> Solar</label>
 <label class="choice"><input type="radio" name="enquiry_type" value="solar_battery"> Solar + Battery</label>
@@ -67,10 +67,10 @@ button{width:100%;border:0;border-radius:11px;background:var(--green);color:#fff
    try{
     if(!sessionToken)sessionToken=new AutocompleteSessionToken();
     const result=await AutocompleteSuggestion.fetchAutocompleteSuggestions({
-     input,includedRegionCodes:["au"],sessionToken
+     input,includedRegionCodes:["au"],locationRestriction:{south:-37.6,west:140.99,north:-28.15,east:153.65},sessionToken
     });
     if(requestId!==sequence || document.activeElement!==address)return;
-    const items=(result.suggestions||[]).filter(x=>x.placePrediction).slice(0,5);
+    const items=(result.suggestions||[]).filter(x=>{const t=x.placePrediction?.text?.toString()||"";return /\bNSW\b|New South Wales/i.test(t);}).slice(0,5);
     for(const item of items){
      const prediction=item.placePrediction;
      const option=document.createElement("button");
@@ -82,7 +82,9 @@ button{width:100%;border:0;border-radius:11px;background:var(--green);color:#fff
       address.value=prediction.text?.toString()||address.value;
       try{
        const place=prediction.toPlace();
-       await place.fetchFields({fields:["formattedAddress"]});
+       await place.fetchFields({fields:["formattedAddress","addressComponents"]});
+       const state=(place.addressComponents||[]).find(c=>(c.types||[]).includes("administrative_area_level_1"));
+       if(state && state.shortText!=="NSW" && state.longText!=="New South Wales") {address.value="";showStatus("Please select a New South Wales property address, or enter it manually.");return;}
        if(place.formattedAddress)address.value=place.formattedAddress;
       }catch(err){console.warn("Using selected address text.",err);}
       sessionToken=null;address.focus();
