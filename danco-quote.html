@@ -17,6 +17,7 @@ input:focus,textarea:focus{outline:3px solid rgba(121,184,42,.16);border-color:v
 fieldset{border:0;padding:0;margin:0 0 20px}.choices{display:grid;gap:9px;margin-top:9px}.choice{display:flex;align-items:center;gap:10px;border:1.5px solid var(--line);border-radius:11px;padding:13px;cursor:pointer;font-weight:600}.choice:has(input:checked){border-color:var(--green);background:#f5faee}.choice input{width:auto;margin:0;accent-color:var(--green)}
 button{width:100%;border:0;border-radius:11px;background:var(--green);color:#fff;font-size:17px;font-weight:800;padding:15px;cursor:pointer}button:hover{background:var(--green-dark)}button:disabled{opacity:.6;cursor:wait}
 .field-help{font-size:12px;line-height:1.4;color:var(--muted);margin:7px 2px 0}.small{font-size:12px;color:var(--muted);text-align:center;margin:14px 0 0}.msg{display:none;margin-top:16px;padding:13px;border-radius:10px;font-weight:700}.ok{display:block;background:#eff8e5;color:#355d12}.err{display:block;background:#fff0f0;color:#9b2525}
+.address-suggestions{display:none;position:relative;z-index:5;margin-top:5px;background:#fff;border:1px solid var(--line);border-radius:10px;box-shadow:0 8px 22px rgba(0,0,0,.12);overflow:hidden}.address-suggestions button{display:block;text-align:left;width:100%;border:0;border-bottom:1px solid var(--line);border-radius:0;background:white;color:var(--ink);font-size:14px;font-weight:400;padding:12px;line-height:1.4}.address-suggestions button:hover,.address-suggestions button:focus{background:#f1f7ec;color:var(--ink)}.address-suggestions button:last-child{border-bottom:0}
 .hp{position:absolute;left:-9999px;opacity:0}.contact{text-align:center;color:var(--muted);font-size:13px;margin-top:20px}.contact a{color:var(--navy);font-weight:700;text-decoration:none}
 @media(max-width:480px){.wrap{padding:18px 13px 30px}.card{padding:24px 17px}h1{font-size:25px}}
 </style></head>
@@ -27,7 +28,7 @@ button{width:100%;border:0;border-radius:11px;background:var(--green);color:#fff
 <div class="field"><label for="name">Name <span class="req">*</span></label><input id="name" name="name" autocomplete="name" maxlength="120" required></div>
 <div class="field"><label for="phone">Contact number <span class="req">*</span></label><input id="phone" name="phone" type="tel" autocomplete="tel" maxlength="40" required></div>
 <div class="field"><label for="email">Email <span style="font-weight:400;color:var(--muted)">(optional)</span></label><input id="email" name="email" type="email" autocomplete="email" maxlength="254"></div>
-<div class="field"><label for="property_address">Property address <span class="req">*</span></label><input id="property_address" name="property_address" autocomplete="street-address" maxlength="500" required><p class="field-help" id="address-help">Start typing to see address suggestions, or enter the address manually. Required so our solar team can assess your property and prepare a more accurate recommendation before contacting you.</p></div>
+<div class="field"><label for="property_address">Property address <span class="req">*</span></label><input id="property_address" name="property_address" autocomplete="street-address" maxlength="500" required><div id="address-suggestions" class="address-suggestions" role="listbox" aria-label="Suggested addresses"></div><p class="field-help" id="address-help">Start typing to see address suggestions, or enter the address manually. Required so our solar team can assess your property and prepare a more accurate recommendation before contacting you.</p></div>
 <fieldset><legend>What are you interested in? <span class="req">*</span></legend><div class="choices">
 <label class="choice"><input type="radio" name="enquiry_type" value="solar" required> Solar</label>
 <label class="choice"><input type="radio" name="enquiry_type" value="solar_battery"> Solar + Battery</label>
@@ -44,26 +45,58 @@ button{width:100%;border:0;border-radius:11px;background:var(--green);color:#fff
 <script>
 (function setupAddressAutocomplete(){
  const address=document.getElementById("property_address");
+ const suggestions=document.getElementById("address-suggestions");
  const key=typeof GOOGLE_MAPS_API_KEY!=="undefined" ? GOOGLE_MAPS_API_KEY : "";
- if(!key || !/^AIza[\w-]+$/.test(key)) return; // Manual entry always remains available.
- window.initDancoAddressAutocomplete=function(){
-  try {
-   if(!window.google?.maps?.places?.Autocomplete) return;
-   const autocomplete=new google.maps.places.Autocomplete(address,{
-    componentRestrictions:{country:"au"},
-    fields:["formatted_address","name"],
-    types:["address"]
-   });
-   autocomplete.addListener("place_changed",()=>{
-    const place=autocomplete.getPlace();
-    if(place?.formatted_address) address.value=place.formatted_address;
-   });
-  } catch(error){console.warn("Address suggestions unavailable; manual entry remains enabled.",error);}
+ if(!key || !/^AIza[\\w-]+$/.test(key)) return;
+ let AutocompleteSuggestion,AutocompleteSessionToken,sessionToken,timer,sequence=0;
+ function hide(){suggestions.replaceChildren();suggestions.style.display="none";}
+ window.initDancoAddressAutocomplete=async function(){
+  try{
+   const places=await google.maps.importLibrary("places");
+   AutocompleteSuggestion=places.AutocompleteSuggestion;
+   AutocompleteSessionToken=places.AutocompleteSessionToken;
+  }catch(err){console.warn("Address suggestions unavailable; manual entry works.",err);}
  };
+ address.addEventListener("input",()=>{
+  clearTimeout(timer);const requestId=++sequence;hide();
+  const input=address.value.trim();
+  if(input.length<3 || !AutocompleteSuggestion)return;
+  timer=setTimeout(async()=>{
+   try{
+    if(!sessionToken)sessionToken=new AutocompleteSessionToken();
+    const result=await AutocompleteSuggestion.fetchAutocompleteSuggestions({
+     input,includedRegionCodes:["au"],sessionToken
+    });
+    if(requestId!==sequence || document.activeElement!==address)return;
+    const items=(result.suggestions||[]).filter(x=>x.placePrediction).slice(0,5);
+    for(const item of items){
+     const prediction=item.placePrediction;
+     const option=document.createElement("button");
+     option.type="button";option.setAttribute("role","option");
+     option.textContent=prediction.text?.toString()||"Select address";
+     option.addEventListener("mousedown",e=>e.preventDefault());
+     option.addEventListener("click",async()=>{
+      ++sequence;hide();
+      address.value=prediction.text?.toString()||address.value;
+      try{
+       const place=prediction.toPlace();
+       await place.fetchFields({fields:["formattedAddress"]});
+       if(place.formattedAddress)address.value=place.formattedAddress;
+      }catch(err){console.warn("Using selected address text.",err);}
+      sessionToken=null;address.focus();
+     });
+     suggestions.appendChild(option);
+    }
+    suggestions.style.display=items.length?"block":"none";
+   }catch(err){hide();console.warn("Address suggestions unavailable; manual entry works.",err);}
+  },300);
+ });
+ address.addEventListener("keydown",e=>{if(e.key==="Escape")hide();});
+ document.addEventListener("click",e=>{if(e.target!==address&&!suggestions.contains(e.target))hide();});
  const script=document.createElement("script");
- script.src="https://maps.googleapis.com/maps/api/js?key="+encodeURIComponent(key)+"&libraries=places&callback=initDancoAddressAutocomplete&loading=async";
+ script.src="https://maps.googleapis.com/maps/api/js?key="+encodeURIComponent(key)+"&loading=async&callback=initDancoAddressAutocomplete&v=weekly";
  script.async=true;
- script.onerror=()=>console.warn("Google Maps unavailable; manual address entry remains enabled.");
+ script.onerror=()=>console.warn("Google Maps unavailable; manual address entry works.");
  document.head.appendChild(script);
 })();
 const endpoint="https://otrzmqyqbyovjggdswzn.supabase.co/functions/v1/submit-danco-enquiry";
