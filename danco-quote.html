@@ -47,7 +47,7 @@ button{width:100%;border:0;border-radius:11px;background:var(--green);color:#fff
  const address=document.getElementById("property_address");
  const suggestions=document.getElementById("address-suggestions");
  const key=typeof GOOGLE_MAPS_API_KEY!=="undefined" ? GOOGLE_MAPS_API_KEY : "";
- if(!key || !/^AIza[\\w-]+$/.test(key)) return;
+ if(!key || !/^AIza[A-Za-z0-9_-]+$/.test(key)) return;
  let AutocompleteSuggestion,AutocompleteSessionToken,sessionToken,timer,sequence=0;
  function hide(){suggestions.replaceChildren();suggestions.style.display="none";}
  window.initDancoAddressAutocomplete=async function(){
