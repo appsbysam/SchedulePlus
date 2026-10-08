@@ -20,3 +20,5 @@
 @media(max-width:600px){.enquiry-toolbar{grid-template-columns:1fr}.enquiry-toolbar input,.enquiry-toolbar select{width:100%}.enquiry-head{align-items:flex-start}.enquiry-actions{align-items:flex-end}}
 
 .enquiry-action-buttons{display:flex;gap:8px;align-items:center}.enquiry-delete{border:1px solid #8b3b45;border-radius:9px;padding:9px 12px;background:#351a1e;color:#ff9da8;font-weight:800;cursor:pointer}.enquiry-delete:hover,.enquiry-delete:focus{background:#482127;border-color:#c65260;color:#fff}
+
+.enquiry-address{margin:10px 0;color:#d9dee7;line-height:1.4}.enquiry-address strong{color:#fff}
