@@ -58,3 +58,10 @@
 .enquiry-type-filter.active{background:var(--sp-pink,#ff1593);border-color:var(--sp-pink,#ff1593);color:#fff}
 .enquiry-type-filter:focus-visible{outline:2px solid #fff;outline-offset:2px}
 @media(max-width:370px){.enquiry-type-filters{gap:4px}.enquiry-type-filter{font-size:11px;padding:7px 3px}}
+
+/* v0.7.60 — pill filters matching the enquiry category badges. */
+#enquiriesView .enquiry-type-filters{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:7px!important;margin:0 0 14px!important;flex:0 0 auto!important;background:transparent!important;border:0!important;padding:0!important}
+#enquiriesView .enquiry-type-filters button.enquiry-type-filter{appearance:none!important;display:flex!important;align-items:center!important;justify-content:center!important;width:100%!important;min-width:0!important;min-height:42px!important;margin:0!important;padding:8px 5px!important;border:1px solid #2b5743!important;border-radius:999px!important;background:#10271e!important;color:#79b89a!important;box-shadow:none!important;font:inherit!important;font-size:clamp(10px,2.6vw,13px)!important;font-weight:800!important;line-height:1.2!important;text-align:center!important;white-space:normal!important;opacity:.72!important;transition:background .15s,border-color .15s,opacity .15s,box-shadow .15s!important}
+#enquiriesView .enquiry-type-filters button.enquiry-type-filter.active{background:#176a42!important;border-color:#4cdd90!important;color:#fff!important;opacity:1!important;box-shadow:0 0 0 1px rgba(76,221,144,.25),0 4px 16px rgba(28,187,105,.2)!important}
+#enquiriesView .enquiry-type-filters button.enquiry-type-filter:focus-visible{outline:2px solid #fff!important;outline-offset:2px!important}
+@media(max-width:370px){#enquiriesView .enquiry-type-filters{gap:4px!important}#enquiriesView .enquiry-type-filters button.enquiry-type-filter{padding:7px 3px!important;font-size:10px!important}}
