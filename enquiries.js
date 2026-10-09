@@ -1,6 +1,6 @@
 (() => {
 const JAYCO_BUSINESS_ID='9359127c-6929-4b2c-b25e-b9bd835d567c';
-let enquiries=[],enabled=false,setupDone=false;
+let enquiries=[],enabled=false,setupDone=false,selectedType="";
 const $e=s=>document.querySelector(s);
 const escE=s=>String(s??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
 const typeLabel=t=>({solar:'Solar',solar_battery:'Solar + Battery',battery_only:'Battery Only'}[t]||t);
@@ -10,8 +10,8 @@ async function setup(){
  if(typeof supabaseClient==='undefined'){setTimeout(setup,200);return}
  const {data:{session}}=await supabaseClient.auth.getSession(); if(!session?.user){setTimeout(setup,300);return}
  enabled=true; setupDone=true;
- const main=document.querySelector('#appView main')||document.querySelector('#appView')||document.querySelector('main'); if(main&&!$e('#enquiriesView')) main.insertAdjacentHTML('beforeend',`<section id="enquiriesView" class="sp-view" data-sp-view="enquiries"><div class="sp-screen-head"><div><h1>Enquiries</h1><p>DanCo customer leads</p></div></div><div class="enquiry-toolbar"><input id="enquirySearch" type="search" placeholder="Search name, phone, email or notes…"><select id="enquiryStatusFilter"><option value="">All statuses</option><option value="new">New</option><option value="contacted">Contacted</option><option value="quoted">Quoted</option><option value="won">Won</option><option value="lost">Lost</option></select></div><div id="enquiriesList" class="enquiries-list"></div></section>`);
- if(!$e('#enquiriesView')){setupDone=false;setTimeout(setup,250);return} $e('#enquirySearch').oninput=render; $e('#enquiryStatusFilter').onchange=render; await load();
+ const main=document.querySelector('#appView main')||document.querySelector('#appView')||document.querySelector('main'); if(main&&!$e('#enquiriesView')) main.insertAdjacentHTML('beforeend',`<section id="enquiriesView" class="sp-view" data-sp-view="enquiries"><div class="sp-screen-head"><div><h1>Enquiries</h1><p>DanCo customer leads</p></div></div><div class="enquiry-toolbar"><input id="enquirySearch" type="search" placeholder="Search name, phone, email or notes…"><select id="enquiryStatusFilter"><option value="">All statuses</option><option value="new">New</option><option value="contacted">Contacted</option><option value="quoted">Quoted</option><option value="won">Won</option><option value="lost">Lost</option></select></div><div class="enquiry-type-filters" role="group" aria-label="Filter enquiries by type"><button type="button" class="enquiry-type-filter active" data-type="" aria-pressed="true">All</button><button type="button" class="enquiry-type-filter" data-type="solar" aria-pressed="false">Solar</button><button type="button" class="enquiry-type-filter" data-type="solar_battery" aria-pressed="false">Solar + Battery</button><button type="button" class="enquiry-type-filter" data-type="battery_only" aria-pressed="false">Battery Only</button></div><div id="enquiriesList" class="enquiries-list"></div></section>`);
+ if(!$e('#enquiriesView')){setupDone=false;setTimeout(setup,250);return} $e('#enquirySearch').oninput=render; $e('#enquiryStatusFilter').onchange=render; document.querySelectorAll('#enquiriesView .enquiry-type-filter').forEach(b=>b.onclick=()=>{selectedType=b.dataset.type;document.querySelectorAll('#enquiriesView .enquiry-type-filter').forEach(x=>{const active=x===b;x.classList.toggle('active',active);x.setAttribute('aria-pressed',String(active));});render();}); await load();
 }
 function bindNav(){
  const b=$e('[data-view="enquiries"]'); if(!b)return;
@@ -27,7 +27,7 @@ async function load(){
 function updateBadge(){const n=enquiries.filter(x=>!x.read_at).length;[$e('#spEnquiryBadge'),$e('#enquiryBadge')].filter(Boolean).forEach(b=>{b.textContent=n;b.classList.toggle('hidden',!n)})}
 function render(){
  const root=$e('#enquiriesList');if(!root)return;const q=($e('#enquirySearch')?.value||'').toLowerCase().trim(),st=$e('#enquiryStatusFilter')?.value||'';
- const rows=enquiries.filter(x=>(!st||x.status===st)&&(!q||`${x.customer_name} ${x.customer_phone} ${x.customer_email||''} ${x.property_address||''} ${x.notes||''} ${typeLabel(x.enquiry_type)}`.toLowerCase().includes(q)));
+ const rows=enquiries.filter(x=>(!st||x.status===st)&&(!selectedType||x.enquiry_type===selectedType)&&(!q||`${x.customer_name} ${x.customer_phone} ${x.customer_email||''} ${x.property_address||''} ${x.notes||''} ${typeLabel(x.enquiry_type)}`.toLowerCase().includes(q)));
  root.innerHTML=rows.length?rows.map(card).join(''):'<div class="empty">No enquiries here yet.</div>';
  root.querySelectorAll('.enquiry-status').forEach(s=>s.onchange=()=>setStatus(s.dataset.id,s.value)); root.querySelectorAll('.enquiry-read-toggle').forEach(b=>b.onclick=()=>setRead(b.dataset.id,b.dataset.read!=='true')); root.querySelectorAll('.enquiry-delete').forEach(b=>b.onclick=()=>deleteEnquiry(b.dataset.id));
 }
