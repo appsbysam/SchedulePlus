@@ -51,3 +51,10 @@
  #enquiriesView:not(.hidden){height:auto!important;max-height:none!important;overflow:visible!important}
  #enquiriesView:not(.hidden) #enquiriesList{overflow:visible!important;max-height:none!important}
 }
+
+/* Enquiry type filters: independent of status and search filters. */
+.enquiry-type-filters{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;margin:0 0 12px;flex:0 0 auto;min-width:0}
+.enquiry-type-filter{min-width:0;min-height:40px;padding:8px 5px;border:1px solid #353c47;border-radius:10px;background:#1b2027;color:#dce3ed;font-size:12px;font-weight:750;line-height:1.2;cursor:pointer;white-space:normal;touch-action:manipulation}
+.enquiry-type-filter.active{background:var(--sp-pink,#ff1593);border-color:var(--sp-pink,#ff1593);color:#fff}
+.enquiry-type-filter:focus-visible{outline:2px solid #fff;outline-offset:2px}
+@media(max-width:370px){.enquiry-type-filters{gap:4px}.enquiry-type-filter{font-size:11px;padding:7px 3px}}
