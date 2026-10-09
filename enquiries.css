@@ -22,3 +22,32 @@
 .enquiry-action-buttons{display:flex;gap:8px;align-items:center}.enquiry-delete{border:1px solid #8b3b45;border-radius:9px;padding:9px 12px;background:#351a1e;color:#ff9da8;font-weight:800;cursor:pointer}.enquiry-delete:hover,.enquiry-delete:focus{background:#482127;border-color:#c65260;color:#fff}
 
 .enquiry-address{margin:10px 0;color:#d9dee7;line-height:1.4}.enquiry-address strong{color:#fff}
+
+/* Enquiries-only mobile scrolling: keep heading and filters visible, scroll the records. */
+#enquiriesView:not(.hidden){
+  display:flex!important;
+  flex-direction:column!important;
+  height:calc(100dvh - var(--sp-nav-h,78px) - 20px)!important;
+  max-height:calc(100dvh - var(--sp-nav-h,78px) - 20px)!important;
+  min-height:0!important;
+  overflow:hidden!important;
+}
+#enquiriesView:not(.hidden)>.sp-screen-head,
+#enquiriesView:not(.hidden)>.enquiry-toolbar{flex:0 0 auto!important}
+#enquiriesView:not(.hidden) #enquiriesList{
+  display:grid!important;
+  align-content:start!important;
+  flex:1 1 auto!important;
+  min-height:0!important;
+  overflow-y:auto!important;
+  overflow-x:hidden!important;
+  -webkit-overflow-scrolling:touch!important;
+  overscroll-behavior:contain!important;
+  touch-action:pan-y!important;
+  padding:8px 2px calc(var(--sp-nav-h,78px) + 26px)!important;
+}
+#enquiriesView .enquiry-card{touch-action:pan-y!important}
+@media(min-width:760px){
+ #enquiriesView:not(.hidden){height:auto!important;max-height:none!important;overflow:visible!important}
+ #enquiriesView:not(.hidden) #enquiriesList{overflow:visible!important;max-height:none!important}
+}
