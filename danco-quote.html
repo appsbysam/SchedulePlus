@@ -109,7 +109,7 @@ form.addEventListener("submit",async(e)=>{e.preventDefault();btn.disabled=true;b
  const fd=new FormData(form); const payload=Object.fromEntries(fd.entries());
  try{const res=await fetch(endpoint,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});const data=await res.json();
  if(!res.ok)throw new Error(data.error||"Unable to submit");
- msg.textContent="Thanks! Your enquiry has been received. Danco Electrical will be in touch.";msg.className="msg ok";form.reset();msg.scrollIntoView({behavior:"smooth",block:"nearest"});
+ form.reset();window.location.replace("./danco-thank-you.html");
  }catch(err){msg.textContent=err.message||"We couldn't submit your enquiry. Please try again.";msg.className="msg err";}
  finally{btn.disabled=false;btn.textContent="Submit Enquiry";}
 });
