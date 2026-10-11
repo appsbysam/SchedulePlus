@@ -2,7 +2,19 @@
   const ACTIVE_BUSINESS_KEY = 'schedule_plus_active_business';
   function field(id) { return document.getElementById(id); }
   function showDateRequired(){let d=field('jobDateRequiredDialog');if(!d){d=document.createElement('dialog');d.id='jobDateRequiredDialog';d.className='job-date-required-dialog';d.innerHTML='<div class="job-date-required-card"><div class="job-date-required-icon">!</div><h3>Date required</h3><p>Please enter a date before saving.</p><button id="jobDateRequiredOk" type="button">OK</button></div>';document.body.appendChild(d);field('jobDateRequiredOk').onclick=()=>{d.close();setTimeout(()=>field('scheduledDate')?.focus(),60)}}if(!d.open)d.showModal()}
-  async function getActiveBusinessId() {const direct=window.SchedulePlusBusiness?.business?.id;if(direct)return direct;if(typeof currentUser==='undefined'||!currentUser?.id)return null;const {data,error}=await supabaseClient.from('business_users').select('business_id,is_active').eq('user_id',currentUser.id).eq('is_active',true);if(error)throw error;const memberships=data||[];if(!memberships.length)return null;let id=localStorage.getItem(ACTIVE_BUSINESS_KEY);if(!memberships.some(m=>m.business_id===id))id=memberships[0].business_id;localStorage.setItem(ACTIVE_BUSINESS_KEY,id);return id}
+  async function getActiveBusinessId() {
+    const route=location.pathname.match(/\/SchedulePlus\/(jayco|powerup)(?:\/|$)/i)?.[1]?.toLowerCase();
+    const ids={jayco:'9359127c-6929-4b2c-b25e-b9bd835d567c',powerup:'5b170395-a2e2-4458-8765-472a6409391d'};
+    if(!route)return null; // Root is business-neutral.
+    const expected=ids[route];
+    const active=window.SchedulePlusBusiness?.business?.id;
+    if(active===expected)return expected;
+    if(typeof currentUser==='undefined'||!currentUser?.id)return null;
+    // Resolve access directly rather than trusting shared localStorage or startup order.
+    const {data,error}=await supabaseClient.from('business_users').select('business_id').eq('business_id',expected).eq('user_id',currentUser.id).eq('is_active',true).maybeSingle();
+    if(error)throw error;
+    return data?.business_id===expected?expected:null;
+  }
   async function safeLoadJobs(){const businessId=await getActiveBusinessId();if(!businessId){jobs=[];if(typeof render==='function')render();if(typeof renderCalendar==='function')renderCalendar();return}const {data,error}=await supabaseClient.from('jobs').select('*').eq('business_id',businessId).order('scheduled_date',{ascending:true,nullsFirst:false}).order('created_at',{ascending:false});if(error){if(typeof jobsList!=='undefined'&&jobsList)jobsList.innerHTML=`<div class="empty">${typeof esc==='function'?esc(error.message):error.message}</div>`;return}jobs=data||[];if(typeof render==='function')render();if(typeof renderCalendar==='function')renderCalendar()}
   async function safeDeleteJob(id,ask=true){const businessId=await getActiveBusinessId();if(!businessId)return;const job=(typeof jobs!=='undefined'?jobs:[]).find(j=>j.id===id);if(ask&&(!job||!confirm(`Delete ${job.customer_name||'this job'}?`)))return;const {error}=await supabaseClient.from('jobs').delete().eq('id',id).eq('business_id',businessId);if(error){alert(error.message);return}if(typeof dialog!=='undefined'&&dialog?.open)dialog.close();await safeLoadJobs()}
   function numberOrNull(v){const s=String(v??'').trim();if(!s)return null;const n=Number(s);return Number.isFinite(n)?n:null}function addressParts(value){return typeof extractAddressParts==='function'?extractAddressParts(value):{suburb:null,postcode:null}}function selectedTimeOfDay(){return document.querySelector('input[name="timeOfDayChoice"]:checked')?.value||null}function feature(key){return window.SchedulePlusFeatures?.isEnabled?.(key)!==false}function keep(existing,prop,fallback=null){return existing?(existing[prop]??fallback):fallback}
