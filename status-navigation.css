@@ -7,3 +7,6 @@
 
 /* Centre the floating Back to Top button above the bottom navigation. */
 #spScrollTop{left:50%!important;right:auto!important;transform:translateX(-50%)!important}#spScrollTop:hover{transform:translateX(-50%) translateY(-2px)!important}
+
+/* Business Central registration progress */
+#signUpBtn[aria-busy="true"]{display:flex!important;align-items:center;justify-content:center;gap:10px;cursor:wait;opacity:.85}#signUpBtn .sp-register-spinner{width:17px;height:17px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;display:inline-block;animation:spRegisterSpin .7s linear infinite;flex:none}@keyframes spRegisterSpin{to{transform:rotate(360deg)}}@media(prefers-reduced-motion:reduce){#signUpBtn .sp-register-spinner{animation-duration:1.6s}}
