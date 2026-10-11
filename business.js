@@ -43,7 +43,7 @@
     await claimPendingInvites();
     const {data,error}=await supabaseClient.from('business_users').select('business_id,role,is_active').eq('user_id',user.id).eq('is_active',true);if(error)return false;
     state.memberships=data||[];
-    if(!state.memberships.length){state.business=null;state.membership=null;applyVanillaBranding();if(!requestedBusinessId)showOnboarding();else showAccessDenied();return false}
+    if(!state.memberships.length){state.business=null;state.membership=null;applyVanillaBranding();if(!requestedBusinessId)showCentralHub();else showAccessDenied();return false}
     // Root stays neutral; named workspace must match an authorised membership.
     state.business=null;state.membership=null;
     if(!requestedBusinessId){applyVanillaBranding();showCentralHub();return false}
@@ -72,10 +72,10 @@
     const app=document.getElementById('appView');if(!app)return;
     let panel=document.getElementById('scheduleCentralHub');
     if(!panel){panel=document.createElement('div');panel.id='scheduleCentralHub';panel.style.cssText='position:fixed;inset:0;z-index:10000;background:#0b0b0d;color:#fff;display:flex;align-items:center;justify-content:center;padding:24px;text-align:center';app.appendChild(panel)}
-    panel.innerHTML='<div style="max-width:460px"><h1>Schedule+</h1><p>Business Central</p><p>Select your business workspace or create a new business. No business records are displayed here.</p><div id="centralWorkspaces" style="display:grid;gap:12px;margin:24px 0"></div><button id="centralCreateBusiness" type="button" style="padding:13px 22px;border-radius:10px">Create new business</button></div>';
+    panel.innerHTML='<div style="max-width:460px"><h1>Welcome to Schedule+</h1><p>Register your business and get started.</p><p>Create your private Schedule+ workspace to manage jobs and your team.</p><div id="centralWorkspaces" style="display:grid;gap:12px;margin:24px 0"></div><button id="centralCreateBusiness" type="button" style="padding:13px 22px;border-radius:10px">Register a new business</button></div>';
     const links=document.getElementById('centralWorkspaces');
     const known=[['jayco','Jayco Enterprises','./jayco/'],['powerup','PowerUp Group','./powerup/']];
-    known.forEach(([slug,name,url])=>{const id=WORKSPACES[slug];if(!state.memberships.some(m=>m.business_id===id))return;const a=document.createElement('a');a.href=url;a.textContent='Open '+name;a.style.cssText='display:block;padding:12px;border:1px solid #505763;border-radius:10px;color:#fff;text-decoration:none';links.appendChild(a)});
+    // Business Central does not reveal any existing tenant names.
     document.getElementById('centralCreateBusiness').onclick=showOnboarding;
   }
   function showAccessDenied(){
