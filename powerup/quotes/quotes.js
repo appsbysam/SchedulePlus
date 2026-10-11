@@ -69,7 +69,7 @@ function printQuotation(){
     });
    }
    const content=page.document.querySelector('main.pu-preview');
-   const opts={margin:[15,15,15,15],filename:filename,image:{type:'jpeg',quality:0.98},html2canvas:{scale:2,useCORS:true,backgroundColor:'#ffffff'},jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},pagebreak:{mode:['css','legacy'],avoid:['tr','img']}};
+   const opts={margin:15,filename:filename,image:{type:'jpeg',quality:0.98},html2canvas:{scale:2,useCORS:true,backgroundColor:'#ffffff'},jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},pagebreak:{mode:['css','legacy'],avoid:['tr','img']}};
    const pdf=await page.html2pdf().set(opts).from(content).toPdf().get('pdf');
    const blob=pdf.output('blob');
    const url=URL.createObjectURL(blob);
