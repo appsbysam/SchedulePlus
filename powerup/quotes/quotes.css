@@ -49,3 +49,20 @@
 #puPreviewDialog #puQuotePreview th,#puPreviewDialog #puQuotePreview td{padding:6px 4px;overflow-wrap:anywhere}
 @media(max-width:640px){#puPreviewDialog.pu-preview-dialog{width:96vw;max-height:90dvh}#puPreviewDialog #puQuotePreview{padding:14px}#puPreviewDialog #puQuotePreview h1{font-size:23px}}
 @media print{#puPreviewDialog.pu-preview-dialog{position:static!important;display:block!important;overflow:visible!important;border:0!important;box-shadow:none!important;max-height:none!important;width:100%!important}#puPreviewDialog #puQuotePreview{overflow:visible!important;max-height:none!important}#puPreviewDialog .pu-preview-toolbar,#puPreviewDialog .pu-preview-footer{display:none!important}#puQuotePreview,#puQuotePreview *{visibility:visible!important}}
+
+
+/* Print quotation from an independent document layer, not the modal. */
+#puPrintSheet{display:none}
+@media print{
+  @page{size:A4;margin:15mm}
+  html,body{height:auto!important;overflow:visible!important;background:#fff!important}
+  body *{visibility:hidden!important}
+  #puPrintSheet,#puPrintSheet *{visibility:visible!important}
+  #puPrintSheet{display:block!important;position:absolute!important;top:0!important;left:0!important;width:100%!important;max-width:none!important;padding:0!important;margin:0!important;color:#17202b!important;background:#fff!important;font:12pt/1.45 Arial,sans-serif!important;overflow:visible!important}
+  #puPrintSheet h1{font-size:25pt;letter-spacing:1px}
+  #puPrintSheet h2{font-size:16pt}
+  #puPrintSheet table{width:100%;border-collapse:collapse;font-size:10pt}
+  #puPrintSheet th,#puPrintSheet td{padding:7px 5px;border-bottom:1px solid #ccc;text-align:left}
+  #puPrintSheet tr{break-inside:avoid}
+  #puPreviewDialog{display:none!important}
+}
