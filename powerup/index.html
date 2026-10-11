@@ -13,7 +13,7 @@
   <link rel="stylesheet" href="maps-autocomplete.css?v=0.7.90">
   <link rel="stylesheet" href="ui-enhancements.css?v=0.7.90">
   <title>Schedule+</title>
-<link rel="stylesheet" href="powerup/quotes/quotes.css?v=0.7.90">
+<link rel="stylesheet" href="powerup/quotes/quotes.css?v=0.7.91">
 </head>
 <body>
 <div id="pinView" class="auth-shell hidden"><div class="auth-card pin-card"><img class="auth-logo" src="assets/icons/icon.svg?v=0.7.90" alt="Schedule+ logo"><h1>Schedule+</h1><p>Enter your 4-digit PIN</p><form id="pinUnlockForm"><label>PIN<input id="pinUnlock" type="password" inputmode="numeric" autocomplete="off" maxlength="4" pattern="[0-9]{4}" required></label><button type="submit">Unlock</button></form><button id="usePasswordBtn" class="secondary" type="button">Use email & password</button><p id="pinMessage" class="message"></p></div></div>
@@ -41,7 +41,7 @@
 <script src="app.js?v=0.7.90"></script>
 <script src="maps-autocomplete.js?v=0.7.90"></script>
 <script src="ui-enhancements.js?v=0.7.90"></script>
-<script src="powerup/quotes/quotes.js?v=0.7.90"></script>
+<script src="powerup/quotes/quotes.js?v=0.7.91"></script>
 <script>document.getElementById("puQuotesNav").addEventListener("click",()=>{document.querySelectorAll(".nav-item").forEach(x=>x.classList.remove("active"));document.getElementById("puQuotesNav").classList.add("active");document.getElementById("dashboardView").classList.add("hidden");document.getElementById("calendarView").classList.add("hidden");document.getElementById("puQuotesView").classList.remove("hidden");document.getElementById("sideMenu").classList.remove("open");document.getElementById("drawerBackdrop").classList.add("hidden");});document.querySelectorAll(".nav-item[data-view]").forEach(b=>b.addEventListener("click",()=>document.getElementById("puQuotesView").classList.add("hidden")));</script>
 </body>
 </html>
