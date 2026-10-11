@@ -297,6 +297,19 @@ function render() {
   $('#countUnscheduled').textContent = unscheduled;
   $('#countFollowup').textContent = followup;
   const rows = filtered();
+  const sortMode=document.getElementById('jobSortSelect')?.value||'customer_asc';
+  const collator=new Intl.Collator('en-AU',{sensitivity:'base',numeric:true});
+  const customer=(j)=>String(j.customer_name||'').trim();
+  const type=(j)=>String(j.title||'').trim();
+  const compareCustomer=(a,b)=>collator.compare(customer(a),customer(b));
+  rows.sort((a,b)=>{
+    if(sortMode==='customer_desc')return compareCustomer(b,a);
+    if(sortMode==='type_asc')return collator.compare(type(a),type(b))||compareCustomer(a,b);
+    if(sortMode==='newest')return String(b.created_at||'').localeCompare(String(a.created_at||''))||compareCustomer(a,b);
+    if(sortMode==='oldest')return String(a.created_at||'').localeCompare(String(b.created_at||''))||compareCustomer(a,b);
+    if(sortMode==='scheduled')return (a.scheduled_date||'9999-12-31').localeCompare(b.scheduled_date||'9999-12-31')||(a.scheduled_start||'99:99').localeCompare(b.scheduled_start||'99:99')||compareCustomer(a,b);
+    return compareCustomer(a,b);
+  });
   jobsList.innerHTML = rows.length ? rows.map(jobCardHtml).join('') : '<div class="empty">No jobs here yet.</div>';
   bindSwipeRows();
   if(!canDeleteJobs)jobsList.querySelectorAll('.swipe-delete').forEach(btn=>btn.remove());
@@ -451,6 +464,12 @@ $('#dayAddJobBtn').onclick = e => {
   openJob(null, date);
 };
 
+const jobSortSelect=document.getElementById('jobSortSelect');
+if(jobSortSelect){
+  const sortKey='scheduleplus-job-sort-'+(location.pathname.match(/\/SchedulePlus\/(jayco|powerup)(?:\/|$)/i)?.[1]||'central');
+  try{const saved=localStorage.getItem(sortKey);if(saved&&[...jobSortSelect.options].some(o=>o.value===saved))jobSortSelect.value=saved}catch(_){}
+  jobSortSelect.addEventListener('change',()=>{try{localStorage.setItem(sortKey,jobSortSelect.value)}catch(_){}render()});
+}
 $('#searchInput').oninput = render;
 $('#statusFilter').onchange = render;
 document.querySelectorAll('.stat').forEach(b => b.onclick = () => {
