@@ -211,9 +211,11 @@ document.querySelectorAll('.nav-item').forEach(b => b.onclick = () => {
 async function loadJobs() {
   const businessId=await (async()=>{
     const route=location.pathname.match(/\/SchedulePlus\/(jayco|powerup)(?:\/|$)/i)?.[1]?.toLowerCase();
+    const customId=new URLSearchParams(location.search).get('business');
+    const validCustom=/^[0-9a-f]{8}-[0-9a-f-]{27,}$/i.test(customId||'')?customId:null;
     const ids={jayco:'9359127c-6929-4b2c-b25e-b9bd835d567c',powerup:'5b170395-a2e2-4458-8765-472a6409391d'};
-    if(!route||!currentUser?.id)return null;
-    const id=ids[route];
+    if((!route&&!validCustom)||!currentUser?.id)return null;
+    const id=route?ids[route]:validCustom;
     const {data,error}=await supabaseClient.from('business_users').select('business_id').eq('user_id',currentUser.id).eq('business_id',id).eq('is_active',true).maybeSingle();
     if(error)throw error;
     return data?.business_id===id?id:null;
