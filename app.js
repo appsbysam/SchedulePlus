@@ -530,9 +530,17 @@ $('#mapsLookupBtn').onclick = () => {
   window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(a)}`, '_blank', 'noopener');
 };
 
+$('#scheduledDate').addEventListener('input', () => $('#scheduledDate').setCustomValidity(''));
+$('#status').addEventListener('change', () => $('#scheduledDate').setCustomValidity(''));
 $('#jobForm').addEventListener('submit', async e => {
   e.preventDefault();
   const id = $('#jobId').value;
+  if ($('#status').value === 'scheduled' && !$('#scheduledDate').value) {
+    $('#scheduledDate').setCustomValidity('Choose a date when scheduling a job.');
+    $('#scheduledDate').reportValidity();
+    return;
+  }
+  $('#scheduledDate').setCustomValidity('');
   const hours = Number($('#estimatedHours').value) || 0;
   const address = $('#addressLine').value.trim();
   const addressParts = extractAddressParts(address);
