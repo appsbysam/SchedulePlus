@@ -467,6 +467,7 @@ document.querySelectorAll('.type-filter').forEach(b => b.onclick = () => {
 });
 
 function openJob(j = null, defaultDate = null) {
+  dialog.dataset.convertedQuoteJob='false';
   $('#jobForm').reset();
   $('#jobId').value = j?.id || '';
   $('#jobDialogTitle').textContent = j ? 'Edit job' : 'New job';
@@ -517,13 +518,36 @@ document.addEventListener('powerup:open-converted-job', async event => {
   document.querySelectorAll('.stat').forEach(el=>el.classList.toggle('active',el.dataset.filter==='all'));
   render();
   openJob(job);
+  dialog.dataset.convertedQuoteJob='true';
  }catch(error){
   alert('Job created, but the job card could not open automatically. Open Jobs and refresh to find it. '+(error?.message||''));
  }
 });
 $('#newJobBtn').onclick = () => openJob();
 $('#calendarNewJobBtn').onclick = () => openJob();
-$('#closeJobBtn').onclick = () => dialog.close();
+$('#closeJobBtn').onclick = async () => {
+ if(dialog.dataset.convertedQuoteJob==='true' && !$('#scheduledDate').value){
+  const notice=document.createElement('dialog');
+  notice.style.cssText='max-width:min(92vw,440px);width:100%;border-radius:16px;padding:24px;border:1px solid #555;background:#20242d;color:white;box-sizing:border-box';
+  notice.innerHTML='<h2 style="margin:0 0 12px">Scheduling date not entered</h2><p>Have you received an installation date? If not, you can leave this job as <strong>To Schedule</strong> and enter the date later.</p><div style="display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap"><button type="button" data-choice="date">Enter Date</button><button type="button" data-choice="later" style="background:#3154ef;color:white">Save for Later</button></div>';
+  document.body.appendChild(notice);
+  const choice=await new Promise(resolve=>{
+   notice.addEventListener('click',e=>{const value=e.target.closest('[data-choice]')?.dataset.choice;if(value)resolve(value);});
+   notice.addEventListener('cancel',e=>{e.preventDefault();resolve('date');});
+   notice.showModal();
+  });
+  notice.close();notice.remove();
+  if(choice==='date'){$('#scheduledDate').focus();return;}
+  const id=$('#jobId').value;
+  if(id){
+   const {error}=await supabaseClient.from('jobs').update({status:'to_schedule',scheduled_date:null}).eq('id',id);
+   if(error){alert('Could not mark job To Schedule: '+error.message);return;}
+  }
+  dialog.dataset.convertedQuoteJob='false';
+  dialog.close();await loadJobs();return;
+ }
+ dialog.close();
+};
 $('#mapsLookupBtn').onclick = () => {
   const a = $('#addressLine').value.trim();
   if (!a) {
