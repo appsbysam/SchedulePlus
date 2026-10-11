@@ -20,3 +20,9 @@
 #puQuotesView .pu-panel{margin:10px 0;padding:14px}
 #puQuotesView .pu-actions{gap:7px;margin-top:10px}
 #puQuotesView .pu-status:empty{display:none}
+
+#puQuotesView #puRef[readonly]{opacity:.85;background:#1b2027;color:#dce5ee}
+#puQuotesView .pu-address-suggestions{display:grid;max-height:210px;overflow-y:auto;border:1px solid #434d5c;background:#1a1f26;border-radius:10px;box-shadow:0 8px 20px #0006}
+#puQuotesView .pu-address-suggestions.hidden{display:none!important}
+#puQuotesView .pu-address-suggestions button{width:100%;text-align:left;border:0!important;border-bottom:1px solid #343a43!important;border-radius:0;background:#1a1f26!important;color:#f5f7fa!important;padding:12px!important}
+#puQuotesView .pu-address-suggestions button:hover{background:#303643!important}
