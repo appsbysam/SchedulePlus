@@ -4,3 +4,6 @@
 .sp-home-job-bottom .sp-home-job-type{display:inline-flex;align-items:center;max-width:100%;width:max-content;padding:5px 10px;border-radius:999px;background:#29292e;color:#f5f5f7;font-size:.88rem;font-weight:750;line-height:1.25;white-space:normal;overflow-wrap:anywhere}
 
 #spScrollTop{z-index:9100!important;right:18px;bottom:calc(92px + env(safe-area-inset-bottom,0px));background:#252a32!important;border:2px solid var(--sp-pink,var(--tenant-accent,#ff1593))!important;color:#fff!important;box-shadow:0 6px 22px #000a!important;touch-action:manipulation}#spScrollTop:not([hidden]){display:flex!important}
+
+/* Centre the floating Back to Top button above the bottom navigation. */
+#spScrollTop{left:50%!important;right:auto!important;transform:translateX(-50%)!important}#spScrollTop:hover{transform:translateX(-50%) translateY(-2px)!important}
