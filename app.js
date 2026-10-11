@@ -499,6 +499,25 @@ function openJob(j = null, defaultDate = null) {
   dialog.showModal();
 }
 
+document.addEventListener('powerup:open-converted-job', async event => {
+ const jobId=event.detail?.jobId;
+ if(!jobId)return;
+ try{
+  await loadJobs();
+  const job=jobs.find(j=>j.id===jobId);
+  if(!job)throw new Error('The converted job is not available in this workspace.');
+  const jobsButton=document.querySelector('.sp-nav-btn[data-sp-view="jobs"]')||document.querySelector('[data-view="jobs"]');
+  jobsButton?.click();
+  $('#searchInput').value='';
+  $('#statusFilter').value='';
+  quickFilter='all';typeFilter='all';
+  document.querySelectorAll('.stat').forEach(el=>el.classList.toggle('active',el.dataset.filter==='all'));
+  render();
+  openJob(job);
+ }catch(error){
+  alert('Job created, but the job card could not open automatically. Open Jobs and refresh to find it. '+(error?.message||''));
+ }
+});
 $('#newJobBtn').onclick = () => openJob();
 $('#calendarNewJobBtn').onclick = () => openJob();
 $('#closeJobBtn').onclick = () => dialog.close();
