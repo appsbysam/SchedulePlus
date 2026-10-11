@@ -79,6 +79,7 @@ $('puSavedQuotes').addEventListener('click',async e=>{
   const {data:q,error}=await supabaseClient.from('powerup_quotes').select('*').eq('id',id).single();if(error)throw error;
   const {data:lines,error:lineError}=await supabaseClient.from('powerup_quote_lines').select('description,quantity,unit_price').eq('quote_id',id).order('sort_order');
   if(lineError)throw lineError;
+  $('puQuotePreview').classList.add('hidden');$('puPrint').disabled=true;
   currentQuoteId=q.id;currentQuoteJobId=q.job_id||null;$('puConvert').disabled=q.status!=='accepted'||!!q.job_id;
   $('puName').value=q.customer_name||'';$('puEmail').value=q.customer_email||'';$('puPhone').value=q.customer_phone||'';$('puAddress').value=q.site_address||'';$('puRef').value=q.quote_number||'';$('puValid').value=q.valid_until||'';$('puNotes').value=q.notes||'';$('puStatus').value=q.status||'draft';
   state.lines=(lines||[]).map(l=>({description:l.description,quantity:Number(l.quantity),unit_price:Number(l.unit_price)}));renderLines();
@@ -98,7 +99,7 @@ $('puSave').onclick=async()=>{
   const {data:savedId,error:saveError}=await supabaseClient.rpc('powerup_save_quote',{p_quote:payload,p_lines:state.lines.map(l=>({description:l.description.trim(),quantity:Number(l.quantity),unit_price:Number(l.unit_price)}))});
   if(saveError)throw saveError;
   currentQuoteId=savedId;$('puRef').value=ref;$('puConvert').disabled=$('puStatus').value!=='accepted'||!!currentQuoteJobId;
-  $('puMessage').textContent='Quote '+ref+' saved successfully.';await refreshQuotes();
+  $('puMessage').textContent='Quote '+ref+' saved successfully.';$('puQuotePreview').classList.add('hidden');$('puPrint').disabled=true;await refreshQuotes();
  }catch(e){$('puMessage').textContent='Save failed: '+e.message;}finally{button.disabled=false;}
 };
 $('puConvert').onclick=async()=>{if(!currentQuoteId||$('puStatus').value!=='accepted')return;if(!confirm('Create a Schedule Plus job from this accepted quote?'))return;try{const {data,error}=await supabaseClient.rpc('powerup_convert_quote_to_job',{p_quote_id:currentQuoteId});if(error)throw error;currentQuoteJobId=data;$('puConvert').disabled=true;$('puMessage').textContent='Job created. Open Jobs to schedule it.';}catch(e){$('puMessage').textContent='Job conversion failed: '+e.message;}};
