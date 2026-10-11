@@ -41,7 +41,7 @@
   async function claimPendingInvites(){try{return await invoke('claim-business-invite',{})}catch(err){console.warn('Could not claim Schedule+ invitation',err);return null}}
   async function loadContext(){
     const {data:{session}}=await supabaseClient.auth.getSession();const user=session?.user;if(!user){if(VANILLA_MODE)applyVanillaBranding();return false}
-    await claimPendingInvites();
+    state.pendingName=user.user_metadata?.pending_business_name||'';await claimPendingInvites();
     const {data,error}=await supabaseClient.from('business_users').select('business_id,role,is_active').eq('user_id',user.id).eq('is_active',true);if(error)return false;
     state.memberships=data||[];
     if(!state.memberships.length){state.business=null;state.membership=null;applyVanillaBranding();if(!requestedBusinessId)showCentralHub();else showAccessDenied();return false}
@@ -55,7 +55,7 @@
     const fresh=(await supabaseClient.auth.getUser()).data?.user;if(fresh?.user_metadata?.schedule_plus_invited&&!fresh?.user_metadata?.schedule_plus_password_set)showInvitePassword();
     return true
   }
-  window.SchedulePlusBusiness={get business(){return state.business},get membership(){return state.membership},get memberships(){return state.memberships},get requestedBusinessId(){return requestedBusinessId},get pendingName(){return ''},reload:loadContext};
+  window.SchedulePlusBusiness={get business(){return state.business},get membership(){return state.membership},get memberships(){return state.memberships},get requestedBusinessId(){return requestedBusinessId},get pendingName(){return state.pendingName||''},reload:loadContext};
   function showOnboarding(){ensureUi();const pending=(window.SchedulePlusBusiness?.pendingName||'');if(pending)document.getElementById('onboardingBusinessName').value=pending;const d=document.getElementById('businessOnboardingDialog');if(d&&!d.open)d.showModal()}
   function showInvitePassword(){ensureUi();const d=document.getElementById('invitePasswordDialog');if(d&&!d.open)d.showModal()}
   async function saveInvitePassword(e){e.preventDefault();const p=invitePassword.value,c=invitePasswordConfirm.value;if(p.length<6){invitePasswordMessage.textContent='Password must be at least 6 characters.';return}if(p!==c){invitePasswordMessage.textContent='Passwords do not match.';return}const btn=e.submitter;btn.disabled=true;btn.textContent='Saving…';const {error}=await supabaseClient.auth.updateUser({password:p,data:{schedule_plus_invited:true,schedule_plus_password_set:true}});btn.disabled=false;btn.textContent='Save password';if(error){invitePasswordMessage.textContent=error.message;return}invitePasswordDialog.close()}
