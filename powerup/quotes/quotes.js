@@ -28,8 +28,22 @@ const previewDialog=$('puPreviewDialog');const hidePreview=()=>{if(previewDialog
 const renderLines = () => {$('puLines').innerHTML=state.lines.map(lineRow).join('');const total=state.lines.reduce((a,l)=>a+Number(l.quantity||0)*Number(l.unit_price||0),0);$('puTotal').textContent='Total incl. GST: '+money(total);};
 $('puLines').addEventListener('input',e=>{const i=Number(e.target.dataset.line),field=e.target.dataset.field;if(!field)return;state.lines[i][field]=field==='description'?e.target.value:(e.target.value===''?'':Number(e.target.value));e.target.setAttribute('aria-invalid','false');e.target.closest('.pu-line')?.classList.remove('pu-line-invalid');const amount=e.target.closest('.pu-line')?.querySelector('.pu-line-amount strong');if(amount)amount.textContent=money(Number(state.lines[i].quantity||0)*Number(state.lines[i].unit_price||0));const total=state.lines.reduce((a,l)=>a+Number(l.quantity||0)*Number(l.unit_price||0),0);$('puTotal').textContent='Total incl. GST: '+money(total);$('puPrint').disabled=true;$('puQuotePreview').classList.add('hidden');});
 $('puLines').addEventListener('click',e=>{if(e.target.dataset.remove===undefined)return;state.lines.splice(Number(e.target.dataset.remove),1);renderLines();});
-$('puAdd').onclick=()=>{if(!requireCompleteLines())return;state.lines.push({description:'',quantity:1,unit_price:0});renderLines();};
-$('puPreset').onchange=e=>{if(e.target.value){if(!requireCompleteLines()){e.target.value='';return;}const item=catalogue.find(x=>x.id===e.target.value);state.lines.push({description:item?item.name:e.target.value,quantity:1,unit_price:item?Number(item.unit_price):0});}e.target.value='';renderLines();};
+function incompleteItemIndex(){return state.lines.findIndex(l=>invalidLine(l));}
+$('puAdd').onclick=()=>{
+ const existing=incompleteItemIndex();
+ if(existing!==-1){$('puMessage').textContent='Finish this item before adding another, or choose a quick item to fill it.';const row=root.querySelector(`[data-row="${existing}"]`);row?.classList.add('pu-line-invalid');row?.querySelector('[data-field="description"]')?.focus();return;}
+ state.lines.push({description:'',quantity:1,unit_price:0});renderLines();
+ $('puMessage').textContent='';$('puLines').querySelector('.pu-line:last-child [data-field="description"]')?.focus();
+};
+$('puPreset').onchange=e=>{
+ const value=e.target.value;if(!value)return;
+ const item=catalogue.find(x=>x.id===value);
+ const chosen={description:item?item.name:value,quantity:1,unit_price:item?Number(item.unit_price):0};
+ const existing=state.lines.findIndex(l=>!String(l.description||'').trim());
+ if(existing!==-1){state.lines[existing]={...state.lines[existing],...chosen};}
+ else {const incomplete=incompleteItemIndex();if(incomplete!==-1){$('puMessage').textContent='Complete the highlighted item before adding another.';markInvalidLines();e.target.value='';return;}state.lines.push(chosen);}
+ e.target.value='';renderLines();$('puMessage').textContent='';
+};
 $('puBack').onclick=()=>{const jobs=document.querySelector('.sp-nav-btn[data-sp-view="jobs"]');if(jobs)jobs.click();else document.querySelector('[data-view="jobs"]')?.click();};
 $('puPreviewBtn').onclick=()=>{
 const name=$('puName').value.trim(),email=$('puEmail').value.trim();
