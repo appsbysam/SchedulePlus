@@ -34,8 +34,22 @@
   }
 
 
+  function isPowerUpActive(){
+    const business=window.SchedulePlusBusiness?.business;
+    return location.pathname.toLowerCase().startsWith('/scheduleplus/powerup/') && !!business && business.slug==='powerup-group';
+  }
+  function syncPowerUpQuotesNav(){
+    const n=document.getElementById('spBottomNav');if(!n)return;
+    const existing=n.querySelector('[data-sp-view="quotes"]');
+    if(!isPowerUpActive()){
+      existing?.remove();
+      if(document.querySelector('.sp-view.active')?.dataset.spView==='quotes')showView('home');
+      return;
+    }
+    if(!existing)enablePowerUpQuotesNav(n);
+  }
   function enablePowerUpQuotesNav(n){
-    if(!location.pathname.toLowerCase().startsWith('/scheduleplus/powerup/'))return;
+    if(!isPowerUpActive())return;
     if(n.querySelector('[data-sp-view="quotes"]'))return;
     const b=document.createElement('button');b.className='sp-nav-btn';b.dataset.spView='quotes';b.type='button';
     b.innerHTML=ICONS.quotes+'<span>Quotes</span>';
@@ -45,6 +59,7 @@
   }
 
   async function enableJaycoEnquiriesNav(n){
+    if(location.pathname.toLowerCase().startsWith('/scheduleplus/powerup/'))return;
     try{
       const {data:{session}}=await supabaseClient.auth.getSession(); if(!session?.user)return;
       const {data}=await supabaseClient.from('business_users').select('business_id').eq('user_id',session.user.id).eq('business_id','9359127c-6929-4b2c-b25e-b9bd835d567c').eq('is_active',true).maybeSingle();
@@ -81,6 +96,7 @@
   function settingCard(icon,title,sub,id,cls){return `<button class="sp-setting-card" id="${id}" type="button"><span class="sp-setting-icon ${cls}">${ICONS[icon]}</span><span class="sp-setting-copy"><strong>${title}</strong><small>${sub}</small></span><span class="sp-chevron">›</span></button>`}
   function bindSettings(){const profile=document.getElementById('spProfileSettings');if(profile)profile.onclick=()=>showView('profile');const bind=(id,target)=>{const b=document.getElementById(id);if(b)b.onclick=()=>{const el=document.getElementById(target);if(el)el.click();else setTimeout(()=>document.getElementById(target)?.click(),150)}};bind('spBusinessSettings','businessSettingsBtn');bind('spConfig','businessConfigBtn');bind('spUsers','businessUsersBtn');bind('spWhatsNew','whatsNewBtn');bind('spUpdates','checkUpdatesBtn')}
   function showView(name){
+    if(name==='quotes'&&!isPowerUpActive())return;
     ensureViews();
     document.querySelectorAll('.sp-view').forEach(v=>{v.classList.remove('hidden');v.classList.toggle('active',v.dataset.spView===name)});
     document.querySelectorAll('.sp-nav-btn').forEach(b=>b.classList.toggle('active',b.dataset.spView===name));
@@ -104,6 +120,6 @@
   function enhanceCards(){document.querySelectorAll('.compact-job-card').forEach(card=>{const row=card.closest('.swipe-row'),id=row?.dataset.id;const all=Array.isArray(window.jobs)?window.jobs:(typeof jobs!=='undefined'?jobs:[]);const j=all.find(x=>String(x.id)===String(id));if(!j)return;const stat=card.querySelector('.compact-status');if(stat)stat.dataset.tone=toneFor(j)})}
   function decorateCalendar(){document.querySelectorAll('.month-day[data-date]').forEach(day=>{day.querySelector('.sp-cal-dots')?.remove();const all=Array.isArray(window.jobs)?window.jobs:(typeof jobs!=='undefined'?jobs:[]);const js=all.filter(j=>j.scheduled_date===day.dataset.date);if(!js.length)return;const d=document.createElement('span');d.className='sp-cal-dots';d.innerHTML=js.slice(0,4).map(j=>`<i class="sp-cal-dot ${toneFor(j)}"></i>`).join('');day.appendChild(d)})}
   function wrapRenderers(){if(typeof render==='function'&&!render.__spRedesign){const old=render;render=function(){old();setTimeout(()=>{enhanceCards();renderHome()},0)};render.__spRedesign=true}if(typeof renderCalendar==='function'&&!renderCalendar.__spRedesign){const oldc=renderCalendar;renderCalendar=function(){oldc();setTimeout(decorateCalendar,0)};renderCalendar.__spRedesign=true}}
-  function boot(){nav();ensureViews();renderProfile();renderHome();wrapRenderers();let n=0;const t=setInterval(()=>{n++;ensureViews();wrapRenderers();enhanceCards();decorateCalendar();bindSettings();if(n>35)clearInterval(t)},200)}
+  function boot(){nav();ensureViews();syncPowerUpQuotesNav();renderProfile();renderHome();wrapRenderers();let n=0;const t=setInterval(()=>{n++;ensureViews();syncPowerUpQuotesNav();wrapRenderers();enhanceCards();decorateCalendar();bindSettings();if(n>35)clearInterval(t)},200)}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
