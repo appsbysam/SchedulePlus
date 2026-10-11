@@ -15,7 +15,7 @@ const pinDialog = $('#pinDialog');
 const dayJobsDialog = $('#dayJobsDialog');
 
 const esc = s => String(s ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
-const labelStatus = s => ({new:'New',to_schedule:'To schedule',scheduled:'Scheduled',in_progress:'In progress',waiting:'Follow-Up',completed:'Completed'}[s] || s);
+const labelStatus = s => window.SchedulePlusStatusLabels?.label(s) || ({new:'New',to_schedule:'To schedule',scheduled:'Scheduled',in_progress:'In progress',waiting:'Follow-Up',completed:'Completed'}[s] || s);
 const pinKey = id => `schedule_plus_pin_${id}`;
 const legacyPinKey = id => `powerup_pin_${id}`;
 const getStoredPinHash = id => localStorage.getItem(pinKey(id)) || localStorage.getItem(legacyPinKey(id));
