@@ -22,8 +22,9 @@
 
   function install(){
     if(installed)return;const f=form(),dlg=dialog(),close=$('#closeJobBtn');if(!f||!dlg)return;installed=true;ensurePrompt();
-    // Date is the one universal minimum field, independent of optional configuration sections.
-    f.addEventListener('submit',e=>{const date=$('#scheduledDate');if(!date?.value){e.preventDefault();e.stopImmediatePropagation();saving=false;alert('Please enter a date before saving.');date?.focus();return}saving=true},true);
+    // Unscheduled jobs can be saved without a date. The main job form handles the
+    // Scheduled-without-date decision and offers Save for Later or Enter Date.
+    f.addEventListener('submit',()=>{saving=true},true);
     f.addEventListener('input',()=>{},true);f.addEventListener('change',()=>{},true);
     // Capture the populated form after New/Edit Job is opened.
     new MutationObserver(()=>{if(dlg.open&&!baseline)markClean()}).observe(dlg,{attributes:true,attributeFilter:['open']});
