@@ -209,7 +209,17 @@ document.querySelectorAll('.nav-item').forEach(b => b.onclick = () => {
 });
 
 async function loadJobs() {
-  const {data,error} = await supabaseClient.from('jobs').select('*').order('scheduled_date',{ascending:true,nullsFirst:false}).order('created_at',{ascending:false});
+  const businessId=await (async()=>{
+    const route=location.pathname.match(/\/SchedulePlus\/(jayco|powerup)(?:\/|$)/i)?.[1]?.toLowerCase();
+    const ids={jayco:'9359127c-6929-4b2c-b25e-b9bd835d567c',powerup:'5b170395-a2e2-4458-8765-472a6409391d'};
+    if(!route||!currentUser?.id)return null;
+    const id=ids[route];
+    const {data,error}=await supabaseClient.from('business_users').select('business_id').eq('user_id',currentUser.id).eq('business_id',id).eq('is_active',true).maybeSingle();
+    if(error)throw error;
+    return data?.business_id===id?id:null;
+  })();
+  if(!businessId){jobs=[];render();renderCalendar();return}
+  const {data,error} = await supabaseClient.from('jobs').select('*').eq('business_id',businessId).order('scheduled_date',{ascending:true,nullsFirst:false}).order('created_at',{ascending:false});
   if (error) {
     jobsList.innerHTML = `<div class="empty">${esc(error.message)}</div>`;
     return;
