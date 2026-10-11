@@ -28,7 +28,7 @@ const previewDialog=$('puPreviewDialog');const hidePreview=()=>{if(previewDialog
 const printSheet=document.createElement('div');printSheet.id='puPrintSheet';document.body.appendChild(printSheet);
 async function printQuotation(){const preview=$('puQuotePreview');if(!preview.innerHTML.trim()){ $('puMessage').textContent='Generate a preview before printing.';return;}printSheet.innerHTML=preview.innerHTML;const imgs=[...printSheet.querySelectorAll('img')];await Promise.all(imgs.map(img=>img.decode?.().catch(()=>{})||Promise.resolve()));window.print();}
 $('puClosePreview').onclick=hidePreview;$('puModalClose').onclick=hidePreview;$('puModalPrint').onclick=printQuotation;
-const renderLines = () => {$('puLines').innerHTML=state.lines.map(lineRow).join('');const total=state.lines.reduce((a,l)=>a+Number(l.quantity||0)*Number(l.unit_price||0),0);$('puTotal').textContent='Total incl. GST: '+money(total);};
+const renderLines = () => {$('puLines').innerHTML=state.lines.map(lineRow).join('');const total=state.lines.reduce((a,l)=>a+Number(l.quantity||0)*Number(l.unit_price||0),0);$('puTotal').textContent='Total: '+money(total);if(typeof renderWizard==='function')renderWizard();};
 $('puLines').addEventListener('input',e=>{const i=Number(e.target.dataset.line),field=e.target.dataset.field;if(!field)return;state.lines[i][field]=field==='description'?e.target.value:(e.target.value===''?'':Number(e.target.value));e.target.setAttribute('aria-invalid','false');e.target.closest('.pu-line')?.classList.remove('pu-line-invalid');const amount=e.target.closest('.pu-line')?.querySelector('.pu-line-amount strong');if(amount)amount.textContent=money(Number(state.lines[i].quantity||0)*Number(state.lines[i].unit_price||0));const total=state.lines.reduce((a,l)=>a+Number(l.quantity||0)*Number(l.unit_price||0),0);$('puTotal').textContent='Total incl. GST: '+money(total);$('puPrint').disabled=true;$('puQuotePreview').classList.remove('hidden');});
 $('puLines').addEventListener('click',e=>{if(e.target.dataset.remove===undefined)return;state.lines.splice(Number(e.target.dataset.remove),1);renderLines();});
 function incompleteItemIndex(){return state.lines.findIndex(l=>invalidLine(l));}
@@ -41,7 +41,7 @@ $('puAdd').onclick=()=>{
 $('puPreset').onchange=e=>{
  const value=e.target.value;if(!value)return;
  const item=catalogue.find(x=>x.id===value);
- const chosen={description:item?item.name:value,quantity:1,unit_price:item?Number(item.unit_price):0};
+ const chosen={description:item?[item.name,item.description].filter(Boolean).join(' — '):value,quantity:1,unit_price:item?Number(item.unit_price):0};
  const existing=state.lines.findIndex(l=>!String(l.description||'').trim());
  if(existing!==-1){state.lines[existing]={...state.lines[existing],...chosen};}
  else {const incomplete=incompleteItemIndex();if(incomplete!==-1){$('puMessage').textContent='Complete the highlighted item before adding another.';markInvalidLines();e.target.value='';return;}state.lines.push(chosen);}
@@ -55,13 +55,13 @@ if(email&&!$('puEmail').checkValidity()){$('puMessage').textContent='Check the c
 if(!requireCompleteLines())return;
 const total=state.lines.reduce((a,l)=>a+Number(l.quantity)*Number(l.unit_price),0);
 const businessLogo='https://appsbysam.github.io/SchedulePlus/powerup/assets/powerup-quote-logo-blk.png';const logoMarkup=businessLogo?'<img class="pu-quote-logo" src="'+safe(new URL(businessLogo,document.baseURI).href)+'" alt="Power Up Solar logo">':'<h1>POWER UP SOLAR</h1>';
-$('puQuotePreview').innerHTML=`${logoMarkup}<p>Quotation ${safe($('puRef').value||'Draft')} · ${safe(new Date().toLocaleDateString('en-AU'))}</p><hr><p><strong>Prepared for:</strong> ${safe(name)}<br>${safe(email)}<br>${safe($('puPhone').value)}<br>${safe($('puAddress').value)}</p><table><thead><tr><th>Description</th><th>Qty</th><th>Unit price</th><th>Amount</th></tr></thead><tbody>${state.lines.map(l=>`<tr><td>${safe(l.description)}</td><td>${safe(l.quantity)}</td><td>${money(l.unit_price)}</td><td>${money(l.quantity*l.unit_price)}</td></tr>`).join('')}</tbody></table><h2 style="text-align:right">Total (incl. GST): ${money(total)}</h2><p>GST component: ${money(total/11)}</p><p><strong>Valid until:</strong> ${safe($('puValid').value||'To be confirmed')}</p><p style="white-space:pre-wrap">${safe($('puNotes').value)}</p><hr><p>Power Up Solar · sales@powerup.sydney · powerup.sydney</p>`;
+$('puQuotePreview').innerHTML=`${logoMarkup}<p>Quotation ${safe($('puRef').value||'Draft')} · ${safe(new Date().toLocaleDateString('en-AU'))}</p><hr><p><strong>Prepared for:</strong> ${safe(name)}<br>${safe(email)}<br>${safe($('puPhone').value)}<br>${safe($('puAddress').value)}</p><table><thead><tr><th>Description</th><th>Qty</th><th>Unit price</th><th>Amount</th></tr></thead><tbody>${state.lines.map(l=>`<tr><td>${safe(l.description)}</td><td>${safe(l.quantity)}</td><td>${money(l.unit_price)}</td><td>${money(l.quantity*l.unit_price)}</td></tr>`).join('')}</tbody></table><h2 style="text-align:right">Total: ${money(total)}</h2><p>GST ${gstEnabled?'10% included: '+money(total/11):'not applicable'}</p><p><strong>Valid until:</strong> ${safe($('puValid').value||'To be confirmed')}</p><p style="white-space:pre-wrap">${safe($('puNotes').value)}</p><hr><p>Power Up Solar · sales@powerup.sydney · powerup.sydney</p>`;
 $('puPrint').disabled=false;$('puMessage').textContent='Preview ready. Review the quotation before printing or saving as PDF.';$('puQuotePreview').classList.remove('hidden');if(!previewDialog.open)previewDialog.showModal();
 };
 $('puPrint').onclick=()=>{if(!previewDialog.open)previewDialog.showModal();};
 
 const PU_BUSINESS_SLUG='powerup-group';
-let catalogue=[];
+let catalogue=[];let gstEnabled=true;
 const basePresets=['Solar panels','Hybrid inverter','Battery storage','Installation labour','Switchboard upgrade'];
 let currentQuoteId=null;let currentQuoteJobId=null;let allQuotes=[];let lastSavedSnapshot=null;let archivedQuotesView=false;let currentQuoteArchived=false;let currentQuoteReadonly=false;let canDeleteQuotes=false;
 async function getBusiness(){
@@ -76,7 +76,7 @@ async function getBusiness(){
 async function refreshCatalogue(){
  try{
   const {business_id}=await getBusiness();
-  const {data,error}=await supabaseClient.from('powerup_quote_items_catalog').select('id,name,unit_price').eq('business_id',business_id).eq('active',true).order('name');
+  const {data,error}=await supabaseClient.from('powerup_quote_items_catalog').select('id,name,description,unit_price').eq('business_id',business_id).eq('active',true).order('name');
   if(error)throw error;
   catalogue=data||[];
   const {role}=await getBusiness();$('puCataloguePanel').hidden=!['owner','admin'].includes(role);
@@ -90,10 +90,10 @@ $('puCatalogList').onclick=async e=>{const id=e.target.dataset.deactivate;if(!id
 async function prepareQuoteDefaults(){const date=new Date();date.setDate(date.getDate()+14);$('puValid').value=[date.getFullYear(),String(date.getMonth()+1).padStart(2,'0'),String(date.getDate()).padStart(2,'0')].join('-');$('puRef').value='Loading next number…';try{const {data,error}=await supabaseClient.rpc('powerup_next_quote_reference');if(error)throw error;$('puRef').value=data||'Assigned on save';}catch(e){$('puRef').value='Assigned on save';$('puMessage').textContent='Quote number will be assigned when saved.';}}
 $('puDuplicate').onclick=()=>{if(!currentQuoteId){$('puMessage').textContent='Open a saved quote before duplicating.';return;}currentQuoteId=null;currentQuoteJobId=null;lastSavedSnapshot=null;$('puRef').readOnly=false;$('puRef').value='';prepareQuoteDefaults();$('puStatus').value='draft';$('puConvert').disabled=true;hidePreview();$('puMessage').textContent='Duplicate ready. Save to create a new quote.';};
 $('puNew').onclick=()=>{
- currentQuoteId=null;currentQuoteJobId=null;currentQuoteArchived=false;currentQuoteReadonly=false;applyQuoteAccess();$('puRef').readOnly=false;$('puConvert').disabled=true;state.lines=[{description:'',quantity:1,unit_price:0}];
+ gstEnabled=true;currentQuoteId=null;currentQuoteJobId=null;currentQuoteArchived=false;currentQuoteReadonly=false;applyQuoteAccess();$('puRef').readOnly=false;$('puConvert').disabled=true;state.lines=[{description:'',quantity:1,unit_price:0}];
  ['puName','puEmail','puPhone','puAddress','puRef','puValid','puNotes'].forEach(id=>$(id).value='');
  $('puStatus').value='draft';$('puQuotePreview').classList.remove('hidden');$('puPrint').disabled=true;
- renderLines();prepareQuoteDefaults();$('puMessage').textContent='New quote ready.';
+ renderLines();prepareQuoteDefaults().then(()=>renderWizard());$('puMessage').textContent='New quote ready.';wizardPage('main');
 };
 function quoteIsArchived(q){return !!(q.job_id||q.archived_at);}
 function applyQuoteAccess(){
@@ -151,10 +151,10 @@ $('puSavedQuotes').addEventListener('click',async e=>{
   const {data:lines,error:lineError}=await supabaseClient.from('powerup_quote_lines').select('description,quantity,unit_price').eq('quote_id',id).order('sort_order');
   if(lineError)throw lineError;
   $('puQuotePreview').classList.remove('hidden');$('puPrint').disabled=true;
-  currentQuoteId=q.id;currentQuoteJobId=q.job_id||null;currentQuoteArchived=!!q.archived_at;currentQuoteReadonly=!!(q.job_id||q.archived_at);lastSavedSnapshot=JSON.stringify({name:q.customer_name,email:q.customer_email||'',phone:q.customer_phone||'',address:q.site_address||'',ref:q.quote_number,valid:q.valid_until||'',notes:q.notes||'',status:q.status,lines:(lines||[]).map(l=>({description:l.description,quantity:Number(l.quantity),unit_price:Number(l.unit_price)}))});$('puRef').readOnly=true;$('puConvert').disabled=q.status!=='accepted'||!!q.job_id;
+  gstEnabled=q.gst_included!==false;currentQuoteId=q.id;currentQuoteJobId=q.job_id||null;currentQuoteArchived=!!q.archived_at;currentQuoteReadonly=!!(q.job_id||q.archived_at);lastSavedSnapshot=JSON.stringify({gst:gstEnabled,name:q.customer_name,email:q.customer_email||'',phone:q.customer_phone||'',address:q.site_address||'',ref:q.quote_number,valid:q.valid_until||'',notes:q.notes||'',status:q.status,lines:(lines||[]).map(l=>({description:l.description,quantity:Number(l.quantity),unit_price:Number(l.unit_price)}))});$('puRef').readOnly=true;$('puConvert').disabled=q.status!=='accepted'||!!q.job_id;
   $('puName').value=q.customer_name||'';$('puEmail').value=q.customer_email||'';$('puPhone').value=q.customer_phone||'';$('puAddress').value=q.site_address||'';$('puRef').value=q.quote_number||'';$('puValid').value=q.valid_until||'';$('puNotes').value=q.notes||'';$('puStatus').value=q.status||'draft';
   state.lines=(lines||[]).map(l=>({description:l.description,quantity:Number(l.quantity),unit_price:Number(l.unit_price)}));renderLines();applyQuoteAccess();
-  $('puMessage').textContent='Loaded '+q.quote_number;switchQuoteTab('editor');
+  $('puMessage').textContent='Loaded '+q.quote_number;switchQuoteTab('editor');wizardPage('main');
  }catch(e){$('puMessage').textContent='Unable to open quote: '+e.message;}
 });
 $('puSave').onclick=async()=>{
@@ -166,18 +166,18 @@ $('puSave').onclick=async()=>{
   if(!requireCompleteLines())throw new Error('Complete highlighted quote items.');
   const id=currentQuoteId||crypto.randomUUID();
   const ref=$('puRef').value.trim()||('PU-'+id.slice(0,8).toUpperCase());
-  const payload={id,business_id,quote_number:ref,status:$('puStatus').value,customer_name:$('puName').value.trim(),customer_email:$('puEmail').value.trim()||null,customer_phone:$('puPhone').value.trim()||null,site_address:$('puAddress').value.trim()||null,notes:$('puNotes').value.trim(),valid_until:$('puValid').value||null,gst_included:true};
+  const payload={id,business_id,quote_number:ref,status:$('puStatus').value,customer_name:$('puName').value.trim(),customer_email:$('puEmail').value.trim()||null,customer_phone:$('puPhone').value.trim()||null,site_address:$('puAddress').value.trim()||null,notes:$('puNotes').value.trim(),valid_until:$('puValid').value||null,gst_included:gstEnabled};
   const {data:savedId,error:saveError}=await supabaseClient.rpc('powerup_save_quote',{p_quote:payload,p_lines:state.lines.map(l=>({description:l.description.trim(),quantity:Number(l.quantity),unit_price:Number(l.unit_price)}))});
   if(saveError)throw saveError;
   const {data:savedQuote,error:refError}=await supabaseClient.from('powerup_quotes').select('quote_number').eq('id',savedId).single();if(refError)throw refError;
-  currentQuoteId=savedId;$('puRef').value=savedQuote.quote_number;lastSavedSnapshot=JSON.stringify({name:$('puName').value.trim(),email:$('puEmail').value.trim(),phone:$('puPhone').value.trim(),address:$('puAddress').value.trim(),ref:savedQuote.quote_number,valid:$('puValid').value,notes:$('puNotes').value.trim(),status:$('puStatus').value,lines:state.lines.map(l=>({...l}))});$('puRef').readOnly=true;$('puConvert').disabled=$('puStatus').value!=='accepted'||!!currentQuoteJobId;
+  currentQuoteId=savedId;$('puRef').value=savedQuote.quote_number;lastSavedSnapshot=JSON.stringify({gst:gstEnabled,name:$('puName').value.trim(),email:$('puEmail').value.trim(),phone:$('puPhone').value.trim(),address:$('puAddress').value.trim(),ref:savedQuote.quote_number,valid:$('puValid').value,notes:$('puNotes').value.trim(),status:$('puStatus').value,lines:state.lines.map(l=>({...l}))});$('puRef').readOnly=true;$('puConvert').disabled=$('puStatus').value!=='accepted'||!!currentQuoteJobId;
   $('puMessage').textContent='Quote '+savedQuote.quote_number+' saved successfully.';$('puQuotePreview').classList.remove('hidden');$('puPrint').disabled=true;await refreshQuotes();
  return true;}catch(e){$('puMessage').textContent='Save failed: '+e.message;return false;}finally{button.disabled=false;}
 };
 $('puConvert').onclick=async()=>{if($('puStatus').value!=='accepted'||currentQuoteJobId)return;if(!confirm('Save this accepted quote and create a Schedule+ job?'))return;const btn=$('puConvert');btn.disabled=true;try{if(!currentQuoteId||!lastSavedSnapshot||currentSnapshot()!==lastSavedSnapshot){const saved=await $('puSave').onclick();if(!saved)throw Error('Quote could not be saved. Correct the highlighted fields and try again.');}if(!currentQuoteId)throw Error('Save the quotation before converting.');const {data,error}=await supabaseClient.rpc('powerup_convert_quote_to_job',{p_quote_id:currentQuoteId});if(error)throw error;currentQuoteJobId=data;currentQuoteReadonly=true;currentQuoteArchived=true;btn.disabled=true;await refreshQuotes();$('puMessage').textContent='Job created successfully. Opening job details…';document.dispatchEvent(new CustomEvent('powerup:open-converted-job',{detail:{jobId:data}}));}catch(e){$('puMessage').textContent='Conversion stopped: '+e.message;btn.disabled=!!currentQuoteJobId;} };
 $('puStatus').onchange=()=>{$('puConvert').disabled=$('puStatus').value!=='accepted'||!!currentQuoteJobId;};
 
-function currentSnapshot(){return JSON.stringify({name:$('puName').value.trim(),email:$('puEmail').value.trim(),phone:$('puPhone').value.trim(),address:$('puAddress').value.trim(),ref:$('puRef').value.trim(),valid:$('puValid').value,notes:$('puNotes').value.trim(),status:$('puStatus').value,lines:state.lines.map(l=>({...l}))});}
+function currentSnapshot(){return JSON.stringify({gst:gstEnabled,name:$('puName').value.trim(),email:$('puEmail').value.trim(),phone:$('puPhone').value.trim(),address:$('puAddress').value.trim(),ref:$('puRef').value.trim(),valid:$('puValid').value,notes:$('puNotes').value.trim(),status:$('puStatus').value,lines:state.lines.map(l=>({...l}))});}
 $('puSendEmail').onclick=async()=>{
  const btn=$('puSendEmail'),message=$('puMessage');
  let started=false,success=false;
@@ -240,6 +240,78 @@ $('puSendEmail').onclick=async()=>{
  list.addEventListener('click',e=>{const btn=e.target.closest('[data-pu-place]');if(btn)choose(Number(btn.dataset.puPlace));});
  document.addEventListener('pointerdown',e=>{if(!e.target.closest('#puAddressSuggestions')&&e.target!==input)hide();});
 })();
+
+
+/* Mobile-first quote workflow; existing save, email, PDF and conversion handlers remain authoritative. */
+const wizard=document.createElement('section');wizard.id='puWizard';wizard.className='pu-wizard';
+root.querySelector('[data-pu-panel="editor"]').prepend(wizard);
+let wizardStep='main',editingItem=-1;
+function splitItemDescription(value){
+ const parts=String(value||'').split(' — ');return {name:parts.shift()||'',details:parts.join(' — ')};
+}
+function wizardTotals(){const total=state.lines.reduce((sum,l)=>sum+Number(l.quantity||0)*Number(l.unit_price||0),0);return {total,gst:gstEnabled?total/11:0};}
+function renderWizard(){
+ if(!wizard.isConnected)return;
+ const {total,gst}=wizardTotals();
+ const reference=$('puRef').value||'New quote';
+ const summary=state.lines.filter(l=>String(l.description||'').trim());
+ const client=$('puName').value.trim();
+ const readonly=currentQuoteReadonly;
+ const title=wizardStep==='main'?'Quote '+safe(reference):wizardStep==='client'?'Add client':'Add item';
+ const top='<div class="pu-wizard-head"><button type="button" data-wiz="back" aria-label="Back">←</button><strong>'+title+'</strong><button type="button" data-wiz="savequote" '+(readonly?'disabled':'')+'>Save</button></div>';
+ if(wizardStep==='main'){
+ wizard.innerHTML=top+'<div class="pu-wiz-main"><p class="pu-wiz-date">'+new Date().toLocaleDateString('en-AU',{day:'numeric',month:'short',year:'numeric'})+'</p><h2>Quote '+safe(reference)+'</h2><div class="pu-wiz-label">BILL TO</div><button class="pu-wiz-tile" type="button" data-wiz="client">◉ &nbsp; '+(client?safe(client):'Add client')+' <span>›</span></button><div class="pu-wiz-label">ITEMS</div><button class="pu-wiz-tile" type="button" data-wiz="add">⊕ &nbsp; Add items <span>›</span></button><div class="pu-wiz-cards">'+summary.map((l,i)=>{const part=splitItemDescription(l.description);return '<button type="button" class="pu-wiz-item-card" data-wiz-item="'+i+'"><strong>'+safe(part.name)+'</strong><small>'+safe(part.details)+'</small><span>'+safe(l.quantity)+' × '+money(l.unit_price)+' &nbsp; <b>'+money(Number(l.quantity)*Number(l.unit_price))+'</b></span></button>';}).join('')+'</div><div class="pu-wiz-gst"><span><strong>GST 10%</strong><small>Applies to the entire quote</small></span><button type="button" role="switch" aria-checked="'+gstEnabled+'" class="pu-wiz-switch '+(gstEnabled?'is-on':'')+'" data-wiz="gst" '+(readonly?'disabled':'')+'><span></span></button></div><div class="pu-wiz-money"><div><span>Subtotal</span><strong>'+money(total-gst)+'</strong></div><div><span>GST</span><strong>'+money(gst)+'</strong></div><div class="pu-wiz-grand"><span>Total</span><strong>'+money(total)+'</strong></div></div><div class="pu-wiz-footer"><button type="button" data-wiz="client">Client details</button><button type="button" data-wiz="add" '+(readonly?'disabled':'')+'>+ Add item</button></div><div class="pu-wiz-tools"><button type="button" data-wiz="preview">Preview / PDF</button><button type="button" data-wiz="actions">More quote actions</button></div></div>';
+ }else if(wizardStep==='client'){
+ wizard.innerHTML=top+'<div class="pu-wiz-form"><label>Customer name<input id="wizName" value="'+safe($('puName').value)+'" '+(readonly?'disabled':'')+'></label><label>Email<input id="wizEmail" type="email" value="'+safe($('puEmail').value)+'" '+(readonly?'disabled':'')+'></label><label>Phone<input id="wizPhone" type="tel" value="'+safe($('puPhone').value)+'" '+(readonly?'disabled':'')+'></label><label>Site address<input id="wizAddress" value="'+safe($('puAddress').value)+'" placeholder="Start typing an NSW address" '+(readonly?'disabled':'')+'></label><div id="wizAddressSuggestions" class="pu-address-suggestions"></div><label>Valid until<input id="wizValid" type="date" value="'+safe($('puValid').value)+'" '+(readonly?'disabled':'')+'></label><button class="pu-wiz-next" type="button" data-wiz="clientnext">Next → Add items</button></div>';
+ }else{
+ const l=editingItem>=0?state.lines[editingItem]:{description:'',quantity:1,unit_price:0};const part=splitItemDescription(l.description);
+ wizard.innerHTML=top+'<div class="pu-wiz-form"><label>Item name<input id="wizItemName" list="wizItemOptions" placeholder="Enter or select an item" value="'+safe(part.name)+'" '+(readonly?'disabled':'')+'><small>Type a new item or select from your catalogue</small></label><datalist id="wizItemOptions">'+catalogue.map(x=>'<option value="'+safe(x.name)+'"></option>').join('')+'</datalist><label>Item description<textarea id="wizItemDetails" rows="4" placeholder="Enter item description" '+(readonly?'disabled':'')+'>'+safe(part.details)+'</textarea></label><label>Rate ($, '+(gstEnabled?'incl. GST':'no GST')+')<input id="wizItemRate" type="number" min="0" step="0.01" value="'+safe(l.unit_price)+'" '+(readonly?'disabled':'')+'></label><label>Quantity<input id="wizItemQty" type="number" min="0.001" step="any" value="'+safe(l.quantity)+'" '+(readonly?'disabled':'')+'></label><button class="pu-wiz-next" type="button" data-wiz="saveitem" '+(readonly?'disabled':'')+'>Save item</button>'+(editingItem>=0&&!readonly?'<button type="button" data-wiz="removeitem">Remove item</button>':'')+'</div>';
+ }
+}
+function wizardPage(step,index=-1){wizardStep=step;editingItem=index;renderWizard();wizard.scrollIntoView({block:'start'});}
+function syncWizardClient(){
+ const fields={wizName:'puName',wizEmail:'puEmail',wizPhone:'puPhone',wizAddress:'puAddress',wizValid:'puValid'};
+ Object.entries(fields).forEach(([source,dest])=>{if($(source))$(dest).value=$(source).value;});
+}
+wizard.addEventListener('input',e=>{
+ if(wizardStep==='client')syncWizardClient();
+ if(e.target.id==='wizItemName'){
+ const item=catalogue.find(x=>x.name.toLowerCase()===e.target.value.trim().toLowerCase());
+ if(item){$('wizItemDetails').value=item.description||'';$('wizItemRate').value=Number(item.unit_price);}
+ }
+});
+wizard.addEventListener('click',async e=>{
+ const btn=e.target.closest('[data-wiz],[data-wiz-item]');if(!btn)return;
+ if(btn.hasAttribute('data-wiz-item')){wizardPage('item',Number(btn.dataset.wizItem));return;}
+ const action=btn.dataset.wiz;
+ if(action==='back'){if(wizardStep==='main')switchQuoteTab('list');else wizardPage('main');}
+ if(action==='client')wizardPage('client');
+ if(action==='add')wizardPage('item');
+ if(action==='gst'){gstEnabled=!gstEnabled;renderWizard();$('puPrint').disabled=true;}
+ if(action==='clientnext'){syncWizardClient();if(!$('puName').value.trim()){alert('Enter a customer name.');return;}if($('puEmail').value&&!$('puEmail').checkValidity()){alert('Enter a valid email.');return;}wizardPage('item');}
+ if(action==='saveitem'){
+  const name=$('wizItemName').value.trim(),details=$('wizItemDetails').value.trim(),qty=Number($('wizItemQty').value),rate=Number($('wizItemRate').value);
+  if(!name||!Number.isFinite(qty)||qty<=0||!Number.isFinite(rate)||rate<0||$('wizItemRate').value===''){alert('Enter an item name, a valid rate and a quantity greater than zero.');return;}
+  const line={description:[name,details].filter(Boolean).join(' — '),quantity:qty,unit_price:rate};
+  if(editingItem>=0)state.lines[editingItem]=line;
+  else if(state.lines.length===1&&!state.lines[0].description.trim())state.lines[0]=line;
+  else state.lines.push(line);
+  renderLines();wizardPage('main');
+ }
+ if(action==='removeitem'){if(confirm('Remove this item?')){state.lines.splice(editingItem,1);if(!state.lines.length)state.lines.push({description:'',quantity:1,unit_price:0});renderLines();wizardPage('main');}}
+ if(action==='preview')$('puPreviewBtn').click();
+ if(action==='savequote'){$('puSave').click();}
+ if(action==='actions'){$('puLegacyActions').hidden=!$('puLegacyActions').hidden;}
+});
+$('puRef').addEventListener('change',renderWizard);
+const legacyEditor=root.querySelector('[data-pu-panel="editor"]');
+const actions=$('puPreviewBtn').closest('.pu-actions');actions.id='puLegacyActions';actions.hidden=true;
+const legacyPanels=[...legacyEditor.children].filter(el=>el!==wizard&&el!==actions&&el.id!=='puMessage'&&el.id!=='puPreviewDialog');
+legacyPanels.forEach(el=>el.classList.add('pu-wiz-legacy'));
+const legacyMessage=$('puMessage');wizard.after(legacyMessage);
+const legacyActionsButton=$('puLegacyActions');
+const originalNew=$('puNew').onclick;$('puNew').onclick=()=>{originalNew();legacyActionsButton.hidden=true;wizardPage('main');};
+renderWizard();
 
 document.getElementById("puQuotesNav")?.addEventListener("click",()=>{refreshQuotes();refreshCatalogue();});
 document.addEventListener("powerup:quotes-open",()=>{switchQuoteTab('list');refreshQuotes();refreshCatalogue();});
