@@ -82,20 +82,16 @@ $('puSavedQuotes').addEventListener('click',async e=>{
 $('puSave').onclick=async()=>{
  const button=$('puSave');button.disabled=true;
  try{
-  const {business_id,user_id}=await getBusiness();
+  const {business_id}=await getBusiness();
   if(!$('puName').value.trim())throw new Error('Customer name is required.');
   if($('puEmail').value&&!$('puEmail').checkValidity())throw new Error('Enter a valid email.');
   if(!state.lines.length||state.lines.some(l=>!l.description.trim()||!(Number(l.quantity)>0)||!(Number(l.unit_price)>=0)))throw new Error('Check quote items and prices.');
   const id=currentQuoteId||crypto.randomUUID();
   const ref=$('puRef').value.trim()||('PU-'+id.slice(0,8).toUpperCase());
   const payload={id,business_id,quote_number:ref,status:$('puStatus').value,customer_name:$('puName').value.trim(),customer_email:$('puEmail').value.trim()||null,customer_phone:$('puPhone').value.trim()||null,site_address:$('puAddress').value.trim()||null,notes:$('puNotes').value.trim(),valid_until:$('puValid').value||null,gst_included:true};
-  if(!currentQuoteId)payload.created_by=user_id;
-  const {error}=currentQuoteId ? await supabaseClient.from('powerup_quotes').update(payload).eq('id',currentQuoteId) : await supabaseClient.from('powerup_quotes').insert(payload);
-  if(error)throw error;
-  currentQuoteId=id;$('puRef').value=ref;
-  const {error:delError}=await supabaseClient.from('powerup_quote_lines').delete().eq('quote_id',id);if(delError)throw delError;
-  const {error:lineError}=await supabaseClient.from('powerup_quote_lines').insert(state.lines.map((l,i)=>({quote_id:id,description:l.description.trim(),quantity:Number(l.quantity),unit_price:Number(l.unit_price),sort_order:i})));
-  if(lineError)throw lineError;
+  const {data:savedId,error:saveError}=await supabaseClient.rpc('powerup_save_quote',{p_quote:payload,p_lines:state.lines.map(l=>({description:l.description.trim(),quantity:Number(l.quantity),unit_price:Number(l.unit_price)}))});
+  if(saveError)throw saveError;
+  currentQuoteId=savedId;$('puRef').value=ref;
   $('puMessage').textContent='Quote '+ref+' saved successfully.';await refreshQuotes();
  }catch(e){$('puMessage').textContent='Save failed: '+e.message;}finally{button.disabled=false;}
 };
