@@ -24,9 +24,12 @@ const switchQuoteTab = name => {
 root.querySelectorAll('[data-pu-tab]').forEach(tab=>tab.addEventListener('click',()=>switchQuoteTab(tab.dataset.puTab)));
 $('puListNew').onclick=()=>{$('puNew').click();switchQuoteTab('editor');};
 switchQuoteTab('list');
-const previewDialog=$('puPreviewDialog');const hidePreview=()=>{if(previewDialog.open)previewDialog.close();$('puPrint').disabled=true;};$('puClosePreview').onclick=hidePreview;$('puModalClose').onclick=hidePreview;$('puModalPrint').onclick=()=>window.print();
+const previewDialog=$('puPreviewDialog');const hidePreview=()=>{if(previewDialog.open)previewDialog.close();$('puPrint').disabled=true;};
+const printSheet=document.createElement('div');printSheet.id='puPrintSheet';document.body.appendChild(printSheet);
+function printQuotation(){const preview=$('puQuotePreview');if(!preview.innerHTML.trim()){ $('puMessage').textContent='Generate a preview before printing.';return;}printSheet.innerHTML=preview.innerHTML;window.print();}
+$('puClosePreview').onclick=hidePreview;$('puModalClose').onclick=hidePreview;$('puModalPrint').onclick=printQuotation;
 const renderLines = () => {$('puLines').innerHTML=state.lines.map(lineRow).join('');const total=state.lines.reduce((a,l)=>a+Number(l.quantity||0)*Number(l.unit_price||0),0);$('puTotal').textContent='Total incl. GST: '+money(total);};
-$('puLines').addEventListener('input',e=>{const i=Number(e.target.dataset.line),field=e.target.dataset.field;if(!field)return;state.lines[i][field]=field==='description'?e.target.value:(e.target.value===''?'':Number(e.target.value));e.target.setAttribute('aria-invalid','false');e.target.closest('.pu-line')?.classList.remove('pu-line-invalid');const amount=e.target.closest('.pu-line')?.querySelector('.pu-line-amount strong');if(amount)amount.textContent=money(Number(state.lines[i].quantity||0)*Number(state.lines[i].unit_price||0));const total=state.lines.reduce((a,l)=>a+Number(l.quantity||0)*Number(l.unit_price||0),0);$('puTotal').textContent='Total incl. GST: '+money(total);$('puPrint').disabled=true;$('puQuotePreview').classList.add('hidden');});
+$('puLines').addEventListener('input',e=>{const i=Number(e.target.dataset.line),field=e.target.dataset.field;if(!field)return;state.lines[i][field]=field==='description'?e.target.value:(e.target.value===''?'':Number(e.target.value));e.target.setAttribute('aria-invalid','false');e.target.closest('.pu-line')?.classList.remove('pu-line-invalid');const amount=e.target.closest('.pu-line')?.querySelector('.pu-line-amount strong');if(amount)amount.textContent=money(Number(state.lines[i].quantity||0)*Number(state.lines[i].unit_price||0));const total=state.lines.reduce((a,l)=>a+Number(l.quantity||0)*Number(l.unit_price||0),0);$('puTotal').textContent='Total incl. GST: '+money(total);$('puPrint').disabled=true;$('puQuotePreview').classList.remove('hidden');});
 $('puLines').addEventListener('click',e=>{if(e.target.dataset.remove===undefined)return;state.lines.splice(Number(e.target.dataset.remove),1);renderLines();});
 function incompleteItemIndex(){return state.lines.findIndex(l=>invalidLine(l));}
 $('puAdd').onclick=()=>{
@@ -52,7 +55,7 @@ if(email&&!$('puEmail').checkValidity()){$('puMessage').textContent='Check the c
 if(!requireCompleteLines())return;
 const total=state.lines.reduce((a,l)=>a+Number(l.quantity)*Number(l.unit_price),0);
 $('puQuotePreview').innerHTML=`<h1>POWER UP SOLAR</h1><p>Quotation ${safe($('puRef').value||'Draft')} · ${safe(new Date().toLocaleDateString('en-AU'))}</p><hr><p><strong>Prepared for:</strong> ${safe(name)}<br>${safe(email)}<br>${safe($('puPhone').value)}<br>${safe($('puAddress').value)}</p><table><thead><tr><th>Description</th><th>Qty</th><th>Unit price</th><th>Amount</th></tr></thead><tbody>${state.lines.map(l=>`<tr><td>${safe(l.description)}</td><td>${safe(l.quantity)}</td><td>${money(l.unit_price)}</td><td>${money(l.quantity*l.unit_price)}</td></tr>`).join('')}</tbody></table><h2 style="text-align:right">Total (incl. GST): ${money(total)}</h2><p>GST component: ${money(total/11)}</p><p><strong>Valid until:</strong> ${safe($('puValid').value||'To be confirmed')}</p><p style="white-space:pre-wrap">${safe($('puNotes').value)}</p><hr><p>Power Up Solar · sales@powerup.sydney · powerup.sydney</p>`;
-$('puPrint').disabled=false;$('puMessage').textContent='Preview ready. Review the quotation before printing or saving as PDF.';if(!previewDialog.open)previewDialog.showModal();
+$('puPrint').disabled=false;$('puMessage').textContent='Preview ready. Review the quotation before printing or saving as PDF.';$('puQuotePreview').classList.remove('hidden');if(!previewDialog.open)previewDialog.showModal();
 };
 $('puPrint').onclick=()=>{if(!previewDialog.open)previewDialog.showModal();};
 
@@ -88,7 +91,7 @@ $('puDuplicate').onclick=()=>{if(!currentQuoteId){$('puMessage').textContent='Op
 $('puNew').onclick=()=>{
  currentQuoteId=null;currentQuoteJobId=null;$('puRef').readOnly=false;$('puConvert').disabled=true;state.lines=[{description:'',quantity:1,unit_price:0}];
  ['puName','puEmail','puPhone','puAddress','puRef','puValid','puNotes'].forEach(id=>$(id).value='');
- $('puStatus').value='draft';$('puQuotePreview').classList.add('hidden');$('puPrint').disabled=true;
+ $('puStatus').value='draft';$('puQuotePreview').classList.remove('hidden');$('puPrint').disabled=true;
  renderLines();prepareQuoteDefaults();$('puMessage').textContent='New quote ready.';
 };
 function showQuotes(){const q=$('puQuoteSearch').value.toLowerCase().trim(),status=$('puQuoteFilter').value;const rows=allQuotes.filter(x=>(!status||x.status===status)&&(!q||(x.customer_name+' '+x.quote_number).toLowerCase().includes(q)));$('puSavedQuotes').innerHTML='<h3>Saved quotes ('+rows.length+')</h3>'+(rows.length?rows.map(x=>'<button type="button" class="pu-saved" data-quote-id="'+safe(x.id)+'">'+safe(x.quote_number)+' · '+safe(x.customer_name)+' · '+safe(x.status)+'</button>').join(''):'<p>No matching quotes.</p>');}
@@ -108,7 +111,7 @@ $('puSavedQuotes').addEventListener('click',async e=>{
   const {data:q,error}=await supabaseClient.from('powerup_quotes').select('*').eq('id',id).single();if(error)throw error;
   const {data:lines,error:lineError}=await supabaseClient.from('powerup_quote_lines').select('description,quantity,unit_price').eq('quote_id',id).order('sort_order');
   if(lineError)throw lineError;
-  $('puQuotePreview').classList.add('hidden');$('puPrint').disabled=true;
+  $('puQuotePreview').classList.remove('hidden');$('puPrint').disabled=true;
   currentQuoteId=q.id;currentQuoteJobId=q.job_id||null;lastSavedSnapshot=JSON.stringify({name:q.customer_name,email:q.customer_email||'',phone:q.customer_phone||'',address:q.site_address||'',ref:q.quote_number,valid:q.valid_until||'',notes:q.notes||'',status:q.status,lines:(lines||[]).map(l=>({description:l.description,quantity:Number(l.quantity),unit_price:Number(l.unit_price)}))});$('puRef').readOnly=true;$('puConvert').disabled=q.status!=='accepted'||!!q.job_id;
   $('puName').value=q.customer_name||'';$('puEmail').value=q.customer_email||'';$('puPhone').value=q.customer_phone||'';$('puAddress').value=q.site_address||'';$('puRef').value=q.quote_number||'';$('puValid').value=q.valid_until||'';$('puNotes').value=q.notes||'';$('puStatus').value=q.status||'draft';
   state.lines=(lines||[]).map(l=>({description:l.description,quantity:Number(l.quantity),unit_price:Number(l.unit_price)}));renderLines();
@@ -129,7 +132,7 @@ $('puSave').onclick=async()=>{
   if(saveError)throw saveError;
   const {data:savedQuote,error:refError}=await supabaseClient.from('powerup_quotes').select('quote_number').eq('id',savedId).single();if(refError)throw refError;
   currentQuoteId=savedId;$('puRef').value=savedQuote.quote_number;lastSavedSnapshot=JSON.stringify({name:$('puName').value.trim(),email:$('puEmail').value.trim(),phone:$('puPhone').value.trim(),address:$('puAddress').value.trim(),ref:savedQuote.quote_number,valid:$('puValid').value,notes:$('puNotes').value.trim(),status:$('puStatus').value,lines:state.lines.map(l=>({...l}))});$('puRef').readOnly=true;$('puConvert').disabled=$('puStatus').value!=='accepted'||!!currentQuoteJobId;
-  $('puMessage').textContent='Quote '+savedQuote.quote_number+' saved successfully.';$('puQuotePreview').classList.add('hidden');$('puPrint').disabled=true;await refreshQuotes();
+  $('puMessage').textContent='Quote '+savedQuote.quote_number+' saved successfully.';$('puQuotePreview').classList.remove('hidden');$('puPrint').disabled=true;await refreshQuotes();
  return true;}catch(e){$('puMessage').textContent='Save failed: '+e.message;return false;}finally{button.disabled=false;}
 };
 $('puConvert').onclick=async()=>{if($('puStatus').value!=='accepted'||currentQuoteJobId)return;if(!confirm('Save this accepted quote and create a Schedule+ job?'))return;const btn=$('puConvert');btn.disabled=true;try{if(!currentQuoteId||!lastSavedSnapshot||currentSnapshot()!==lastSavedSnapshot){const saved=await $('puSave').onclick();if(!saved)throw Error('Quote could not be saved. Correct the highlighted fields and try again.');}if(!currentQuoteId)throw Error('Save the quotation before converting.');const {data,error}=await supabaseClient.rpc('powerup_convert_quote_to_job',{p_quote_id:currentQuoteId});if(error)throw error;currentQuoteJobId=data;btn.disabled=true;$('puMessage').textContent='Job created successfully. Open Jobs to schedule it.';}catch(e){$('puMessage').textContent='Conversion stopped: '+e.message;btn.disabled=!!currentQuoteJobId;} };
