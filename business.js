@@ -55,8 +55,8 @@
     const fresh=(await supabaseClient.auth.getUser()).data?.user;if(fresh?.user_metadata?.schedule_plus_invited&&!fresh?.user_metadata?.schedule_plus_password_set)showInvitePassword();
     return true
   }
-  window.SchedulePlusBusiness={get business(){return state.business},get membership(){return state.membership},get memberships(){return state.memberships},get requestedBusinessId(){return requestedBusinessId},reload:loadContext};
-  function showOnboarding(){ensureUi();const d=document.getElementById('businessOnboardingDialog');if(d&&!d.open)d.showModal()}
+  window.SchedulePlusBusiness={get business(){return state.business},get membership(){return state.membership},get memberships(){return state.memberships},get requestedBusinessId(){return requestedBusinessId},get pendingName(){return ''},reload:loadContext};
+  function showOnboarding(){ensureUi();const pending=(window.SchedulePlusBusiness?.pendingName||'');if(pending)document.getElementById('onboardingBusinessName').value=pending;const d=document.getElementById('businessOnboardingDialog');if(d&&!d.open)d.showModal()}
   function showInvitePassword(){ensureUi();const d=document.getElementById('invitePasswordDialog');if(d&&!d.open)d.showModal()}
   async function saveInvitePassword(e){e.preventDefault();const p=invitePassword.value,c=invitePasswordConfirm.value;if(p.length<6){invitePasswordMessage.textContent='Password must be at least 6 characters.';return}if(p!==c){invitePasswordMessage.textContent='Passwords do not match.';return}const btn=e.submitter;btn.disabled=true;btn.textContent='Saving…';const {error}=await supabaseClient.auth.updateUser({password:p,data:{schedule_plus_invited:true,schedule_plus_password_set:true}});btn.disabled=false;btn.textContent='Save password';if(error){invitePasswordMessage.textContent=error.message;return}invitePasswordDialog.close()}
   async function createBusiness(e){e.preventDefault();const name=onboardingBusinessName.value.trim();if(name.length<2){businessOnboardingMessage.textContent='Enter a business name.';return}
@@ -93,6 +93,23 @@
     if(!panel){panel=document.createElement('div');panel.id='scheduleCentralHub';panel.style.cssText='position:fixed;inset:0;z-index:10000;background:#0b0b0d;color:#fff;display:flex;align-items:center;justify-content:center;padding:24px;text-align:center';app.appendChild(panel)}
     panel.innerHTML='<div style="max-width:460px"><h1>Welcome to Schedule+</h1><p>Register your business and get started.</p><p>Create your private Schedule+ workspace to manage jobs and your team.</p><p style="color:#aab4c4;font-size:13px;margin:24px 0 10px">Already registered? Sign in using the dedicated link provided by your business administrator.</p><button id="centralCreateBusiness" type="button" style="padding:13px 22px;border-radius:10px">Register a new business</button></div>';
     document.getElementById('centralCreateBusiness').onclick=showOnboarding;
+    const memberships=state.memberships||[];
+    if(memberships.length){
+      const links=document.createElement('div');links.style.cssText='display:grid;gap:10px;margin:16px 0';
+      const heading=document.createElement('p');heading.textContent='Your authorised businesses';heading.style.color='#aab4c4';links.appendChild(heading);
+      panel.querySelector('div').insertBefore(links,document.getElementById('centralCreateBusiness'));
+      supabaseClient.from('businesses').select('id,business_name,slug').in('id',memberships.map(m=>m.business_id)).then(({data,error})=>{
+        if(error)return;
+        for(const business of data||[]){
+          if(!memberships.some(m=>m.business_id===business.id))continue;
+          const link=document.createElement('a');
+          link.href=business.slug==='jayco'?'./jayco/':business.slug==='powerup-group'?'./powerup/':'./?business='+encodeURIComponent(business.id);
+          link.textContent=business.business_name||'My workspace';
+          link.style.cssText='display:block;padding:12px;border:1px solid #505763;border-radius:10px;color:#fff;text-decoration:none';
+          links.appendChild(link);
+        }
+      });
+    }
   }
   function showAccessDenied(){
     const app=document.getElementById('appView');if(!app)return;
