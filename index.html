@@ -15,7 +15,19 @@
 </head>
 <body>
 <div id="pinView" class="auth-shell hidden"><div class="auth-card pin-card"><img class="auth-logo" src="assets/icons/icon.svg?v=0.7.71" alt="Schedule+ logo"><h1>Schedule+</h1><p>Enter your 4-digit PIN</p><form id="pinUnlockForm"><label>PIN<input id="pinUnlock" type="password" inputmode="numeric" autocomplete="off" maxlength="4" pattern="[0-9]{4}" required></label><button type="submit">Unlock</button></form><button id="usePasswordBtn" class="secondary" type="button">Use email & password</button><p id="pinMessage" class="message"></p></div></div>
-<div id="authView" class="auth-shell"><div class="auth-card"><img class="auth-logo" src="assets/icons/icon.svg?v=0.7.71" alt="Schedule+ logo"><h1>Schedule+</h1><p>Simple job planning for busy trade teams.</p><form id="authForm"><label>Email<input id="email" type="email" autocomplete="email" required></label><label>Password<input id="password" type="password" autocomplete="current-password" minlength="6" required></label><button type="submit">Sign in</button></form><button id="signUpBtn" class="secondary" type="button">Create account</button><button id="resendBtn" class="link-button" type="button">Resend confirmation email</button><p id="authMessage" class="message"></p></div></div>
+<div id="authView" class="auth-shell"><div class="auth-card">
+<img class="auth-logo" src="assets/icons/icon.svg?v=0.7.71" alt="Schedule+ logo">
+<h1>Welcome to Schedule+</h1>
+<p>Register your business to manage jobs, schedules and your team in one place.</p>
+<p style="font-weight:700;margin-top:20px">Create your Schedule+ account</p>
+<form id="authForm"><label>Email<input id="email" type="email" autocomplete="email" required></label><label>Password<input id="password" type="password" autocomplete="new-password" minlength="6" required></label><button id="centralSignIn" type="submit" style="display:none">Sign in to finish registration</button></form>
+<button id="signUpBtn" class="secondary" type="button">Register a New Business</button>
+<button id="centralExistingAccount" class="link-button" type="button">Already started registering? Sign in to continue</button>
+<button id="resendBtn" class="link-button" type="button">Resend confirmation email</button>
+<p style="font-size:13px;line-height:1.6;color:#a5adba;margin-top:22px">Already registered your business? Please use your business's dedicated Schedule+ link to sign in. If you don't have the link, contact your business administrator.</p>
+<p id="authMessage" class="message"></p>
+</div></div>
+<script>document.addEventListener('DOMContentLoaded',()=>{const toggle=document.getElementById('centralExistingAccount'),signIn=document.getElementById('centralSignIn'),signUp=document.getElementById('signUpBtn');let continuing=false;toggle.addEventListener('click',()=>{continuing=!continuing;signIn.style.display=continuing?'block':'none';signUp.style.display=continuing?'none':'block';toggle.textContent=continuing?'New business? Create an account':'Already started registering? Sign in to continue';});});</script>
 <div id="appView" class="app-shell hidden">
 <header class="topbar"><div class="brand"><button id="menuBtn" class="menu-btn" aria-label="Open menu">☰</button><img src="assets/icons/icon.svg?v=0.7.71" alt=""><strong>Schedule+</strong></div><div class="top-actions"><button id="signedInUser" class="signed-user-btn" type="button" aria-label="Open user details">Signed in</button><span id="versionBadge" class="version-badge"></span></div></header>
 <div id="drawerBackdrop" class="drawer-backdrop hidden"></div>
