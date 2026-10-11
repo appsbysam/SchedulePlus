@@ -52,8 +52,34 @@ function printQuotation(){
  .pu-preview tr{break-inside:avoid}}
  `;
  page.document.open();
- page.document.write('<!doctype html><html lang="en-AU"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Power Up quotation</title><style>'+styles+'</style></head><body><nav class="print-tools"><button type="button" onclick="window.print()">Print / Save PDF</button><button class="close" type="button" onclick="window.close()">Close</button></nav><main class="pu-preview">'+preview.innerHTML+'</main></body></html>');
+ page.document.write('<!doctype html><html lang="en-AU"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Power Up quotation</title><style>'+styles+'</style></head><body><nav class="print-tools"><button type="button" id="savePdfBtn">Save PDF</button><button type="button" id="printQuoteBtn">Print</button><button class="close" type="button" onclick="window.close()">Close</button></nav><main class="pu-preview">'+preview.innerHTML+'</main></body></html>');
  page.document.close();
+ const filename='Power-Up-Quotation-'+($('puRef')?.value||'Quote').replace(/[^a-zA-Z0-9_-]/g,'-')+'.pdf';
+ page.document.getElementById('printQuoteBtn').addEventListener('click',()=>page.print());
+ page.document.getElementById('savePdfBtn').addEventListener('click',async()=>{
+  const button=page.document.getElementById('savePdfBtn');
+  button.disabled=true;button.textContent='Preparing PDF…';
+  try{
+   if(!page.html2pdf){
+    await new Promise((resolve,reject)=>{
+     const script=page.document.createElement('script');
+     script.src='https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
+     script.onload=resolve;script.onerror=()=>reject(new Error('PDF generator could not load. Check your internet connection.'));
+     page.document.head.appendChild(script);
+    });
+   }
+   const content=page.document.querySelector('main.pu-preview');
+   const opts={margin:[15,15,15,15],filename:filename,image:{type:'jpeg',quality:0.98},html2canvas:{scale:2,useCORS:true,backgroundColor:'#ffffff'},jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},pagebreak:{mode:['css','legacy'],avoid:['tr','img']}};
+   const pdf=await page.html2pdf().set(opts).from(content).toPdf().get('pdf');
+   const blob=pdf.output('blob');
+   const url=URL.createObjectURL(blob);
+   const isApple=/iPhone|iPad|iPod/i.test(page.navigator.userAgent);
+   if(isApple){page.open(url,'_blank');}else{const a=page.document.createElement('a');a.href=url;a.download=opts.filename;page.document.body.appendChild(a);a.click();a.remove();}
+   page.setTimeout(()=>URL.revokeObjectURL(url),120000);
+   button.textContent='Save PDF';
+  }catch(err){page.alert('Could not generate PDF: '+(err?.message||err));button.textContent='Save PDF';}
+  finally{button.disabled=false;}
+ });
 }
 $('puClosePreview').onclick=hidePreview;$('puModalClose').onclick=hidePreview;$('puModalPrint').onclick=printQuotation;
 const renderLines = () => {$('puLines').innerHTML=state.lines.map(lineRow).join('');const total=state.lines.reduce((a,l)=>a+Number(l.quantity||0)*Number(l.unit_price||0),0);$('puTotal').textContent='Total: '+money(total);if(typeof renderWizard==='function')renderWizard();};
