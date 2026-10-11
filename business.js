@@ -115,7 +115,7 @@
     const app=document.getElementById('appView');if(!app)return;
     let panel=document.getElementById('workspaceAccessNotice');
     if(!panel){panel=document.createElement('div');panel.id='workspaceAccessNotice';panel.style.cssText='position:fixed;inset:0;z-index:10000;background:#0b0b0d;color:white;display:flex;align-items:center;justify-content:center;padding:24px;text-align:center';app.appendChild(panel)}
-    panel.innerHTML='<div style="max-width:420px"><h2>Access required</h2><p>Your account is not authorised for this business workspace. Ask the business administrator to invite your email address from Users &amp; Staff.</p><p><a href="../" style="color:#9bd3ff">Schedule+ main site</a></p></div>';
+    panel.innerHTML='<div style="max-width:420px"><h2>Access required</h2><p>Your account is not authorised for this business workspace. Ask the business administrator to invite your email address from Users &amp; Staff.</p><p><a href="/SchedulePlus/" style="color:#9bd3ff">Schedule+ main site</a></p></div>';
   }
   function configureLogin(){
     const signup=document.getElementById('signUpBtn');
