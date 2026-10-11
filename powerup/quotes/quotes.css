@@ -117,3 +117,12 @@
 @media(max-width:640px){#puQuotesView{padding:8px}#puQuotesView .pu-wizard{border-radius:12px}#puQuotesView .pu-wiz-footer,#puQuotesView .pu-wiz-tools{flex-wrap:wrap}}
 
 #puQuotesView #puLegacyActions .pu-wiz-secondary-hidden{display:none!important}
+
+/* iOS Safari/Chrome: use a body-level fixed preview instead of native dialog top-layer. */
+body.pu-preview-open{overflow:hidden!important}
+body #puPreviewDialog.pu-preview-dialog{display:none;position:fixed!important;inset:0!important;z-index:2147483647!important;margin:auto!important;width:min(96vw,850px)!important;max-width:850px!important;height:min(88dvh,920px)!important;max-height:88dvh!important;background:#191d25!important;color:#fff!important;box-sizing:border-box!important}
+body #puPreviewDialog.pu-preview-dialog.pu-preview-visible{display:flex!important;flex-direction:column!important}
+body #puPreviewDialog #puQuotePreview{display:block!important;visibility:visible!important;flex:1 1 auto!important;min-height:0!important;overflow-y:auto!important;-webkit-overflow-scrolling:touch!important;background:#fff!important;color:#17202b!important}
+body #puPreviewDialog .pu-preview-toolbar,body #puPreviewDialog .pu-preview-footer{flex:0 0 auto!important}
+@media(max-width:640px){body #puPreviewDialog.pu-preview-dialog{height:90dvh!important;max-height:90dvh!important}}
+@media print{body #puPreviewDialog.pu-preview-dialog.pu-preview-visible{display:none!important}body.pu-preview-open{overflow:visible!important}}
