@@ -5,6 +5,7 @@
     jobs:'<svg viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>',
     settings:'<svg viewBox="0 0 24 24"><path d="M12 8.2a3.8 3.8 0 1 0 0 7.6 3.8 3.8 0 0 0 0-7.6z"/><path d="m19.4 15 .9 1.7-2 3.5-1.7-.7a8 8 0 0 1-2 .8L13.4 21H10.6L10 19.2a8 8 0 0 1-2-.8l-1.7.9-2.6-2.6.9-1.7a8 8 0 0 1-.8-2L2 12.4V9.6L3.8 9a8 8 0 0 1 .8-2l-.9-1.7 2.6-2.6 1.7.9a8 8 0 0 1 2-.8L10.6 1h2.8l.6 1.8a8 8 0 0 1 2 .8l1.7-.9 2.6 2.6-.9 1.7a8 8 0 0 1 .8 2l1.8.6v2.8l-1.8.6a8 8 0 0 1-.8 2z"/></svg>',
     profile:'<svg viewBox="0 0 24 24"><circle cx="12" cy="7.5" r="3.5"/><path d="M4.5 21c.6-4.3 3.1-6.5 7.5-6.5s6.9 2.2 7.5 6.5"/></svg>',
+    quotes:'<svg viewBox="0 0 24 24"><path d="M6 2h9l4 4v16H6zM15 2v5h4M9 12h7M9 16h7"/></svg>',
     enquiries:'<svg viewBox="0 0 24 24"><path d="M4 4h16v13H8l-4 3z"/><path d="M8 8h8M8 12h6"/></svg>',
     business:'<svg viewBox="0 0 24 24"><path d="M4 21V5h7v16M11 9h9v12M7 8h1M7 12h1M7 16h1M14 12h2M14 16h2"/></svg>',
     config:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="m19 13.5 1.5 1-2 3.5-1.7-.7a8.2 8.2 0 0 1-2.6 1.5L14 21h-4l-.2-2.2a8.2 8.2 0 0 1-2.6-1.5l-1.7.7-2-3.5 1.5-1a8.4 8.4 0 0 1 0-3l-1.5-1 2-3.5 1.7.7a8.2 8.2 0 0 1 2.6-1.5L10 3h4l.2 2.2a8.2 8.2 0 0 1 2.6 1.5l1.7-.7 2 3.5-1.5 1a8.4 8.4 0 0 1 0 3z"/></svg>',
@@ -27,10 +28,21 @@
     const n=document.createElement('nav');n.id='spBottomNav';n.className='sp-bottom-nav';n.setAttribute('aria-label','Main navigation');
     n.innerHTML=[['home','Home'],['calendar','Calendar'],['jobs','Jobs'],['settings','Settings']].map(([k,l])=>`<button class="sp-nav-btn${k==='home'?' active':''}" data-sp-view="${k}" type="button">${ICONS[k]}<span>${l}</span></button>`).join('');
     enableJaycoEnquiriesNav(n);
+    enablePowerUpQuotesNav(n);
     document.getElementById('appView')?.appendChild(n);
     n.querySelectorAll('button').forEach(b=>b.onclick=()=>showView(b.dataset.spView));
   }
 
+
+  function enablePowerUpQuotesNav(n){
+    if(!location.pathname.toLowerCase().startsWith('/scheduleplus/powerup/'))return;
+    if(n.querySelector('[data-sp-view="quotes"]'))return;
+    const b=document.createElement('button');b.className='sp-nav-btn';b.dataset.spView='quotes';b.type='button';
+    b.innerHTML=ICONS.quotes+'<span>Quotes</span>';
+    b.onclick=()=>showView('quotes');
+    n.insertBefore(b,n.querySelector('[data-sp-view="settings"]'));
+    n.classList.add('sp-bottom-nav-six');
+  }
 
   async function enableJaycoEnquiriesNav(n){
     try{
@@ -49,6 +61,7 @@
     const dash=document.getElementById('dashboardView'),cal=document.getElementById('calendarView');
     if(dash){dash.classList.add('sp-view');dash.classList.remove('hidden');dash.dataset.spView='jobs';}
     if(cal){cal.classList.add('sp-view');cal.classList.remove('hidden');cal.dataset.spView='calendar';}
+    const quotes=document.getElementById('puQuotesView');if(quotes){quotes.classList.add('sp-view');quotes.dataset.spView='quotes';}
     if(!document.getElementById('spHomeView')){
       const home=document.createElement('section');home.id='spHomeView';home.className='sp-view active';home.dataset.spView='home';
       home.innerHTML='<div class="sp-home-wrap"><div class="sp-home-left"><div class="sp-home-brand"><img id="spHomeLogo" alt="Business logo"></div><div class="sp-greeting"><span class="hello">Good morning,</span><strong id="spGreetingName">Welcome</strong><small id="spGreetingDate"></small></div><div id="spStats" class="sp-stat-grid"></div></div><div><div class="sp-section-title"><h2>Upcoming Jobs</h2><button id="spViewAllJobs" type="button">View all ›</button></div><div id="spUpcoming" class="sp-upcoming"></div></div></div>';
@@ -72,6 +85,7 @@
     document.querySelectorAll('.sp-view').forEach(v=>{v.classList.remove('hidden');v.classList.toggle('active',v.dataset.spView===name)});
     document.querySelectorAll('.sp-nav-btn').forEach(b=>b.classList.toggle('active',b.dataset.spView===name));
     if(name==='calendar'&&typeof renderCalendar==='function'){renderCalendar();setTimeout(decorateCalendar,0)}
+    if(name==='quotes')document.dispatchEvent(new Event('powerup:quotes-open'));
     if(name==='home')renderHome();if(name==='profile')renderProfile();if(name==='enquiries')window.dispatchEvent(new CustomEvent('scheduleplus:show-enquiries'));window.scrollTo({top:0,behavior:'instant'});
   }
 
