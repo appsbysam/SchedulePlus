@@ -74,7 +74,20 @@
     if(!panel){panel=document.createElement('div');panel.id='workspaceAccessNotice';panel.style.cssText='position:fixed;inset:0;z-index:10000;background:#0b0b0d;color:white;display:flex;align-items:center;justify-content:center;padding:24px;text-align:center';app.appendChild(panel)}
     panel.innerHTML='<div style="max-width:420px"><h2>Access required</h2><p>Your account is not authorised for this business workspace. Ask the business administrator to invite your email address from Users &amp; Staff.</p><p><a href="../" style="color:#9bd3ff">Schedule+ main site</a></p></div>';
   }
-  async function boot(){ensureUi();if(requestedBusinessId)applyCachedBrand();else applyVanillaBranding();await loadContext()}
+  function configureLogin(){
+    const signup=document.getElementById('signUpBtn');
+    if(!signup)return;
+    if(requestedBusinessId){
+      signup.textContent='New user? Create account';
+      const note=document.createElement('p');
+      note.style.cssText='font-size:13px;line-height:1.5;color:#9ca3af;margin-top:12px';
+      note.textContent='New staff members need an invitation from the business administrator. Creating an account alone does not grant access to this workspace.';
+      signup.insertAdjacentElement('afterend',note);
+    }else{
+      signup.textContent='New user? Create a Schedule+ account';
+    }
+  }
+  async function boot(){ensureUi();configureLogin();if(requestedBusinessId)applyCachedBrand();else applyVanillaBranding();await loadContext()}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
   supabaseClient.auth.onAuthStateChange((event,session)=>{if(event==='SIGNED_OUT'){state.business=null;state.membership=null;state.memberships=[];applyVanillaBranding();return}if(session?.user)setTimeout(loadContext,0)});
 })();
