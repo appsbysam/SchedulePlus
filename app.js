@@ -4,7 +4,7 @@ let calendarCursor = new Date();
 calendarCursor = new Date(calendarCursor.getFullYear(), calendarCursor.getMonth(), 1, 12);
 
 const AUTH_REDIRECT_URL = 'https://appsbysam.github.io/SchedulePlus/';
-const APP_SW_VERSION = '0.6.1';
+const APP_SW_VERSION = typeof APP_VERSION !== 'undefined' ? APP_VERSION : '0.8.03';
 
 const authView = $('#authView');
 const pinView = $('#pinView');
