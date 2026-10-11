@@ -115,3 +115,5 @@
 #puQuotesView .pu-wiz-form .pu-wiz-next{background:#3154ef;color:#fff;border:0;padding:16px;font-size:16px}
 #puQuotesView #puLegacyActions:not([hidden]){display:flex;max-width:720px;margin:12px auto}
 @media(max-width:640px){#puQuotesView{padding:8px}#puQuotesView .pu-wizard{border-radius:12px}#puQuotesView .pu-wiz-footer,#puQuotesView .pu-wiz-tools{flex-wrap:wrap}}
+
+#puQuotesView #puLegacyActions .pu-wiz-secondary-hidden{display:none!important}
