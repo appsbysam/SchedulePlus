@@ -24,7 +24,7 @@ const switchQuoteTab = name => {
 root.querySelectorAll('[data-pu-tab]').forEach(tab=>tab.addEventListener('click',()=>switchQuoteTab(tab.dataset.puTab)));
 $('puListNew').onclick=()=>{$('puNew').click();switchQuoteTab('editor');};
 switchQuoteTab('list');
-const previewDialog=$('puPreviewDialog');root.appendChild(previewDialog);const hidePreview=()=>{if(previewDialog.open)previewDialog.close();$('puPrint').disabled=true;};
+const previewDialog=$('puPreviewDialog');document.body.appendChild(previewDialog);const showPreview=()=>{previewDialog.setAttribute('open','');previewDialog.classList.add('pu-preview-visible');document.body.classList.add('pu-preview-open');};const hidePreview=()=>{previewDialog.removeAttribute('open');previewDialog.classList.remove('pu-preview-visible');document.body.classList.remove('pu-preview-open');$('puPrint').disabled=true;};
 const printSheet=document.createElement('div');printSheet.id='puPrintSheet';document.body.appendChild(printSheet);
 async function printQuotation(){const preview=$('puQuotePreview');if(!preview.innerHTML.trim()){ $('puMessage').textContent='Generate a preview before printing.';return;}printSheet.innerHTML=preview.innerHTML;const imgs=[...printSheet.querySelectorAll('img')];await Promise.all(imgs.map(img=>img.decode?.().catch(()=>{})||Promise.resolve()));window.print();}
 $('puClosePreview').onclick=hidePreview;$('puModalClose').onclick=hidePreview;$('puModalPrint').onclick=printQuotation;
@@ -56,9 +56,9 @@ if(!requireCompleteLines())return;
 const subtotal=state.lines.reduce((a,l)=>a+Number(l.quantity)*Number(l.unit_price),0);const gst= gstEnabled?Math.round(subtotal*10)/100:0;const total=subtotal+gst;
 const businessLogo='https://appsbysam.github.io/SchedulePlus/powerup/assets/powerup-quote-logo-blk.png';const logoMarkup=businessLogo?'<img class="pu-quote-logo" src="'+safe(new URL(businessLogo,document.baseURI).href)+'" alt="Power Up Solar logo">':'<h1>POWER UP SOLAR</h1>';
 $('puQuotePreview').innerHTML=`${logoMarkup}<p>Quotation ${safe($('puRef').value||'Draft')} · ${safe(new Date().toLocaleDateString('en-AU'))}</p><hr><p><strong>Prepared for:</strong> ${safe(name)}<br>${safe(email)}<br>${safe($('puPhone').value)}<br>${safe($('puAddress').value)}</p><table><thead><tr><th>Description</th><th>Qty</th><th>Unit price</th><th>Amount</th></tr></thead><tbody>${state.lines.map(l=>`<tr><td>${safe(l.description)}</td><td>${safe(l.quantity)}</td><td>${money(l.unit_price)}</td><td>${money(l.quantity*l.unit_price)}</td></tr>`).join('')}</tbody></table><p style="text-align:right">Subtotal: ${money(subtotal)}</p><p style="text-align:right">GST 10%: ${money(gst)}</p><h2 style="text-align:right">Total: ${money(total)}</h2><p><strong>Valid until:</strong> ${safe($('puValid').value||'To be confirmed')}</p><p style="white-space:pre-wrap">${safe($('puNotes').value)}</p><hr><p>Power Up Solar · sales@powerup.sydney · powerup.sydney</p>`;
-$('puPrint').disabled=false;$('puMessage').textContent='Preview ready. Review the quotation before printing or saving as PDF.';$('puQuotePreview').classList.remove('hidden');if(!previewDialog.open)previewDialog.showModal();
+$('puPrint').disabled=false;$('puMessage').textContent='Preview ready. Review the quotation before printing or saving as PDF.';$('puQuotePreview').classList.remove('hidden');showPreview();
 };
-$('puPrint').onclick=()=>{if(!previewDialog.open)previewDialog.showModal();};
+$('puPrint').onclick=showPreview;
 
 const PU_BUSINESS_SLUG='powerup-group';
 let catalogue=[];let gstEnabled=true;
