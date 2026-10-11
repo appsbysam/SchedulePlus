@@ -1,16 +1,43 @@
 (()=>{
-function init(){
- let btn=document.getElementById('spScrollTop');
- if(!btn){btn=document.createElement('button');btn.id='spScrollTop';btn.type='button';btn.setAttribute('aria-label','Back to top');btn.title='Back to top';btn.textContent='↑';document.body.appendChild(btn)}
- const visible=el=>!!el&&!!el.getClientRects().length&&getComputedStyle(el).display!=='none'&&!el.closest('.hidden');
- const onTarget=()=>{const active=document.querySelector('.sp-view.active');return !!active&&visible(active)&&['home','jobs'].includes(active.dataset.spView)};
- const candidates=()=>[document.scrollingElement,document.querySelector('.sp-home-scroll'),document.querySelector('.sp-view.active'),document.querySelector('.app-shell'),document.querySelector('#appView'),document.querySelector('.app-shell main')].filter(Boolean);
- const scrollPosition=()=>Math.max(window.scrollY,document.documentElement.scrollTop,document.body.scrollTop,...candidates().map(el=>el.scrollTop||0));
- const update=()=>{btn.hidden=!(onTarget()&&scrollPosition()>240)};
- btn.onclick=()=>{for(const el of candidates())if(el.scrollTop>0)el.scrollTo({top:0,behavior:'smooth'});window.scrollTo({top:0,behavior:'smooth'})};
- document.addEventListener('scroll',update,true);window.addEventListener('scroll',update,{passive:true});window.addEventListener('resize',update);document.addEventListener('click',()=>requestAnimationFrame(update));
- new MutationObserver(()=>requestAnimationFrame(update)).observe(document.getElementById('appView')||document.body,{subtree:true,attributes:true,attributeFilter:['class','style']});
- update();
-}
-if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
+  function init(){
+    let button=document.getElementById('spScrollTop');
+    if(!button){
+      button=document.createElement('button');
+      button.id='spScrollTop';
+      button.type='button';
+      button.title='Back to top';
+      button.setAttribute('aria-label','Back to top');
+      button.textContent='↑';
+      document.body.appendChild(button);
+    }
+    const scrollables=()=>{
+      const all=[document.scrollingElement,document.documentElement,document.body,document.querySelector('#appView'),document.querySelector('.app-shell'),document.querySelector('.app-shell main'),...document.querySelectorAll('.sp-view.active, .sp-view.active *')];
+      return [...new Set(all.filter(Boolean))].filter(el=>el.scrollHeight>el.clientHeight+20 || el.scrollTop>0);
+    };
+    const allowed=()=>{
+      const activeNav=document.querySelector('#spBottomNav .sp-nav-btn.active')?.dataset.spView;
+      if(activeNav)return activeNav==='home'||activeNav==='jobs';
+      return !!document.querySelector('.sp-view.active[data-sp-view="home"],.sp-view.active[data-sp-view="jobs"]');
+    };
+    function position(){
+      const page=Math.max(window.scrollY||0,document.documentElement.scrollTop||0,document.body.scrollTop||0);
+      return Math.max(page,...scrollables().map(el=>el.scrollTop||0));
+    }
+    function update(){button.hidden=!allowed()||position()<180}
+    button.addEventListener('click',()=>{
+      for(const el of scrollables())if(el.scrollTop>0)el.scrollTo({top:0,behavior:'smooth'});
+      window.scrollTo({top:0,behavior:'smooth'});
+      button.hidden=true;
+    });
+    document.addEventListener('scroll',update,true);
+    window.addEventListener('scroll',update,{passive:true});
+    window.addEventListener('resize',update);
+    document.addEventListener('click',()=>requestAnimationFrame(update));
+    document.addEventListener('touchend',()=>requestAnimationFrame(update),{passive:true});
+    const nav=document.getElementById('spBottomNav');
+    if(nav)new MutationObserver(update).observe(nav,{subtree:true,attributes:true,attributeFilter:['class']});
+    update();
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);
+  else init();
 })();
