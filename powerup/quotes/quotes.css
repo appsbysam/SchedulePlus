@@ -66,3 +66,7 @@
   #puPrintSheet tr{break-inside:avoid}
   #puPreviewDialog{display:none!important}
 }
+
+/* Match quotation branding to the Home screen business logo. */
+#puQuotePreview .pu-quote-logo{display:block;max-width:min(100%,340px);max-height:125px;width:auto;height:auto;object-fit:contain;object-position:left center;margin:0 0 18px}
+@media print{#puPrintSheet .pu-quote-logo{display:block!important;max-width:85mm!important;max-height:32mm!important;width:auto!important;height:auto!important;object-fit:contain!important;margin:0 0 7mm!important}}
