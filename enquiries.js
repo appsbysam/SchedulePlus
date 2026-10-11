@@ -1,4 +1,6 @@
 (() => {
+// DanCo enquiries must never initialise in another tenant's app.
+if(location.pathname.toLowerCase().startsWith('/scheduleplus/powerup/'))return;
 const JAYCO_BUSINESS_ID='9359127c-6929-4b2c-b25e-b9bd835d567c';
 let enquiries=[],enabled=false,setupDone=false,selectedType="";
 const $e=s=>document.querySelector(s);
