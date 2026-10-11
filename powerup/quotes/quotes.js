@@ -54,7 +54,7 @@ if(!name){$('puMessage').textContent='Enter a customer name first.';return;}
 if(email&&!$('puEmail').checkValidity()){$('puMessage').textContent='Check the customer email address.';return;}
 if(!requireCompleteLines())return;
 const total=state.lines.reduce((a,l)=>a+Number(l.quantity)*Number(l.unit_price),0);
-const homeLogo=document.getElementById('spHomeLogo');const businessLogo=window.SchedulePlusBusiness?.business?.logo_dark_url||window.SchedulePlusBusiness?.business?.logo_url||homeLogo?.getAttribute('src')||'';const logoMarkup=businessLogo?'<img class="pu-quote-logo" src="'+safe(new URL(businessLogo,document.baseURI).href)+'" alt="Power Up Solar logo">':'<h1>POWER UP SOLAR</h1>';
+const businessLogo='assets/powerup-quote-logo-blk.png';const logoMarkup=businessLogo?'<img class="pu-quote-logo" src="'+safe(new URL(businessLogo,document.baseURI).href)+'" alt="Power Up Solar logo">':'<h1>POWER UP SOLAR</h1>';
 $('puQuotePreview').innerHTML=`${logoMarkup}<p>Quotation ${safe($('puRef').value||'Draft')} · ${safe(new Date().toLocaleDateString('en-AU'))}</p><hr><p><strong>Prepared for:</strong> ${safe(name)}<br>${safe(email)}<br>${safe($('puPhone').value)}<br>${safe($('puAddress').value)}</p><table><thead><tr><th>Description</th><th>Qty</th><th>Unit price</th><th>Amount</th></tr></thead><tbody>${state.lines.map(l=>`<tr><td>${safe(l.description)}</td><td>${safe(l.quantity)}</td><td>${money(l.unit_price)}</td><td>${money(l.quantity*l.unit_price)}</td></tr>`).join('')}</tbody></table><h2 style="text-align:right">Total (incl. GST): ${money(total)}</h2><p>GST component: ${money(total/11)}</p><p><strong>Valid until:</strong> ${safe($('puValid').value||'To be confirmed')}</p><p style="white-space:pre-wrap">${safe($('puNotes').value)}</p><hr><p>Power Up Solar · sales@powerup.sydney · powerup.sydney</p>`;
 $('puPrint').disabled=false;$('puMessage').textContent='Preview ready. Review the quotation before printing or saving as PDF.';$('puQuotePreview').classList.remove('hidden');if(!previewDialog.open)previewDialog.showModal();
 };
@@ -141,7 +141,8 @@ $('puStatus').onchange=()=>{$('puConvert').disabled=$('puStatus').value!=='accep
 
 function currentSnapshot(){return JSON.stringify({name:$('puName').value.trim(),email:$('puEmail').value.trim(),phone:$('puPhone').value.trim(),address:$('puAddress').value.trim(),ref:$('puRef').value.trim(),valid:$('puValid').value,notes:$('puNotes').value.trim(),status:$('puStatus').value,lines:state.lines.map(l=>({...l}))});}
 $('puSendEmail').onclick=async()=>{
- const btn=$('puSendEmail');
+ const btn=$('puSendEmail'),message=$('puMessage');
+ let started=false,success=false;
  try{
   const {role}=await getBusiness();
   if(!['owner','admin'].includes(role))throw new Error('Only a Power Up administrator can email quotations.');
@@ -150,18 +151,23 @@ $('puSendEmail').onclick=async()=>{
   const email=$('puEmail').value.trim();
   if(!email||!$('puEmail').checkValidity())throw new Error('Enter a valid customer email and save the quote.');
   if(!confirm('Send quotation '+$('puRef').value+' as a PDF to '+email+' from sales@powerup.sydney?'))return;
-  btn.disabled=true;$('puMessage').textContent='Submitting quotation to Microsoft 365…';
+  started=true;btn.disabled=true;btn.classList.remove('pu-email-sent');
+  btn.classList.add('pu-email-sending');btn.innerHTML='<span class="pu-email-spinner" aria-hidden="true"></span> Sending…';
+  message.textContent='';message.classList.remove('pu-success');
   const {data,error}=await supabaseClient.functions.invoke('powerup-send-quote',{body:{quote_id:currentQuoteId}});
-  if(error){let message=error.message;if(error.context?.json){try{const detail=await error.context.json();message=detail.error||message;}catch{}}throw new Error(message);}
+  if(error){let detail=error.message;if(error.context?.json){try{const body=await error.context.json();detail=body.error||detail;}catch{}}throw new Error(detail);}
   if(!data?.ok)throw new Error(data?.error||'Microsoft did not confirm the send.');
-  $('puStatus').value='sent';
-  lastSavedSnapshot=currentSnapshot();
-  $('puMessage').textContent='Quotation emailed successfully.';$('puMessage').classList.add('pu-success');setTimeout(()=>{$('puMessage').classList.remove('pu-success');if($('puMessage').textContent==='Quotation emailed successfully.')$('puMessage').textContent='';},5000);
+  $('puStatus').value='sent';lastSavedSnapshot=currentSnapshot();
+  success=true;btn.classList.add('pu-email-sent');btn.textContent='Email submitted ✓';
+  message.textContent='Quotation email successfully submitted for sending.';message.classList.add('pu-success');
   await refreshQuotes();
- }catch(e){$('puMessage').textContent='Email not sent: '+e.message;}
- finally{btn.disabled=false;}
+ }catch(e){message.classList.remove('pu-success');message.textContent='Email not sent: '+e.message;}
+ finally{
+  if(started){btn.disabled=false;btn.classList.remove('pu-email-sending');if(!success){btn.classList.remove('pu-email-sent');btn.textContent='Send quotation email';}
+   else setTimeout(()=>{btn.classList.remove('pu-email-sent');btn.textContent='Send quotation email';},4000);
+  }
+ }
 };
-
 
 /* Google Places (New) NSW-only autocomplete, scoped to the quote address. */
 (()=>{
