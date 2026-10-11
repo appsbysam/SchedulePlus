@@ -15,6 +15,9 @@ function start(){
  const back=document.createElement('button');back.id='spBack';back.type='button';back.className='link-button';back.textContent='Back to options';
  card.insertBefore(actions,form);card.insertBefore(header,form);form.after(find,back);
  const existing=$('centralExistingAccount'),signup=$('signUpBtn'),resend=$('resendBtn'),submit=$('centralSignIn'),pass=$('password');
+ signup.textContent='Register';
+ const suppressLegacy=()=>{for(const id of ['centralExistingAccount','resendBtn','centralSignIn']){const el=$(id);if(el)el.style.setProperty('display','none','important')}for(const el of card.querySelectorAll('button')){if(/new user\? create a schedule\+ account|^sign in$/i.test(el.textContent.trim())&&!['spFind','spRegister'].includes(el.id))el.style.setProperty('display','none','important')}};
+ suppressLegacy();
  if(existing)existing.style.display='none';
  const extras=form.querySelector('.auth-extra-row');if(extras)extras.style.display='none';const old=card.querySelector('p[style*="font-weight:700"]');if(old)old.style.display='none';
  const foot=card.querySelector('p[style*="font-size:13px"]');if(foot)foot.style.display='none';
@@ -22,9 +25,9 @@ function start(){
   actions.style.display=which?'none':'grid';header.style.display=which?'block':'none';form.style.display=which?'block':'none';back.style.display=which?'block':'none';
   business.style.display=which==='register'?'block':'none';name.required=which==='register';
   pass.closest('label').style.display=which==='find'?'none':'block';pass.required=which!=='find';
-  signup.style.display=which==='register'?'block':'none';submit.style.display='none';find.style.display=which==='find'?'block':'none';resend.style.display=which==='register'?'block':'none';
+  signup.style.display=which==='register'?'block':'none';submit.style.display='none';find.style.display=which==='find'?'block':'none';resend.style.display='none';
   header.textContent=which==='register'?'Register a New Business':'Find My Business Link';
-  form.dataset.spMode=which||'';const extra=form.querySelector('.auth-extra-row');if(extra)extra.style.display='none';$('authMessage').textContent='';
+  form.dataset.spMode=which||'';const extra=form.querySelector('.auth-extra-row');if(extra)extra.style.setProperty('display','none','important');suppressLegacy();$('authMessage').textContent='';
  }
  $('spRegister').onclick=()=>mode('register');$('spFind').onclick=()=>mode('find');back.onclick=()=>mode(null);
  signup.onclick=async()=>{
@@ -48,6 +51,7 @@ function start(){
  };
  form.addEventListener('submit',e=>{if(form.dataset.spMode!=='login'){e.preventDefault();e.stopImmediatePropagation();if(form.dataset.spMode==='find')find.click();else signup.click()}},true);
  mode(null);
+ new MutationObserver(suppressLegacy).observe(card,{childList:true,subtree:true});
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start);else start();
 })();
