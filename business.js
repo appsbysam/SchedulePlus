@@ -1,6 +1,10 @@
 (() => {
   const ACTIVE_BUSINESS_KEY='schedule_plus_active_business', BRAND_CACHE_KEY='schedule_plus_brand_cache', DEFAULT_LOGO='assets/icons/icon.svg';
   const VANILLA_MODE=new URLSearchParams(location.search).get('new')==='1';
+  // Fixed, verified workspace IDs. A URL never grants membership.
+  const workspace=location.pathname.match(/\/SchedulePlus\/(jayco|powerup)(?:\/|$)/i)?.[1]?.toLowerCase()||null;
+  const WORKSPACES={jayco:'9359127c-6929-4b2c-b25e-b9bd835d567c',powerup:'5b170395-a2e2-4458-8765-472a6409391d'};
+  const requestedBusinessId=workspace?WORKSPACES[workspace]:null;
   const state={business:null,membership:null,memberships:[]};
   const validHex=(v,f)=>/^#[0-9a-f]{6}$/i.test(String(v||''))?v:f;
   function cacheBrand(b){try{localStorage.setItem(BRAND_CACHE_KEY,JSON.stringify({business_name:b?.business_name,logo_url:b?.logo_url,accent_color:b?.accent_color,secondary_color:b?.secondary_color}))}catch(_){}}
@@ -39,14 +43,18 @@
     await claimPendingInvites();
     const {data,error}=await supabaseClient.from('business_users').select('business_id,role,is_active').eq('user_id',user.id).eq('is_active',true);if(error)return false;
     state.memberships=data||[];
-    if(!state.memberships.length){state.business=null;state.membership=null;applyVanillaBranding();showOnboarding();return false}
-    let id=localStorage.getItem(ACTIVE_BUSINESS_KEY);if(!state.memberships.some(m=>m.business_id===id))id=state.memberships[0].business_id;localStorage.setItem(ACTIVE_BUSINESS_KEY,id);state.membership=state.memberships.find(m=>m.business_id===id)||state.memberships[0];
+    if(!state.memberships.length){state.business=null;state.membership=null;applyVanillaBranding();if(!requestedBusinessId)showOnboarding();else showAccessDenied();return false}
+    // Root stays neutral; named workspace must match an authorised membership.
+    state.business=null;state.membership=null;
+    if(!requestedBusinessId){applyVanillaBranding();return false}
+    state.membership=state.memberships.find(m=>m.business_id===requestedBusinessId)||null;
+    if(!state.membership){applyVanillaBranding();showAccessDenied();return false}
     const {data:b,error:e}=await supabaseClient.from('businesses').select('*').eq('id',state.membership.business_id).single();if(e)return false;state.business=b;applyBranding(b);
     if(VANILLA_MODE)history.replaceState({},'',location.pathname);
     const fresh=(await supabaseClient.auth.getUser()).data?.user;if(fresh?.user_metadata?.schedule_plus_invited&&!fresh?.user_metadata?.schedule_plus_password_set)showInvitePassword();
     return true
   }
-  window.SchedulePlusBusiness={get business(){return state.business},get membership(){return state.membership},get memberships(){return state.memberships},reload:loadContext};
+  window.SchedulePlusBusiness={get business(){return state.business},get membership(){return state.membership},get memberships(){return state.memberships},get requestedBusinessId(){return requestedBusinessId},reload:loadContext};
   function showOnboarding(){ensureUi();const d=document.getElementById('businessOnboardingDialog');if(d&&!d.open)d.showModal()}
   function showInvitePassword(){ensureUi();const d=document.getElementById('invitePasswordDialog');if(d&&!d.open)d.showModal()}
   async function saveInvitePassword(e){e.preventDefault();const p=invitePassword.value,c=invitePasswordConfirm.value;if(p.length<6){invitePasswordMessage.textContent='Password must be at least 6 characters.';return}if(p!==c){invitePasswordMessage.textContent='Passwords do not match.';return}const btn=e.submitter;btn.disabled=true;btn.textContent='Saving…';const {error}=await supabaseClient.auth.updateUser({password:p,data:{schedule_plus_invited:true,schedule_plus_password_set:true}});btn.disabled=false;btn.textContent='Save password';if(error){invitePasswordMessage.textContent=error.message;return}invitePasswordDialog.close()}
@@ -60,7 +68,13 @@
   async function addUser(e){e.preventDefault();const email=newBusinessUserEmail.value.trim(),role=newBusinessUserRole.value;const btn=e.submitter;btn.disabled=true;btn.textContent='Sending…';businessUsersMessage.textContent='';try{const result=await invoke('manage-business-user',{action:'add',business_id:state.business.id,email,role});newBusinessUserEmail.value='';businessUsersMessage.textContent=result.mode==='invited'?'Invitation email sent. They will join this business automatically when they accept it.':'Existing Schedule+ account added to this business.';businessUsersMessage.classList.add('ok');await renderUsers()}catch(err){businessUsersMessage.textContent=err.message||'Could not invite user.'}finally{btn.disabled=false;btn.textContent='Send invitation'}}
   async function changeRole(user_id,role){businessUsersMessage.textContent='Saving role…';try{await invoke('manage-business-user',{action:'role',business_id:state.business.id,user_id,role});businessUsersMessage.textContent='Role updated.';businessUsersMessage.classList.add('ok');await renderUsers()}catch(err){businessUsersMessage.textContent=err.message;await renderUsers()}}
   async function removeUser(user_id){if(!confirm('Remove this user from the business?'))return;businessUsersMessage.textContent='Removing…';try{await invoke('manage-business-user',{action:'remove',business_id:state.business.id,user_id});businessUsersMessage.textContent='User removed.';businessUsersMessage.classList.add('ok');await renderUsers()}catch(err){businessUsersMessage.textContent=err.message}}
-  async function boot(){ensureUi();applyCachedBrand();await loadContext()}
+  function showAccessDenied(){
+    const app=document.getElementById('appView');if(!app)return;
+    let panel=document.getElementById('workspaceAccessNotice');
+    if(!panel){panel=document.createElement('div');panel.id='workspaceAccessNotice';panel.style.cssText='position:fixed;inset:0;z-index:10000;background:#0b0b0d;color:white;display:flex;align-items:center;justify-content:center;padding:24px;text-align:center';app.appendChild(panel)}
+    panel.innerHTML='<div style="max-width:420px"><h2>Access required</h2><p>Your account is not authorised for this business workspace. Ask the business administrator to invite your email address from Users &amp; Staff.</p><p><a href="../" style="color:#9bd3ff">Schedule+ main site</a></p></div>';
+  }
+  async function boot(){ensureUi();if(requestedBusinessId)applyCachedBrand();else applyVanillaBranding();await loadContext()}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
-  supabaseClient.auth.onAuthStateChange((event,session)=>{if(event==='SIGNED_OUT'){state.business=null;state.membership=null;state.memberships=[];if(VANILLA_MODE)applyVanillaBranding();return}if(session?.user)setTimeout(loadContext,0)});
+  supabaseClient.auth.onAuthStateChange((event,session)=>{if(event==='SIGNED_OUT'){state.business=null;state.membership=null;state.memberships=[];applyVanillaBranding();return}if(session?.user)setTimeout(loadContext,0)});
 })();
