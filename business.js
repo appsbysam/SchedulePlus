@@ -46,7 +46,7 @@
     if(!state.memberships.length){state.business=null;state.membership=null;applyVanillaBranding();if(!requestedBusinessId)showOnboarding();else showAccessDenied();return false}
     // Root stays neutral; named workspace must match an authorised membership.
     state.business=null;state.membership=null;
-    if(!requestedBusinessId){applyVanillaBranding();return false}
+    if(!requestedBusinessId){applyVanillaBranding();showCentralHub();return false}
     state.membership=state.memberships.find(m=>m.business_id===requestedBusinessId)||null;
     if(!state.membership){applyVanillaBranding();showAccessDenied();return false}
     const {data:b,error:e}=await supabaseClient.from('businesses').select('*').eq('id',state.membership.business_id).single();if(e)return false;state.business=b;applyBranding(b);
@@ -68,6 +68,16 @@
   async function addUser(e){e.preventDefault();const email=newBusinessUserEmail.value.trim(),role=newBusinessUserRole.value;const btn=e.submitter;btn.disabled=true;btn.textContent='Sending…';businessUsersMessage.textContent='';try{const result=await invoke('manage-business-user',{action:'add',business_id:state.business.id,email,role});newBusinessUserEmail.value='';businessUsersMessage.textContent=result.mode==='invited'?'Invitation email sent. They will join this business automatically when they accept it.':'Existing Schedule+ account added to this business.';businessUsersMessage.classList.add('ok');await renderUsers()}catch(err){businessUsersMessage.textContent=err.message||'Could not invite user.'}finally{btn.disabled=false;btn.textContent='Send invitation'}}
   async function changeRole(user_id,role){businessUsersMessage.textContent='Saving role…';try{await invoke('manage-business-user',{action:'role',business_id:state.business.id,user_id,role});businessUsersMessage.textContent='Role updated.';businessUsersMessage.classList.add('ok');await renderUsers()}catch(err){businessUsersMessage.textContent=err.message;await renderUsers()}}
   async function removeUser(user_id){if(!confirm('Remove this user from the business?'))return;businessUsersMessage.textContent='Removing…';try{await invoke('manage-business-user',{action:'remove',business_id:state.business.id,user_id});businessUsersMessage.textContent='User removed.';businessUsersMessage.classList.add('ok');await renderUsers()}catch(err){businessUsersMessage.textContent=err.message}}
+  function showCentralHub(){
+    const app=document.getElementById('appView');if(!app)return;
+    let panel=document.getElementById('scheduleCentralHub');
+    if(!panel){panel=document.createElement('div');panel.id='scheduleCentralHub';panel.style.cssText='position:fixed;inset:0;z-index:10000;background:#0b0b0d;color:#fff;display:flex;align-items:center;justify-content:center;padding:24px;text-align:center';app.appendChild(panel)}
+    panel.innerHTML='<div style="max-width:460px"><h1>Schedule+</h1><p>Business Central</p><p>Select your business workspace or create a new business. No business records are displayed here.</p><div id="centralWorkspaces" style="display:grid;gap:12px;margin:24px 0"></div><button id="centralCreateBusiness" type="button" style="padding:13px 22px;border-radius:10px">Create new business</button></div>';
+    const links=document.getElementById('centralWorkspaces');
+    const known=[['jayco','Jayco Enterprises','./jayco/'],['powerup','PowerUp Group','./powerup/']];
+    known.forEach(([slug,name,url])=>{const id=WORKSPACES[slug];if(!state.memberships.some(m=>m.business_id===id))return;const a=document.createElement('a');a.href=url;a.textContent='Open '+name;a.style.cssText='display:block;padding:12px;border:1px solid #505763;border-radius:10px;color:#fff;text-decoration:none';links.appendChild(a)});
+    document.getElementById('centralCreateBusiness').onclick=showOnboarding;
+  }
   function showAccessDenied(){
     const app=document.getElementById('appView');if(!app)return;
     let panel=document.getElementById('workspaceAccessNotice');
