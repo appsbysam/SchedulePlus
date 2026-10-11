@@ -24,7 +24,7 @@
 .enquiry-address{margin:10px 0;color:#d9dee7;line-height:1.4}.enquiry-address strong{color:#fff}
 
 /* Enquiries-only mobile scrolling: keep heading and filters visible, scroll the records. */
-#enquiriesView:not(.hidden){
+#enquiriesView.sp-view.active{
   display:flex!important;
   flex-direction:column!important;
   height:calc(100dvh - var(--sp-nav-h,78px) - 20px)!important;
@@ -32,9 +32,9 @@
   min-height:0!important;
   overflow:hidden!important;
 }
-#enquiriesView:not(.hidden)>.sp-screen-head,
-#enquiriesView:not(.hidden)>.enquiry-toolbar{flex:0 0 auto!important}
-#enquiriesView:not(.hidden) #enquiriesList{
+#enquiriesView.sp-view.active>.sp-screen-head,
+#enquiriesView.sp-view.active>.enquiry-toolbar{flex:0 0 auto!important}
+#enquiriesView.sp-view.active #enquiriesList{
   display:grid!important;
   align-content:start!important;
   flex:1 1 auto!important;
@@ -48,8 +48,8 @@
 }
 #enquiriesView .enquiry-card{touch-action:pan-y!important}
 @media(min-width:760px){
- #enquiriesView:not(.hidden){height:auto!important;max-height:none!important;overflow:visible!important}
- #enquiriesView:not(.hidden) #enquiriesList{overflow:visible!important;max-height:none!important}
+ #enquiriesView.sp-view.active{height:auto!important;max-height:none!important;overflow:visible!important}
+ #enquiriesView.sp-view.active #enquiriesList{overflow:visible!important;max-height:none!important}
 }
 
 /* Enquiry type filters: independent of status and search filters. */
@@ -71,3 +71,6 @@
 #enquiriesView .enquiry-filter-label{min-width:0}
 #enquiriesView .enquiry-filter-count{display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;min-width:19px;height:19px;padding:0 4px;border-radius:999px;background:rgba(255,255,255,.11);color:inherit;font-size:10px;font-weight:900;line-height:1}
 #enquiriesView .enquiry-type-filter.active .enquiry-filter-count{background:rgba(255,255,255,.23);color:#fff}
+
+/* Keep Enquiries fully hidden when another bottom-navigation page is selected. */
+#enquiriesView.sp-view:not(.active),#enquiriesView.hidden{display:none!important;visibility:hidden!important;}
