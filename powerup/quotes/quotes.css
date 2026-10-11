@@ -73,3 +73,10 @@
 
 /* Print exactly one quotation: suppress the editor and modal, retain the dedicated A4 sheet. */
 @media print{#puPreviewDialog,#puPreviewDialog.pu-preview-dialog,#puQuotePreview{display:none!important;visibility:hidden!important}#puPrintSheet{display:block!important;visibility:visible!important}#puPrintSheet *{visibility:visible!important}body{margin:0!important;padding:0!important}#puPrintSheet{break-after:auto!important;page-break-after:auto!important}}
+
+/* Quotation email sending progress and confirmation. */
+#puSendEmail.pu-email-sending{display:inline-flex;align-items:center;justify-content:center;gap:10px;opacity:.85;cursor:wait}
+#puSendEmail.pu-email-sent{background:#16824b!important;border-color:#16824b!important;color:#fff!important}
+.pu-email-spinner{display:inline-block;width:16px;height:16px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:puEmailSpin .75s linear infinite}
+@keyframes puEmailSpin{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.pu-email-spinner{animation:none}}
