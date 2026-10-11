@@ -1,5 +1,5 @@
 const $ = s => document.querySelector(s);
-let jobs = [], currentUser = null, quickFilter = 'all', typeFilter = 'all', pinUnlocked = false;
+let jobs = [], currentUser = null, quickFilter = 'all', typeFilter = 'all', pinUnlocked = false, canDeleteJobs = false;
 let calendarCursor = new Date();
 calendarCursor = new Date(calendarCursor.getFullYear(), calendarCursor.getMonth(), 1, 12);
 
@@ -220,7 +220,9 @@ async function loadJobs() {
     if(error)throw error;
     return data?.business_id===id?id:null;
   })();
-  if(!businessId){jobs=[];render();renderCalendar();return}
+  if(!businessId){jobs=[];canDeleteJobs=false;render();renderCalendar();return}
+  const {data:membership,error:membershipError}=await supabaseClient.from('business_users').select('role').eq('business_id',businessId).eq('user_id',currentUser.id).eq('is_active',true).maybeSingle();
+  canDeleteJobs=!membershipError&&['owner','admin'].includes(membership?.role);
   const {data,error} = await supabaseClient.from('jobs').select('*').eq('business_id',businessId).order('scheduled_date',{ascending:true,nullsFirst:false}).order('created_at',{ascending:false});
   if (error) {
     jobsList.innerHTML = `<div class="empty">${esc(error.message)}</div>`;
@@ -297,6 +299,7 @@ function render() {
   const rows = filtered();
   jobsList.innerHTML = rows.length ? rows.map(jobCardHtml).join('') : '<div class="empty">No jobs here yet.</div>';
   bindSwipeRows();
+  if(!canDeleteJobs)jobsList.querySelectorAll('.swipe-delete').forEach(btn=>btn.remove());
 }
 
 function closeAllSwipes(except = null) {
@@ -318,7 +321,7 @@ function setSwipe(row, side) {
 }
 async function deleteJobFromDashboard(id) {
   const job = jobs.find(j => j.id === id);
-  if (!job || !confirm(`Delete ${job.customer_name || 'this job'}?`)) return;
+  if (!canDeleteJobs || !job || !confirm(`Permanently delete ${job.customer_name || 'this job'}? This cannot be undone.`)) return;
   const {error} = await supabaseClient.from('jobs').delete().eq('id', id);
   if (error) {
     alert(error.message);
@@ -467,7 +470,7 @@ function openJob(j = null, defaultDate = null) {
   $('#jobForm').reset();
   $('#jobId').value = j?.id || '';
   $('#jobDialogTitle').textContent = j ? 'Edit job' : 'New job';
-  $('#deleteJobBtn').classList.toggle('hidden', !j);
+  $('#deleteJobBtn').classList.toggle('hidden', !j||!canDeleteJobs);
   if (j) {
     $('#jobTitle').value = ['Battery','Solar','Battery + Solar'].includes(j.title) ? j.title : '';
     $('#customerName').value = j.customer_name || '';
@@ -585,7 +588,7 @@ $('#jobForm').addEventListener('submit', async e => {
 
 $('#deleteJobBtn').onclick = async () => {
   const id = $('#jobId').value;
-  if (!id || !confirm('Delete this job?')) return;
+  if (!canDeleteJobs || !id || !confirm('Permanently delete this job? This cannot be undone.')) return;
   const {error} = await supabaseClient.from('jobs').delete().eq('id', id);
   if (error) {
     alert(error.message);
