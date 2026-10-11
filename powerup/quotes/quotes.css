@@ -4,3 +4,19 @@
 /* Power Up Quotes only: independently scroll the long editor while keeping the fixed bottom navigation accessible. */
 #puQuotesView.sp-view.active{height:calc(100dvh - var(--sp-nav-h,78px) - env(safe-area-inset-bottom) - 34px);min-height:240px;overflow-y:auto!important;overflow-x:hidden;overscroll-behavior-y:contain;-webkit-overflow-scrolling:touch;padding-bottom:32px;scrollbar-gutter:stable;}
 #puQuotesView.sp-view.active .pu-panel{max-width:100%;}
+
+/* Power Up Quotes presentation only. */
+#puQuotesView .pu-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;padding:5px;background:#181c22;border:1px solid #303641;border-radius:14px;position:sticky;top:0;z-index:5}
+#puQuotesView .pu-tabs .pu-tab{min-width:0;padding:12px 6px;border:0;background:transparent;color:#bac4d1;font-weight:750;font-size:clamp(11px,2.4vw,14px)}
+#puQuotesView .pu-tabs .pu-tab.active{background:var(--tenant-accent,#ff1593);color:#fff;box-shadow:0 4px 12px #0005}
+#puQuotesView .pu-tab-panel[hidden]{display:none!important}
+#puQuotesView .pu-panel-heading{display:flex;align-items:center;justify-content:space-between;gap:12px}
+#puQuotesView .pu-panel-heading strong{font-size:1.05rem}
+#puQuotesView button:not(.pu-tab){background:#28202d;color:#f8e7f2;border:1px solid color-mix(in srgb,var(--tenant-accent,#ff1593) 35%,#414650);font-weight:700}
+#puQuotesView button.primary,#puQuotesView #puSave,#puQuotesView #puSendEmail,#puQuotesView #puCatalogSave{background:var(--tenant-accent,#ff1593)!important;color:#fff!important;border-color:transparent!important}
+#puQuotesView button:disabled{opacity:.45}
+#puQuotesView .pu-saved{background:#1b2027!important;color:#f5f7fa!important;border:1px solid #3d4652!important}
+#puQuotesView .pu-grid{gap:10px}
+#puQuotesView .pu-panel{margin:10px 0;padding:14px}
+#puQuotesView .pu-actions{gap:7px;margin-top:10px}
+#puQuotesView .pu-status:empty{display:none}
