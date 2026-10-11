@@ -8,7 +8,7 @@ const root = $('puQuotesView');if(!root)return;
 const lineRow = (l,i) => `<div class="pu-line"><input data-line="${i}" data-field="description" aria-label="Item description" value="${safe(l.description)}" placeholder="Product or service"><input data-line="${i}" data-field="quantity" type="number" min="0.001" step="any" aria-label="Quantity" value="${l.quantity}"><input data-line="${i}" data-field="unit_price" type="number" min="0" step="0.01" aria-label="Unit price" value="${l.unit_price}"><button type="button" data-remove="${i}" aria-label="Remove item">×</button></div>`;
 root.innerHTML = `<section class="hero-row"><div><p class="eyebrow">POWER UP SOLAR</p><h1>Quotes</h1></div><button type="button" id="puBack">← Jobs</button></section>
 <div class="pu-tabs" role="tablist" aria-label="Quotation sections"><button type="button" class="pu-tab active" data-pu-tab="list">My Quotes</button><button type="button" class="pu-tab" data-pu-tab="editor">Create / Edit</button><button type="button" class="pu-tab" data-pu-tab="catalogue">Catalogue</button></div><div class="pu-tab-panel" data-pu-panel="list"><div class="pu-panel"><div class="pu-panel-heading"><strong>Saved quotations</strong><button type="button" id="puListNew" class="primary">+ New quote</button></div><div id="puSavedQuotes" class="pu-note">Loading saved quotes…</div><div class="pu-actions"><label>Search saved quotes<input id="puQuoteSearch" type="search" placeholder="Customer or quote number"></label><label>Status filter<select id="puQuoteFilter"><option value="">All statuses</option><option value="draft">Draft</option><option value="sent">Sent</option><option value="accepted">Accepted</option><option value="declined">Declined</option><option value="expired">Expired</option></select></label></div></div></div><div class="pu-tab-panel" data-pu-panel="editor" hidden><div class="pu-panel"><div class="pu-panel-heading"><strong>Quote editor</strong><button type="button" id="puNew">+ New quote</button></div><div class="pu-actions"><button type="button" id="puDuplicate">Duplicate quote</button><label>Quote status<select id="puStatus"><option value="draft">Draft</option><option value="sent">Sent</option><option value="accepted">Accepted</option><option value="declined">Declined</option><option value="expired">Expired</option></select></label></div><p class="pu-note">Save, reopen, duplicate and print quotes. Use Send quotation email to deliver a saved quote as a PDF from sales@powerup.sydney. Only Power Up administrators can send.</p>
-<div class="pu-grid"><label>Customer name<input id="puName" autocomplete="name"></label><label>Email<input id="puEmail" type="email" autocomplete="email"></label><label>Phone<input id="puPhone" type="tel"></label><label>Site address<input id="puAddress"></label><label>Quote reference<input id="puRef" placeholder="e.g. PU-1001"></label><label>Valid until<input id="puValid" type="date"></label></div>
+<div class="pu-grid"><label>Customer name<input id="puName" autocomplete="name"></label><label>Email<input id="puEmail" type="email" autocomplete="email"></label><label>Phone<input id="puPhone" type="tel"></label><label>Site address<input id="puAddress" autocomplete="off" placeholder="Start typing a NSW address"><span id="puAddressHint" class="pu-note">Select an NSW address from Google suggestions.</span><div id="puAddressSuggestions" class="pu-address-suggestions hidden" role="listbox"></div></label><label>Quote reference<input id="puRef" placeholder="Assigned on save" readonly></label><label>Valid until<input id="puValid" type="date"></label></div>
 <label>Notes / inclusions<textarea id="puNotes" rows="3"></textarea></label></div>
 <div class="pu-panel" id="puCataloguePanel" hidden><h3>Product catalogue · Admin</h3><div class="pu-grid"><label>Item name<input id="puCatalogName" placeholder="e.g. 10 kWh battery"></label><label>GST-inclusive price<input id="puCatalogPrice" type="number" min="0" step="0.01"></label></div><div class="pu-actions"><button id="puCatalogSave" type="button">Add catalogue item</button></div><div id="puCatalogList"></div></div><div class="pu-panel"><h3>Quote items</h3><div id="puLines"></div><div class="pu-actions"><button type="button" id="puAdd">+ Add item</button><select id="puPreset" aria-label="Quick item"><option value="">Select a quick item…</option><option>Solar panels</option><option>Hybrid inverter</option><option>Battery storage</option><option>Installation labour</option><option>Switchboard upgrade</option></select></div><p class="pu-note">Enter GST-inclusive unit prices. Product catalogue and controlled pricing will be connected later.</p><div class="pu-total" id="puTotal"></div></div>
 <div class="pu-actions"><button type="button" id="puPreviewBtn" class="primary">Preview quote</button><button type="button" id="puPrint" disabled>Print / Save PDF</button><button type="button" id="puSave">Save quote</button><button type="button" id="puConvert" disabled>Convert accepted quote to job</button><button type="button" id="puSendEmail">Send quotation email</button></div><p id="puMessage" class="pu-status" role="status"></p><div id="puQuotePreview" class="pu-preview hidden"></div></div><div class="pu-tab-panel" data-pu-panel="catalogue" hidden><div class="pu-panel"><h3>Product catalogue</h3><p class="pu-note">Manage your reusable products and prices here.</p><div id="puCatalogueMount"></div></div></div>`;
@@ -65,12 +65,13 @@ async function refreshCatalogue(){
 }
 $('puCatalogSave').onclick=async()=>{try{const {business_id,role}=await getBusiness();if(!['owner','admin'].includes(role))throw Error('Admin access required');const name=$('puCatalogName').value.trim(),price=Number($('puCatalogPrice').value);if(!name||!Number.isFinite(price)||price<0)throw Error('Enter a valid name and price');const {error}=await supabaseClient.from('powerup_quote_items_catalog').insert({business_id,name,unit_price:price});if(error)throw error;$('puCatalogName').value='';$('puCatalogPrice').value='';await refreshCatalogue();$('puMessage').textContent='Catalogue item added.';}catch(e){$('puMessage').textContent=e.message;}};
 $('puCatalogList').onclick=async e=>{const id=e.target.dataset.deactivate;if(!id)return;if(!confirm('Deactivate this catalogue item?'))return;const {error}=await supabaseClient.from('powerup_quote_items_catalog').update({active:false}).eq('id',id);$('puMessage').textContent=error?error.message:'Item deactivated';if(!error)await refreshCatalogue();};
-$('puDuplicate').onclick=()=>{if(!currentQuoteId){$('puMessage').textContent='Open a saved quote before duplicating.';return;}currentQuoteId=null;currentQuoteJobId=null;lastSavedSnapshot=null;$('puRef').readOnly=false;$('puRef').value='';$('puStatus').value='draft';$('puConvert').disabled=true;$('puQuotePreview').classList.add('hidden');$('puPrint').disabled=true;$('puMessage').textContent='Duplicate ready. Save to create a new quote.';};
+async function prepareQuoteDefaults(){const date=new Date();date.setDate(date.getDate()+14);$('puValid').value=[date.getFullYear(),String(date.getMonth()+1).padStart(2,'0'),String(date.getDate()).padStart(2,'0')].join('-');$('puRef').value='Loading next number…';try{const {data,error}=await supabaseClient.rpc('powerup_next_quote_reference');if(error)throw error;$('puRef').value=data||'Assigned on save';}catch(e){$('puRef').value='Assigned on save';$('puMessage').textContent='Quote number will be assigned when saved.';}}
+$('puDuplicate').onclick=()=>{if(!currentQuoteId){$('puMessage').textContent='Open a saved quote before duplicating.';return;}currentQuoteId=null;currentQuoteJobId=null;lastSavedSnapshot=null;$('puRef').readOnly=false;$('puRef').value='';prepareQuoteDefaults();$('puStatus').value='draft';$('puConvert').disabled=true;$('puQuotePreview').classList.add('hidden');$('puPrint').disabled=true;$('puMessage').textContent='Duplicate ready. Save to create a new quote.';};
 $('puNew').onclick=()=>{
  currentQuoteId=null;currentQuoteJobId=null;$('puRef').readOnly=false;$('puConvert').disabled=true;state.lines=[{description:'',quantity:1,unit_price:0}];
  ['puName','puEmail','puPhone','puAddress','puRef','puValid','puNotes'].forEach(id=>$(id).value='');
  $('puStatus').value='draft';$('puQuotePreview').classList.add('hidden');$('puPrint').disabled=true;
- renderLines();$('puMessage').textContent='New quote ready.';
+ renderLines();prepareQuoteDefaults();$('puMessage').textContent='New quote ready.';
 };
 function showQuotes(){const q=$('puQuoteSearch').value.toLowerCase().trim(),status=$('puQuoteFilter').value;const rows=allQuotes.filter(x=>(!status||x.status===status)&&(!q||(x.customer_name+' '+x.quote_number).toLowerCase().includes(q)));$('puSavedQuotes').innerHTML='<h3>Saved quotes ('+rows.length+')</h3>'+(rows.length?rows.map(x=>'<button type="button" class="pu-saved" data-quote-id="'+safe(x.id)+'">'+safe(x.quote_number)+' · '+safe(x.customer_name)+' · '+safe(x.status)+'</button>').join(''):'<p>No matching quotes.</p>');}
 $('puQuoteSearch').oninput=showQuotes;$('puQuoteFilter').onchange=showQuotes;
@@ -108,8 +109,9 @@ $('puSave').onclick=async()=>{
   const payload={id,business_id,quote_number:ref,status:$('puStatus').value,customer_name:$('puName').value.trim(),customer_email:$('puEmail').value.trim()||null,customer_phone:$('puPhone').value.trim()||null,site_address:$('puAddress').value.trim()||null,notes:$('puNotes').value.trim(),valid_until:$('puValid').value||null,gst_included:true};
   const {data:savedId,error:saveError}=await supabaseClient.rpc('powerup_save_quote',{p_quote:payload,p_lines:state.lines.map(l=>({description:l.description.trim(),quantity:Number(l.quantity),unit_price:Number(l.unit_price)}))});
   if(saveError)throw saveError;
-  currentQuoteId=savedId;$('puRef').value=ref;lastSavedSnapshot=JSON.stringify({name:$('puName').value.trim(),email:$('puEmail').value.trim(),phone:$('puPhone').value.trim(),address:$('puAddress').value.trim(),ref,valid:$('puValid').value,notes:$('puNotes').value.trim(),status:$('puStatus').value,lines:state.lines.map(l=>({...l}))});$('puRef').readOnly=true;$('puConvert').disabled=$('puStatus').value!=='accepted'||!!currentQuoteJobId;
-  $('puMessage').textContent='Quote '+ref+' saved successfully.';$('puQuotePreview').classList.add('hidden');$('puPrint').disabled=true;await refreshQuotes();
+  const {data:savedQuote,error:refError}=await supabaseClient.from('powerup_quotes').select('quote_number').eq('id',savedId).single();if(refError)throw refError;
+  currentQuoteId=savedId;$('puRef').value=savedQuote.quote_number;lastSavedSnapshot=JSON.stringify({name:$('puName').value.trim(),email:$('puEmail').value.trim(),phone:$('puPhone').value.trim(),address:$('puAddress').value.trim(),ref:savedQuote.quote_number,valid:$('puValid').value,notes:$('puNotes').value.trim(),status:$('puStatus').value,lines:state.lines.map(l=>({...l}))});$('puRef').readOnly=true;$('puConvert').disabled=$('puStatus').value!=='accepted'||!!currentQuoteJobId;
+  $('puMessage').textContent='Quote '+savedQuote.quote_number+' saved successfully.';$('puQuotePreview').classList.add('hidden');$('puPrint').disabled=true;await refreshQuotes();
  }catch(e){$('puMessage').textContent='Save failed: '+e.message;}finally{button.disabled=false;}
 };
 $('puConvert').onclick=async()=>{if(!currentQuoteId||$('puStatus').value!=='accepted')return;if(!confirm('Create a Schedule Plus job from this accepted quote?'))return;try{const {data,error}=await supabaseClient.rpc('powerup_convert_quote_to_job',{p_quote_id:currentQuoteId});if(error)throw error;currentQuoteJobId=data;$('puConvert').disabled=true;$('puMessage').textContent='Job created. Open Jobs to schedule it.';}catch(e){$('puMessage').textContent='Job conversion failed: '+e.message;}};
@@ -137,6 +139,41 @@ $('puSendEmail').onclick=async()=>{
  }catch(e){$('puMessage').textContent='Email not sent: '+e.message;}
  finally{btn.disabled=false;}
 };
+
+
+/* Google Places (New) NSW-only autocomplete, scoped to the quote address. */
+(()=>{
+ const input=$('puAddress'),list=$('puAddressSuggestions'),hint=$('puAddressHint');
+ const bounds={west:140.999,south:-37.6,east:153.7,north:-28.1};
+ let library=null,token=null,timer=null,seq=0,predictions=[];
+ const hide=()=>{list.classList.add('hidden');list.innerHTML='';};
+ async function places(){
+  if(!window.google?.maps?.importLibrary){
+   if(typeof GOOGLE_MAPS_API_KEY==='undefined'||!GOOGLE_MAPS_API_KEY)throw Error('Google Maps is not configured');
+   await new Promise((resolve,reject)=>{const cb='puPlacesReady'+Date.now();window[cb]=()=>{delete window[cb];resolve();};const s=document.createElement('script');s.src='https://maps.googleapis.com/maps/api/js?key='+encodeURIComponent(GOOGLE_MAPS_API_KEY)+'&v=weekly&callback='+cb;s.onerror=()=>reject(Error('Google Maps failed to load'));document.head.appendChild(s);});
+  }
+  if(!library){library=await google.maps.importLibrary('places');token=new library.AutocompleteSessionToken();}
+  return library;
+ }
+ const component=(place,type)=>place.addressComponents?.find(x=>x.types?.includes(type))?.shortText||'';
+ async function choose(i){
+  const prediction=predictions[i];if(!prediction)return;
+  try{
+   const place=prediction.toPlace();await place.fetchFields({fields:['formattedAddress','addressComponents']});
+   if(component(place,'country')!=='AU'||component(place,'administrative_area_level_1')!=='NSW')throw Error('Please select an address in New South Wales.');
+   input.value=(place.formattedAddress||prediction.text?.toString()||'').replace(/,?\s*Australia\s*$/i,'').trim();
+   input.dataset.nswSelected='true';hint.textContent='NSW address selected.';hide();token=new library.AutocompleteSessionToken();
+  }catch(e){hint.textContent=e.message;}
+ }
+ input.addEventListener('input',()=>{delete input.dataset.nswSelected;clearTimeout(timer);timer=setTimeout(async()=>{
+  const text=input.value.trim(),request=++seq;if(text.length<3){hide();hint.textContent='Start typing a NSW address.';return;}
+  try{const p=await places();const {suggestions=[]}=await p.AutocompleteSuggestion.fetchAutocompleteSuggestions({input:text,includedRegionCodes:['au'],locationRestriction:bounds,sessionToken:token});if(request!==seq)return;
+   predictions=suggestions.map(x=>x.placePrediction).filter(Boolean);list.innerHTML=predictions.length?predictions.map((x,i)=>'<button type="button" data-pu-place="'+i+'">'+safe(x.text?.toString()||'')+'</button>').join(''):'<div class="pu-note">No matching NSW addresses.</div>';list.classList.remove('hidden');hint.textContent='Select an NSW address.';
+  }catch(e){if(request===seq){hide();hint.textContent='Google address lookup unavailable: '+e.message;}}
+ },250);});
+ list.addEventListener('click',e=>{const btn=e.target.closest('[data-pu-place]');if(btn)choose(Number(btn.dataset.puPlace));});
+ document.addEventListener('pointerdown',e=>{if(!e.target.closest('#puAddressSuggestions')&&e.target!==input)hide();});
+})();
 
 document.getElementById("puQuotesNav")?.addEventListener("click",()=>{refreshQuotes();refreshCatalogue();});
 document.addEventListener("powerup:quotes-open",()=>{switchQuoteTab('list');refreshQuotes();refreshCatalogue();});
