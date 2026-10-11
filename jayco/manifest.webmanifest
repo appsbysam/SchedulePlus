@@ -1,10 +1,10 @@
 {
-  "name": "Schedule+",
-  "short_name": "Schedule+",
-  "description": "Schedule+ job planning for trade teams.",
+  "name": "JAYCO Schedule+",
+  "short_name": "JAYCO",
+  "description": "JAYCO job management",
   "id": "/SchedulePlus/jayco/",
   "start_url": "/SchedulePlus/jayco/",
-  "scope": "/SchedulePlus/",
+  "scope": "/SchedulePlus/jayco/",
   "display": "standalone",
   "display_override": [
     "standalone",
@@ -15,10 +15,22 @@
   "prefer_related_applications": false,
   "icons": [
     {
-      "src": "assets/icons/icon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
-      "purpose": "any maskable"
+      "src": "https://otrzmqyqbyovjggdswzn.supabase.co/storage/v1/object/public/business-logos/9359127c-6929-4b2c-b25e-b9bd835d567c/app-icon-192-1789474915354.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "https://otrzmqyqbyovjggdswzn.supabase.co/storage/v1/object/public/business-logos/9359127c-6929-4b2c-b25e-b9bd835d567c/app-icon-512-1789474915354.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "https://otrzmqyqbyovjggdswzn.supabase.co/storage/v1/object/public/business-logos/9359127c-6929-4b2c-b25e-b9bd835d567c/app-icon-maskable-1789474915354.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ]
 }
