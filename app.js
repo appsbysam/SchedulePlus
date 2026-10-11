@@ -539,9 +539,19 @@ $('#jobForm').addEventListener('submit', async e => {
   e.preventDefault();
   const id = $('#jobId').value;
   if ($('#status').value === 'scheduled' && !$('#scheduledDate').value) {
-    $('#scheduledDate').setCustomValidity('Choose a date when scheduling a job.');
-    $('#scheduledDate').reportValidity();
-    return;
+    const answer = await new Promise(resolve => {
+      const notice = document.createElement('dialog');
+      notice.setAttribute('aria-label', 'Scheduling date not entered');
+      notice.style.cssText = 'max-width:min(92vw,440px);width:100%;border-radius:16px;padding:24px;border:1px solid #555;background:#20242d;color:#fff;box-sizing:border-box';
+      notice.innerHTML = '<h2 style="margin:0 0 12px;font-size:21px">Scheduling date not entered</h2><p style="line-height:1.5">Do you have an installation date? If not, you can save this job as <strong>To Schedule</strong> and add the date later.</p><div style="display:flex;flex-wrap:wrap;gap:10px;justify-content:flex-end;margin-top:20px"><button type="button" data-choice="date" style="padding:12px">Enter Date</button><button type="button" data-choice="later" style="padding:12px;background:#3154ef;color:white">Save for Later</button></div>';
+      document.body.appendChild(notice);
+      const finish = value => { notice.close();notice.remove();resolve(value); };
+      notice.addEventListener('click', ev => {const choice=ev.target.closest('[data-choice]')?.dataset.choice;if(choice)finish(choice);});
+      notice.addEventListener('cancel', ev => {ev.preventDefault();finish('date');});
+      notice.showModal();
+    });
+    if(answer==='date'){$('#scheduledDate').focus();return;}
+    $('#status').value='to_schedule';
   }
   $('#scheduledDate').setCustomValidity('');
   const hours = Number($('#estimatedHours').value) || 0;
