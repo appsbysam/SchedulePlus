@@ -74,7 +74,7 @@ function printQuotation(){
    const blob=pdf.output('blob');
    const url=URL.createObjectURL(blob);
    const isApple=/iPhone|iPad|iPod/i.test(page.navigator.userAgent);
-   if(isApple){page.open(url,'_blank');}else{const a=page.document.createElement('a');a.href=url;a.download=opts.filename;page.document.body.appendChild(a);a.click();a.remove();}
+   if(isApple){page.location.href=url;}else{const a=page.document.createElement('a');a.href=url;a.download=opts.filename;page.document.body.appendChild(a);a.click();a.remove();}
    page.setTimeout(()=>URL.revokeObjectURL(url),120000);
    button.textContent='Save PDF';
   }catch(err){page.alert('Could not generate PDF: '+(err?.message||err));button.textContent='Save PDF';}
