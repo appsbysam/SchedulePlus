@@ -10,11 +10,11 @@ const invalidLine = l => !l.description.trim()||!(Number(l.quantity)>0)||!Number
 function markInvalidLines(){let first=null;state.lines.forEach((l,i)=>{const row=root.querySelector(`[data-row="${i}"]`);if(!row)return;const bad=invalidLine(l);row.classList.toggle('pu-line-invalid',bad);for(const field of ['description','quantity','unit_price']){const el=row.querySelector(`[data-field="${field}"]`);if(!el)continue;const invalid=field==='description'?!l.description.trim():field==='quantity'?!(Number(l.quantity)>0):l.unit_price===''||!Number.isFinite(Number(l.unit_price))||Number(l.unit_price)<0;el.setAttribute('aria-invalid',String(invalid));if(invalid&&!first)first=el;}});if(first){first.scrollIntoView({behavior:'smooth',block:'center'});first.focus({preventScroll:true});}return !!first;}
 function requireCompleteLines(){if(!state.lines.length||state.lines.some(invalidLine)){markInvalidLines();$('puMessage').textContent='Complete the highlighted quote item before continuing.';return false;}return true;}
 root.innerHTML = `<section class="hero-row"><div><p class="eyebrow">POWER UP SOLAR</p><h1>Quotes</h1></div><button type="button" id="puBack">← Jobs</button></section>
-<div class="pu-tabs" role="tablist" aria-label="Quotation sections"><button type="button" class="pu-tab active" data-pu-tab="list">My Quotes</button><button type="button" class="pu-tab" data-pu-tab="editor">Create / Edit</button><button type="button" class="pu-tab" data-pu-tab="catalogue">Catalogue</button></div><div class="pu-tab-panel" data-pu-panel="list"><div class="pu-panel"><div class="pu-panel-heading"><strong>Saved quotations</strong><button type="button" id="puListNew" class="primary">+ New quote</button></div><div id="puSavedQuotes" class="pu-note">Loading saved quotes…</div><div class="pu-actions"><label>Search saved quotes<input id="puQuoteSearch" type="search" placeholder="Customer or quote number"></label><label>Status filter<select id="puQuoteFilter"><option value="">All statuses</option><option value="draft">Draft</option><option value="sent">Sent</option><option value="accepted">Accepted</option><option value="declined">Declined</option><option value="expired">Expired</option></select></label></div></div></div><div class="pu-tab-panel" data-pu-panel="editor" hidden><div class="pu-panel"><div class="pu-panel-heading"><strong>Quote editor</strong><button type="button" id="puNew">+ New quote</button></div><div class="pu-actions"><button type="button" id="puDuplicate">Duplicate quote</button><label>Quote status<select id="puStatus"><option value="draft">Draft</option><option value="sent">Sent</option><option value="accepted">Accepted</option><option value="declined">Declined</option><option value="expired">Expired</option></select></label></div><p class="pu-note">Preview and print without saving. Save before emailing or converting a quote. Use Send quotation email to deliver a saved quote as a PDF from sales@powerup.sydney. Only Power Up administrators can send.</p>
+<div class="pu-tabs" role="tablist" aria-label="Quotation sections"><button type="button" class="pu-tab active" data-pu-tab="list">My Quotes</button><button type="button" class="pu-tab" data-pu-tab="editor">Create / Edit</button><button type="button" class="pu-tab" data-pu-tab="catalogue">Catalogue</button></div><div class="pu-tab-panel" data-pu-panel="list"><div class="pu-panel"><div class="pu-panel-heading"><strong>Saved quotations</strong><button type="button" id="puListNew" class="primary">+ New quote</button></div><div class="pu-actions"><button type="button" id="puActiveQuotes" class="primary">Active Quotes</button><button type="button" id="puArchivedQuotes">Archived Quotes</button></div><div id="puSavedQuotes" class="pu-note">Loading saved quotes…</div><div class="pu-actions"><label>Search saved quotes<input id="puQuoteSearch" type="search" placeholder="Customer or quote number"></label><label>Status filter<select id="puQuoteFilter"><option value="">All statuses</option><option value="draft">Draft</option><option value="sent">Sent</option><option value="accepted">Accepted</option><option value="declined">Declined</option><option value="expired">Expired</option></select></label></div></div></div><div class="pu-tab-panel" data-pu-panel="editor" hidden><div class="pu-panel"><div class="pu-panel-heading"><strong>Quote editor</strong><button type="button" id="puNew">+ New quote</button></div><div class="pu-actions"><button type="button" id="puDuplicate">Duplicate quote</button><label>Quote status<select id="puStatus"><option value="draft">Draft</option><option value="sent">Sent</option><option value="accepted">Accepted</option><option value="declined">Declined</option><option value="expired">Expired</option></select></label></div><p class="pu-note">Preview and print without saving. Save before emailing or converting a quote. Use Send quotation email to deliver a saved quote as a PDF from sales@powerup.sydney. Only Power Up administrators can send.</p>
 <div class="pu-grid"><label>Customer name<input id="puName" autocomplete="name"></label><label>Email<input id="puEmail" type="email" autocomplete="email"></label><label>Phone<input id="puPhone" type="tel"></label><label>Site address<input id="puAddress" autocomplete="off" placeholder="Start typing a NSW address"><span id="puAddressHint" class="pu-note">Select an NSW address from Google suggestions.</span><div id="puAddressSuggestions" class="pu-address-suggestions hidden" role="listbox"></div></label><label>Quote reference<input id="puRef" placeholder="Assigned on save" readonly></label><label>Valid until<input id="puValid" type="date"></label></div>
 <label>Notes / inclusions<textarea id="puNotes" rows="3"></textarea></label></div>
 <div class="pu-panel" id="puCataloguePanel" hidden><h3>Product catalogue · Admin</h3><div class="pu-grid"><label>Item name<input id="puCatalogName" placeholder="e.g. 10 kWh battery"></label><label>GST-inclusive price<input id="puCatalogPrice" type="number" min="0" step="0.01"></label></div><div class="pu-actions"><button id="puCatalogSave" type="button">Add catalogue item</button></div><div id="puCatalogList"></div></div><div class="pu-panel"><h3>Quote items</h3><div id="puLines"></div><div class="pu-actions"><button type="button" id="puAdd">+ Add item</button><select id="puPreset" aria-label="Quick item"><option value="">Select a quick item…</option><option>Solar panels</option><option>Hybrid inverter</option><option>Battery storage</option><option>Installation labour</option><option>Switchboard upgrade</option></select></div><p class="pu-note">Enter GST-inclusive unit prices. Product catalogue and controlled pricing will be connected later.</p><div class="pu-total" id="puTotal"></div></div>
-<div class="pu-actions"><button type="button" id="puPreviewBtn" class="primary">Preview quote</button><button type="button" id="puPrint" disabled>Print / Save PDF</button><button type="button" id="puSave">Save quote</button><button type="button" id="puConvert" disabled>Convert accepted quote to job</button><button type="button" id="puSendEmail">Send quotation email</button></div><p id="puMessage" class="pu-status" role="status"></p><dialog id="puPreviewDialog" class="pu-preview-dialog" aria-label="Quotation preview"><div class="pu-preview-toolbar"><strong>Quotation Preview</strong><button type="button" id="puClosePreview" aria-label="Close preview">×</button></div><div id="puQuotePreview" class="pu-preview"></div><div class="pu-preview-footer"><button type="button" id="puModalClose">Close</button><button type="button" id="puModalPrint" class="primary">Print / Save PDF</button></div></dialog></div><div class="pu-tab-panel" data-pu-panel="catalogue" hidden><div class="pu-panel"><h3>Product catalogue</h3><p class="pu-note">Manage your reusable products and prices here.</p><div id="puCatalogueMount"></div></div></div>`;
+<div class="pu-actions"><button type="button" id="puPreviewBtn" class="primary">Preview quote</button><button type="button" id="puPrint" disabled>Print / Save PDF</button><button type="button" id="puSave">Save quote</button><button type="button" id="puConvert" disabled>Convert accepted quote to job</button><button type="button" id="puSendEmail">Send quotation email</button><button type="button" id="puArchiveCurrent" hidden>Archive quotation</button><button type="button" id="puDeleteCurrent" hidden>Delete quotation</button></div><p id="puMessage" class="pu-status" role="status"></p><dialog id="puPreviewDialog" class="pu-preview-dialog" aria-label="Quotation preview"><div class="pu-preview-toolbar"><strong>Quotation Preview</strong><button type="button" id="puClosePreview" aria-label="Close preview">×</button></div><div id="puQuotePreview" class="pu-preview"></div><div class="pu-preview-footer"><button type="button" id="puModalClose">Close</button><button type="button" id="puModalPrint" class="primary">Print / Save PDF</button></div></dialog></div><div class="pu-tab-panel" data-pu-panel="catalogue" hidden><div class="pu-panel"><h3>Product catalogue</h3><p class="pu-note">Manage your reusable products and prices here.</p><div id="puCatalogueMount"></div></div></div>`;
 const cataloguePanel=$('puCataloguePanel');$('puCatalogueMount').appendChild(cataloguePanel);
 const switchQuoteTab = name => {
  root.querySelectorAll('[data-pu-panel]').forEach(panel=>{panel.hidden=panel.dataset.puPanel!==name;});
@@ -63,7 +63,7 @@ $('puPrint').onclick=()=>{if(!previewDialog.open)previewDialog.showModal();};
 const PU_BUSINESS_SLUG='powerup-group';
 let catalogue=[];
 const basePresets=['Solar panels','Hybrid inverter','Battery storage','Installation labour','Switchboard upgrade'];
-let currentQuoteId=null;let currentQuoteJobId=null;let allQuotes=[];let lastSavedSnapshot=null;
+let currentQuoteId=null;let currentQuoteJobId=null;let allQuotes=[];let lastSavedSnapshot=null;let archivedQuotesView=false;let currentQuoteArchived=false;let currentQuoteReadonly=false;let canDeleteQuotes=false;
 async function getBusiness(){
  const {data:{user},error:userError}=await supabaseClient.auth.getUser();
  if(userError||!user)throw new Error('Please sign in first.');
@@ -90,22 +90,60 @@ $('puCatalogList').onclick=async e=>{const id=e.target.dataset.deactivate;if(!id
 async function prepareQuoteDefaults(){const date=new Date();date.setDate(date.getDate()+14);$('puValid').value=[date.getFullYear(),String(date.getMonth()+1).padStart(2,'0'),String(date.getDate()).padStart(2,'0')].join('-');$('puRef').value='Loading next number…';try{const {data,error}=await supabaseClient.rpc('powerup_next_quote_reference');if(error)throw error;$('puRef').value=data||'Assigned on save';}catch(e){$('puRef').value='Assigned on save';$('puMessage').textContent='Quote number will be assigned when saved.';}}
 $('puDuplicate').onclick=()=>{if(!currentQuoteId){$('puMessage').textContent='Open a saved quote before duplicating.';return;}currentQuoteId=null;currentQuoteJobId=null;lastSavedSnapshot=null;$('puRef').readOnly=false;$('puRef').value='';prepareQuoteDefaults();$('puStatus').value='draft';$('puConvert').disabled=true;hidePreview();$('puMessage').textContent='Duplicate ready. Save to create a new quote.';};
 $('puNew').onclick=()=>{
- currentQuoteId=null;currentQuoteJobId=null;$('puRef').readOnly=false;$('puConvert').disabled=true;state.lines=[{description:'',quantity:1,unit_price:0}];
+ currentQuoteId=null;currentQuoteJobId=null;currentQuoteArchived=false;currentQuoteReadonly=false;applyQuoteAccess();$('puRef').readOnly=false;$('puConvert').disabled=true;state.lines=[{description:'',quantity:1,unit_price:0}];
  ['puName','puEmail','puPhone','puAddress','puRef','puValid','puNotes'].forEach(id=>$(id).value='');
  $('puStatus').value='draft';$('puQuotePreview').classList.remove('hidden');$('puPrint').disabled=true;
  renderLines();prepareQuoteDefaults();$('puMessage').textContent='New quote ready.';
 };
-function showQuotes(){const q=$('puQuoteSearch').value.toLowerCase().trim(),status=$('puQuoteFilter').value;const rows=allQuotes.filter(x=>(!status||x.status===status)&&(!q||(x.customer_name+' '+x.quote_number).toLowerCase().includes(q)));$('puSavedQuotes').innerHTML='<h3>Saved quotes ('+rows.length+')</h3>'+(rows.length?rows.map(x=>'<button type="button" class="pu-saved" data-quote-id="'+safe(x.id)+'">'+safe(x.quote_number)+' · '+safe(x.customer_name)+' · '+safe(x.job_id?'Converted to Job':x.status)+'</button>').join(''):'<p>No matching quotes.</p>');}
+function quoteIsArchived(q){return !!(q.job_id||q.archived_at);}
+function applyQuoteAccess(){
+ const locked=currentQuoteReadonly;
+ ['puName','puEmail','puPhone','puAddress','puValid','puNotes','puStatus','puAdd','puPreset','puSave','puConvert','puSendEmail'].forEach(id=>{const el=$(id);if(el)el.disabled=locked;});
+ $('puRef').readOnly=true;
+ $('puLines').querySelectorAll('input,button').forEach(el=>el.disabled=locked);
+ $('puArchiveCurrent').hidden=!currentQuoteId||!!currentQuoteJobId;
+ $('puArchiveCurrent').textContent=currentQuoteArchived?'Restore quotation':'Archive quotation';
+ $('puDeleteCurrent').hidden=!currentQuoteId||!!currentQuoteJobId||!canDeleteQuotes;
+ if(!locked)$('puConvert').disabled=$('puStatus').value!=='accepted'||!!currentQuoteJobId;
+}
+function showQuotes(){
+ const q=$('puQuoteSearch').value.toLowerCase().trim(),status=$('puQuoteFilter').value;
+ const rows=allQuotes.filter(x=>quoteIsArchived(x)===archivedQuotesView&&(!status||x.status===status)&&(!q||(x.customer_name+' '+x.quote_number).toLowerCase().includes(q)));
+ $('puActiveQuotes').classList.toggle('primary',!archivedQuotesView);
+ $('puArchivedQuotes').classList.toggle('primary',archivedQuotesView);
+ $('puSavedQuotes').innerHTML='<h3>'+(archivedQuotesView?'Archived':'Active')+' quotes ('+rows.length+')</h3>'+(rows.length?rows.map(x=>'<button type="button" class="pu-saved" data-quote-id="'+safe(x.id)+'">'+safe(x.quote_number)+' · '+safe(x.customer_name)+' · '+safe(x.job_id?'Converted to Job':x.status)+(quoteIsArchived(x)?' · Archived':'')+'</button>').join(''):'<p>No matching quotes.</p>');
+}
+$('puActiveQuotes').onclick=()=>{archivedQuotesView=false;showQuotes();};
+$('puArchivedQuotes').onclick=()=>{archivedQuotesView=true;showQuotes();};
 $('puQuoteSearch').oninput=showQuotes;$('puQuoteFilter').onchange=showQuotes;
 async function refreshQuotes(){
  const list=$('puSavedQuotes');if(!list)return;
  try{
-  const {business_id}=await getBusiness();
-  const {data,error}=await supabaseClient.from('powerup_quotes').select('id,quote_number,customer_name,status,job_id,created_at').eq('business_id',business_id).order('created_at',{ascending:false}).limit(30);
+  const {business_id,role}=await getBusiness();
+  canDeleteQuotes=['owner','admin'].includes(role);
+  const {data,error}=await supabaseClient.from('powerup_quotes').select('id,quote_number,customer_name,status,job_id,archived_at,created_at').eq('business_id',business_id).order('created_at',{ascending:false}).limit(200);
   if(error)throw error;
-  allQuotes=data||[];showQuotes();
+  allQuotes=data||[];showQuotes();applyQuoteAccess();
  }catch(e){list.textContent='Saved quotes unavailable: '+e.message;}
 }
+$('puArchiveCurrent').onclick=async()=>{
+ if(!currentQuoteId||currentQuoteJobId)return;
+ const action=currentQuoteArchived?'restore':'archive';
+ if(!confirm((action==='archive'?'Archive':'Restore')+' quotation '+$('puRef').value+'?'))return;
+ const {error}=await supabaseClient.from('powerup_quotes').update({archived_at:currentQuoteArchived?null:new Date().toISOString()}).eq('id',currentQuoteId).is('job_id',null);
+ if(error){$('puMessage').textContent='Unable to '+action+': '+error.message;return;}
+ currentQuoteArchived=!currentQuoteArchived;currentQuoteReadonly=currentQuoteArchived;
+ applyQuoteAccess();await refreshQuotes();$('puMessage').textContent='Quotation '+(currentQuoteArchived?'archived.':'restored.');
+};
+$('puDeleteCurrent').onclick=async()=>{
+ if(!currentQuoteId||currentQuoteJobId||!canDeleteQuotes)return;
+ const ref=$('puRef').value;
+ if(!confirm('Permanently delete quotation '+ref+'? This cannot be undone.'))return;
+ const {error,count}=await supabaseClient.from('powerup_quotes').delete({count:'exact'}).eq('id',currentQuoteId).is('job_id',null);
+ if(error||count!==1){$('puMessage').textContent='Delete failed: '+(error?.message||'Quotation was not deleted.');return;}
+ $('puNew').click();switchQuoteTab('list');await refreshQuotes();
+};
+
 $('puSavedQuotes').addEventListener('click',async e=>{
  const id=e.target.dataset.quoteId;if(!id)return;
  try{
@@ -113,14 +151,14 @@ $('puSavedQuotes').addEventListener('click',async e=>{
   const {data:lines,error:lineError}=await supabaseClient.from('powerup_quote_lines').select('description,quantity,unit_price').eq('quote_id',id).order('sort_order');
   if(lineError)throw lineError;
   $('puQuotePreview').classList.remove('hidden');$('puPrint').disabled=true;
-  currentQuoteId=q.id;currentQuoteJobId=q.job_id||null;lastSavedSnapshot=JSON.stringify({name:q.customer_name,email:q.customer_email||'',phone:q.customer_phone||'',address:q.site_address||'',ref:q.quote_number,valid:q.valid_until||'',notes:q.notes||'',status:q.status,lines:(lines||[]).map(l=>({description:l.description,quantity:Number(l.quantity),unit_price:Number(l.unit_price)}))});$('puRef').readOnly=true;$('puConvert').disabled=q.status!=='accepted'||!!q.job_id;
+  currentQuoteId=q.id;currentQuoteJobId=q.job_id||null;currentQuoteArchived=!!q.archived_at;currentQuoteReadonly=!!(q.job_id||q.archived_at);lastSavedSnapshot=JSON.stringify({name:q.customer_name,email:q.customer_email||'',phone:q.customer_phone||'',address:q.site_address||'',ref:q.quote_number,valid:q.valid_until||'',notes:q.notes||'',status:q.status,lines:(lines||[]).map(l=>({description:l.description,quantity:Number(l.quantity),unit_price:Number(l.unit_price)}))});$('puRef').readOnly=true;$('puConvert').disabled=q.status!=='accepted'||!!q.job_id;
   $('puName').value=q.customer_name||'';$('puEmail').value=q.customer_email||'';$('puPhone').value=q.customer_phone||'';$('puAddress').value=q.site_address||'';$('puRef').value=q.quote_number||'';$('puValid').value=q.valid_until||'';$('puNotes').value=q.notes||'';$('puStatus').value=q.status||'draft';
-  state.lines=(lines||[]).map(l=>({description:l.description,quantity:Number(l.quantity),unit_price:Number(l.unit_price)}));renderLines();
+  state.lines=(lines||[]).map(l=>({description:l.description,quantity:Number(l.quantity),unit_price:Number(l.unit_price)}));renderLines();applyQuoteAccess();
   $('puMessage').textContent='Loaded '+q.quote_number;switchQuoteTab('editor');
  }catch(e){$('puMessage').textContent='Unable to open quote: '+e.message;}
 });
 $('puSave').onclick=async()=>{
- const button=$('puSave');button.disabled=true;
+ if(currentQuoteReadonly){$('puMessage').textContent='Archived and converted quotations are read-only.';return false;}const button=$('puSave');button.disabled=true;
  try{
   const {business_id}=await getBusiness();
   if(!$('puName').value.trim())throw new Error('Customer name is required.');
@@ -136,7 +174,7 @@ $('puSave').onclick=async()=>{
   $('puMessage').textContent='Quote '+savedQuote.quote_number+' saved successfully.';$('puQuotePreview').classList.remove('hidden');$('puPrint').disabled=true;await refreshQuotes();
  return true;}catch(e){$('puMessage').textContent='Save failed: '+e.message;return false;}finally{button.disabled=false;}
 };
-$('puConvert').onclick=async()=>{if($('puStatus').value!=='accepted'||currentQuoteJobId)return;if(!confirm('Save this accepted quote and create a Schedule+ job?'))return;const btn=$('puConvert');btn.disabled=true;try{if(!currentQuoteId||!lastSavedSnapshot||currentSnapshot()!==lastSavedSnapshot){const saved=await $('puSave').onclick();if(!saved)throw Error('Quote could not be saved. Correct the highlighted fields and try again.');}if(!currentQuoteId)throw Error('Save the quotation before converting.');const {data,error}=await supabaseClient.rpc('powerup_convert_quote_to_job',{p_quote_id:currentQuoteId});if(error)throw error;currentQuoteJobId=data;btn.disabled=true;await refreshQuotes();$('puMessage').textContent='Job created successfully. Opening job details…';document.dispatchEvent(new CustomEvent('powerup:open-converted-job',{detail:{jobId:data}}));}catch(e){$('puMessage').textContent='Conversion stopped: '+e.message;btn.disabled=!!currentQuoteJobId;} };
+$('puConvert').onclick=async()=>{if($('puStatus').value!=='accepted'||currentQuoteJobId)return;if(!confirm('Save this accepted quote and create a Schedule+ job?'))return;const btn=$('puConvert');btn.disabled=true;try{if(!currentQuoteId||!lastSavedSnapshot||currentSnapshot()!==lastSavedSnapshot){const saved=await $('puSave').onclick();if(!saved)throw Error('Quote could not be saved. Correct the highlighted fields and try again.');}if(!currentQuoteId)throw Error('Save the quotation before converting.');const {data,error}=await supabaseClient.rpc('powerup_convert_quote_to_job',{p_quote_id:currentQuoteId});if(error)throw error;currentQuoteJobId=data;currentQuoteReadonly=true;currentQuoteArchived=true;btn.disabled=true;await refreshQuotes();$('puMessage').textContent='Job created successfully. Opening job details…';document.dispatchEvent(new CustomEvent('powerup:open-converted-job',{detail:{jobId:data}}));}catch(e){$('puMessage').textContent='Conversion stopped: '+e.message;btn.disabled=!!currentQuoteJobId;} };
 $('puStatus').onchange=()=>{$('puConvert').disabled=$('puStatus').value!=='accepted'||!!currentQuoteJobId;};
 
 function currentSnapshot(){return JSON.stringify({name:$('puName').value.trim(),email:$('puEmail').value.trim(),phone:$('puPhone').value.trim(),address:$('puAddress').value.trim(),ref:$('puRef').value.trim(),valid:$('puValid').value,notes:$('puNotes').value.trim(),status:$('puStatus').value,lines:state.lines.map(l=>({...l}))});}
