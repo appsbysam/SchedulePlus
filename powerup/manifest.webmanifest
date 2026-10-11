@@ -4,7 +4,7 @@
   "description": "Schedule+ job planning for trade teams.",
   "id": "/SchedulePlus/powerup/",
   "start_url": "/SchedulePlus/powerup/",
-  "scope": "/SchedulePlus/",
+  "scope": "/SchedulePlus/powerup/",
   "display": "standalone",
   "display_override": [
     "standalone",
