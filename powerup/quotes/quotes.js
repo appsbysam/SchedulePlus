@@ -130,6 +130,7 @@ $('puSendEmail').onclick=async()=>{
 };
 
 document.getElementById("puQuotesNav")?.addEventListener("click",()=>{refreshQuotes();refreshCatalogue();});
+document.addEventListener("powerup:quotes-open",()=>{refreshQuotes();refreshCatalogue();});
 refreshQuotes();
 refreshCatalogue();
 
