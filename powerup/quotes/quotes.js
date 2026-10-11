@@ -79,6 +79,7 @@ $('puSave').onclick=async()=>{
   $('puMessage').textContent='Quote '+ref+' saved successfully.';await refreshQuotes();
  }catch(e){$('puMessage').textContent='Save failed: '+e.message;}finally{button.disabled=false;}
 };
+document.getElementById("puQuotesNav")?.addEventListener("click",refreshQuotes);
 refreshQuotes();
 
 renderLines();
