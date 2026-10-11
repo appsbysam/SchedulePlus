@@ -36,11 +36,14 @@ function start(){
   const email=$('email').value.trim(),password=pass.value;
   if(password.length<6){$('authMessage').textContent='Password must be at least six characters.';return}
   signup.disabled=true;
+  signup.setAttribute('aria-busy','true');
+  signup.innerHTML='<span class="sp-register-spinner" aria-hidden="true"></span><span>Registering your account…</span>';
+  $('authMessage').textContent='';
   try{
    const {error}=await supabaseClient.auth.signUp({email,password,options:{emailRedirectTo:'https://appsbysam.github.io/SchedulePlus/',data:{pending_business_name:name.value.trim()}}});
    $('authMessage').textContent=error?error.message:'Check your email to verify your account. Once verified, sign in to finish creating your business.';
   }catch(e){$('authMessage').textContent='Registration unavailable. Please try again.'}
-  finally{signup.disabled=false}
+  finally{signup.disabled=false;signup.removeAttribute('aria-busy');signup.textContent='Register'}
  };
  find.onclick=async()=>{
   const email=$('email').value.trim();if(!email||!$('email').checkValidity()){$('authMessage').textContent='Enter a valid email address.';return}
