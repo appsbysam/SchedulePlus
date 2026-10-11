@@ -562,7 +562,7 @@ $('#status').addEventListener('change', () => $('#scheduledDate').setCustomValid
 $('#jobForm').addEventListener('submit', async e => {
   e.preventDefault();
   const id = $('#jobId').value;
-  if ($('#status').value === 'scheduled' && !$('#scheduledDate').value) {
+  if (!$('#scheduledDate').value && (dialog.dataset.convertedQuoteJob==='true' || $('#status').value === 'scheduled')) {
     const answer = await new Promise(resolve => {
       const notice = document.createElement('dialog');
       notice.setAttribute('aria-label', 'Scheduling date not entered');
@@ -616,6 +616,7 @@ $('#jobForm').addEventListener('submit', async e => {
     alert(error.message);
     return;
   }
+  dialog.dataset.convertedQuoteJob='false';
   dialog.close();
   await loadJobs();
 });
