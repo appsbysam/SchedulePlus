@@ -246,12 +246,15 @@ $('puSendEmail').onclick=async()=>{
 const wizard=document.createElement('section');wizard.id='puWizard';wizard.className='pu-wizard';
 root.querySelector('[data-pu-panel="editor"]').prepend(wizard);
 let wizardStep='main',editingItem=-1;
+const originalAddressParent=$('puAddress').parentElement;
+function restoreAddress(){if($('puAddress').parentElement!==originalAddressParent)originalAddressParent.insertBefore($('puAddress'),$('puAddressHint'));if($('puAddressSuggestions').parentElement!==originalAddressParent)originalAddressParent.appendChild($('puAddressSuggestions'));if($('puAddressHint').parentElement!==originalAddressParent)originalAddressParent.appendChild($('puAddressHint'));}
 function splitItemDescription(value){
  const parts=String(value||'').split(' — ');return {name:parts.shift()||'',details:parts.join(' — ')};
 }
 function wizardTotals(){const total=state.lines.reduce((sum,l)=>sum+Number(l.quantity||0)*Number(l.unit_price||0),0);return {total,gst:gstEnabled?total/11:0};}
 function renderWizard(){
  if(!wizard.isConnected)return;
+ restoreAddress();
  const {total,gst}=wizardTotals();
  const reference=$('puRef').value||'New quote';
  const summary=state.lines.filter(l=>String(l.description||'').trim());
@@ -262,7 +265,10 @@ function renderWizard(){
  if(wizardStep==='main'){
  wizard.innerHTML=top+'<div class="pu-wiz-main"><p class="pu-wiz-date">'+new Date().toLocaleDateString('en-AU',{day:'numeric',month:'short',year:'numeric'})+'</p><h2>Quote '+safe(reference)+'</h2><div class="pu-wiz-label">BILL TO</div><button class="pu-wiz-tile" type="button" data-wiz="client">◉ &nbsp; '+(client?safe(client):'Add client')+' <span>›</span></button><div class="pu-wiz-label">ITEMS</div><button class="pu-wiz-tile" type="button" data-wiz="add">⊕ &nbsp; Add items <span>›</span></button><div class="pu-wiz-cards">'+summary.map((l,i)=>{const part=splitItemDescription(l.description);return '<button type="button" class="pu-wiz-item-card" data-wiz-item="'+i+'"><strong>'+safe(part.name)+'</strong><small>'+safe(part.details)+'</small><span>'+safe(l.quantity)+' × '+money(l.unit_price)+' &nbsp; <b>'+money(Number(l.quantity)*Number(l.unit_price))+'</b></span></button>';}).join('')+'</div><div class="pu-wiz-gst"><span><strong>GST 10%</strong><small>Applies to the entire quote</small></span><button type="button" role="switch" aria-checked="'+gstEnabled+'" class="pu-wiz-switch '+(gstEnabled?'is-on':'')+'" data-wiz="gst" '+(readonly?'disabled':'')+'><span></span></button></div><div class="pu-wiz-money"><div><span>Subtotal</span><strong>'+money(total-gst)+'</strong></div><div><span>GST</span><strong>'+money(gst)+'</strong></div><div class="pu-wiz-grand"><span>Total</span><strong>'+money(total)+'</strong></div></div><div class="pu-wiz-footer"><button type="button" data-wiz="client">Client details</button><button type="button" data-wiz="add" '+(readonly?'disabled':'')+'>+ Add item</button></div><div class="pu-wiz-tools"><button type="button" data-wiz="preview">Preview / PDF</button><button type="button" data-wiz="actions">More quote actions</button></div></div>';
  }else if(wizardStep==='client'){
- wizard.innerHTML=top+'<div class="pu-wiz-form"><label>Customer name<input id="wizName" value="'+safe($('puName').value)+'" '+(readonly?'disabled':'')+'></label><label>Email<input id="wizEmail" type="email" value="'+safe($('puEmail').value)+'" '+(readonly?'disabled':'')+'></label><label>Phone<input id="wizPhone" type="tel" value="'+safe($('puPhone').value)+'" '+(readonly?'disabled':'')+'></label><label>Site address<input id="wizAddress" value="'+safe($('puAddress').value)+'" placeholder="Start typing an NSW address" '+(readonly?'disabled':'')+'></label><div id="wizAddressSuggestions" class="pu-address-suggestions"></div><label>Valid until<input id="wizValid" type="date" value="'+safe($('puValid').value)+'" '+(readonly?'disabled':'')+'></label><button class="pu-wiz-next" type="button" data-wiz="clientnext">Next → Add items</button></div>';
+ wizard.innerHTML=top+'<div class="pu-wiz-form"><label>Customer name<input id="wizName" value="'+safe($('puName').value)+'" '+(readonly?'disabled':'')+'></label><label>Email<input id="wizEmail" type="email" value="'+safe($('puEmail').value)+'" '+(readonly?'disabled':'')+'></label><label>Phone<input id="wizPhone" type="tel" value="'+safe($('puPhone').value)+'" '+(readonly?'disabled':'')+'></label><label id="wizAddressMount">Site address</label><label>Valid until<input id="wizValid" type="date" value="'+safe($('puValid').value)+'" '+(readonly?'disabled':'')+'></label><button class="pu-wiz-next" type="button" data-wiz="clientnext">Next → Add items</button></div>';
+ $('wizAddressMount').appendChild($('puAddress'));
+ $('wizAddressMount').appendChild($('puAddressSuggestions'));
+ $('wizAddressMount').appendChild($('puAddressHint'));
  }else{
  const l=editingItem>=0?state.lines[editingItem]:{description:'',quantity:1,unit_price:0};const part=splitItemDescription(l.description);
  wizard.innerHTML=top+'<div class="pu-wiz-form"><label>Item name<input id="wizItemName" list="wizItemOptions" placeholder="Enter or select an item" value="'+safe(part.name)+'" '+(readonly?'disabled':'')+'><small>Type a new item or select from your catalogue</small></label><datalist id="wizItemOptions">'+catalogue.map(x=>'<option value="'+safe(x.name)+'"></option>').join('')+'</datalist><label>Item description<textarea id="wizItemDetails" rows="4" placeholder="Enter item description" '+(readonly?'disabled':'')+'>'+safe(part.details)+'</textarea></label><label>Rate ($, '+(gstEnabled?'incl. GST':'no GST')+')<input id="wizItemRate" type="number" min="0" step="0.01" value="'+safe(l.unit_price)+'" '+(readonly?'disabled':'')+'></label><label>Quantity<input id="wizItemQty" type="number" min="0.001" step="any" value="'+safe(l.quantity)+'" '+(readonly?'disabled':'')+'></label><button class="pu-wiz-next" type="button" data-wiz="saveitem" '+(readonly?'disabled':'')+'>Save item</button>'+(editingItem>=0&&!readonly?'<button type="button" data-wiz="removeitem">Remove item</button>':'')+'</div>';
@@ -270,11 +276,12 @@ function renderWizard(){
 }
 function wizardPage(step,index=-1){wizardStep=step;editingItem=index;renderWizard();wizard.scrollIntoView({block:'start'});}
 function syncWizardClient(){
- const fields={wizName:'puName',wizEmail:'puEmail',wizPhone:'puPhone',wizAddress:'puAddress',wizValid:'puValid'};
+ const fields={wizName:'puName',wizEmail:'puEmail',wizPhone:'puPhone',wizValid:'puValid'};
  Object.entries(fields).forEach(([source,dest])=>{if($(source))$(dest).value=$(source).value;});
 }
 wizard.addEventListener('input',e=>{
  if(wizardStep==='client')syncWizardClient();
+ if(e.target.id==='wizStatus'){$('puStatus').value=e.target.value;$('puStatus').dispatchEvent(new Event('change'));}
  if(e.target.id==='wizItemName'){
  const item=catalogue.find(x=>x.name.toLowerCase()===e.target.value.trim().toLowerCase());
  if(item){$('wizItemDetails').value=item.description||'';$('wizItemRate').value=Number(item.unit_price);}
@@ -300,7 +307,7 @@ wizard.addEventListener('click',async e=>{
  }
  if(action==='removeitem'){if(confirm('Remove this item?')){state.lines.splice(editingItem,1);if(!state.lines.length)state.lines.push({description:'',quantity:1,unit_price:0});renderLines();wizardPage('main');}}
  if(action==='preview')$('puPreviewBtn').click();
- if(action==='savequote'){$('puSave').click();}
+ if(action==='savequote'){if(wizardStep==='client')syncWizardClient();$('puSave').click();}
  if(action==='actions'){$('puLegacyActions').hidden=!$('puLegacyActions').hidden;}
 });
 $('puRef').addEventListener('change',renderWizard);
