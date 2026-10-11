@@ -4,9 +4,11 @@
   function showDateRequired(){let d=field('jobDateRequiredDialog');if(!d){d=document.createElement('dialog');d.id='jobDateRequiredDialog';d.className='job-date-required-dialog';d.innerHTML='<div class="job-date-required-card"><div class="job-date-required-icon">!</div><h3>Date required</h3><p>Please enter a date before saving.</p><button id="jobDateRequiredOk" type="button">OK</button></div>';document.body.appendChild(d);field('jobDateRequiredOk').onclick=()=>{d.close();setTimeout(()=>field('scheduledDate')?.focus(),60)}}if(!d.open)d.showModal()}
   async function getActiveBusinessId() {
     const route=location.pathname.match(/\/SchedulePlus\/(jayco|powerup)(?:\/|$)/i)?.[1]?.toLowerCase();
+    const customId=new URLSearchParams(location.search).get('business');
+    const validCustom=/^[0-9a-f]{8}-[0-9a-f-]{27,}$/i.test(customId||'')?customId:null;
     const ids={jayco:'9359127c-6929-4b2c-b25e-b9bd835d567c',powerup:'5b170395-a2e2-4458-8765-472a6409391d'};
-    if(!route)return null; // Root is business-neutral.
-    const expected=ids[route];
+    if(!route&&!validCustom)return null; // Root without a workspace selection is neutral.
+    const expected=route?ids[route]:validCustom;
     const active=window.SchedulePlusBusiness?.business?.id;
     if(active===expected)return expected;
     if(typeof currentUser==='undefined'||!currentUser?.id)return null;
