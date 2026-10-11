@@ -81,15 +81,7 @@
     const app=document.getElementById('appView');if(!app)return;
     let panel=document.getElementById('scheduleCentralHub');
     if(!panel){panel=document.createElement('div');panel.id='scheduleCentralHub';panel.style.cssText='position:fixed;inset:0;z-index:10000;background:#0b0b0d;color:#fff;display:flex;align-items:center;justify-content:center;padding:24px;text-align:center';app.appendChild(panel)}
-    panel.innerHTML='<div style="max-width:460px"><h1>Welcome to Schedule+</h1><p>Register your business and get started.</p><p>Create your private Schedule+ workspace to manage jobs and your team.</p><div id="centralWorkspaces" style="display:grid;gap:12px;margin:24px 0"></div><button id="centralCreateBusiness" type="button" style="padding:13px 22px;border-radius:10px">Register a new business</button></div>';
-    const links=document.getElementById('centralWorkspaces');
-    const known=[['jayco','Jayco Enterprises','./jayco/'],['powerup','PowerUp Group','./powerup/']];
-    // Only show the signed-in user's own workspaces, never a public tenant directory.
-    const mine=state.memberships||[];
-    if(mine.length){
-      const heading=document.createElement('p');heading.textContent='Your existing workspaces';heading.style.cssText='color:#aab4c4;font-size:13px;margin:18px 0 8px';links.appendChild(heading);
-      mine.forEach(m=>{const a=document.createElement('a');a.href='./?business='+encodeURIComponent(m.business_id);a.textContent='Continue to my workspace';a.style.cssText='display:block;padding:12px;border:1px solid #505763;border-radius:10px;color:#fff;text-decoration:none';links.appendChild(a)});
-    }
+    panel.innerHTML='<div style="max-width:460px"><h1>Welcome to Schedule+</h1><p>Register your business and get started.</p><p>Create your private Schedule+ workspace to manage jobs and your team.</p><p style="color:#aab4c4;font-size:13px;margin:24px 0 10px">Already registered? Sign in using the dedicated link provided by your business administrator.</p><button id="centralCreateBusiness" type="button" style="padding:13px 22px;border-radius:10px">Register a new business</button></div>';
     document.getElementById('centralCreateBusiness').onclick=showOnboarding;
   }
   function showAccessDenied(){
