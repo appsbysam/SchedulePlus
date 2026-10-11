@@ -95,13 +95,13 @@ $('puNew').onclick=()=>{
  $('puStatus').value='draft';$('puQuotePreview').classList.remove('hidden');$('puPrint').disabled=true;
  renderLines();prepareQuoteDefaults();$('puMessage').textContent='New quote ready.';
 };
-function showQuotes(){const q=$('puQuoteSearch').value.toLowerCase().trim(),status=$('puQuoteFilter').value;const rows=allQuotes.filter(x=>(!status||x.status===status)&&(!q||(x.customer_name+' '+x.quote_number).toLowerCase().includes(q)));$('puSavedQuotes').innerHTML='<h3>Saved quotes ('+rows.length+')</h3>'+(rows.length?rows.map(x=>'<button type="button" class="pu-saved" data-quote-id="'+safe(x.id)+'">'+safe(x.quote_number)+' · '+safe(x.customer_name)+' · '+safe(x.status)+'</button>').join(''):'<p>No matching quotes.</p>');}
+function showQuotes(){const q=$('puQuoteSearch').value.toLowerCase().trim(),status=$('puQuoteFilter').value;const rows=allQuotes.filter(x=>(!status||x.status===status)&&(!q||(x.customer_name+' '+x.quote_number).toLowerCase().includes(q)));$('puSavedQuotes').innerHTML='<h3>Saved quotes ('+rows.length+')</h3>'+(rows.length?rows.map(x=>'<button type="button" class="pu-saved" data-quote-id="'+safe(x.id)+'">'+safe(x.quote_number)+' · '+safe(x.customer_name)+' · '+safe(x.job_id?'Converted to Job':x.status)+'</button>').join(''):'<p>No matching quotes.</p>');}
 $('puQuoteSearch').oninput=showQuotes;$('puQuoteFilter').onchange=showQuotes;
 async function refreshQuotes(){
  const list=$('puSavedQuotes');if(!list)return;
  try{
   const {business_id}=await getBusiness();
-  const {data,error}=await supabaseClient.from('powerup_quotes').select('id,quote_number,customer_name,status,created_at').eq('business_id',business_id).order('created_at',{ascending:false}).limit(30);
+  const {data,error}=await supabaseClient.from('powerup_quotes').select('id,quote_number,customer_name,status,job_id,created_at').eq('business_id',business_id).order('created_at',{ascending:false}).limit(30);
   if(error)throw error;
   allQuotes=data||[];showQuotes();
  }catch(e){list.textContent='Saved quotes unavailable: '+e.message;}
@@ -136,7 +136,7 @@ $('puSave').onclick=async()=>{
   $('puMessage').textContent='Quote '+savedQuote.quote_number+' saved successfully.';$('puQuotePreview').classList.remove('hidden');$('puPrint').disabled=true;await refreshQuotes();
  return true;}catch(e){$('puMessage').textContent='Save failed: '+e.message;return false;}finally{button.disabled=false;}
 };
-$('puConvert').onclick=async()=>{if($('puStatus').value!=='accepted'||currentQuoteJobId)return;if(!confirm('Save this accepted quote and create a Schedule+ job?'))return;const btn=$('puConvert');btn.disabled=true;try{if(!currentQuoteId||!lastSavedSnapshot||currentSnapshot()!==lastSavedSnapshot){const saved=await $('puSave').onclick();if(!saved)throw Error('Quote could not be saved. Correct the highlighted fields and try again.');}if(!currentQuoteId)throw Error('Save the quotation before converting.');const {data,error}=await supabaseClient.rpc('powerup_convert_quote_to_job',{p_quote_id:currentQuoteId});if(error)throw error;currentQuoteJobId=data;btn.disabled=true;$('puMessage').textContent='Job created successfully. Open Jobs to schedule it.';}catch(e){$('puMessage').textContent='Conversion stopped: '+e.message;btn.disabled=!!currentQuoteJobId;} };
+$('puConvert').onclick=async()=>{if($('puStatus').value!=='accepted'||currentQuoteJobId)return;if(!confirm('Save this accepted quote and create a Schedule+ job?'))return;const btn=$('puConvert');btn.disabled=true;try{if(!currentQuoteId||!lastSavedSnapshot||currentSnapshot()!==lastSavedSnapshot){const saved=await $('puSave').onclick();if(!saved)throw Error('Quote could not be saved. Correct the highlighted fields and try again.');}if(!currentQuoteId)throw Error('Save the quotation before converting.');const {data,error}=await supabaseClient.rpc('powerup_convert_quote_to_job',{p_quote_id:currentQuoteId});if(error)throw error;currentQuoteJobId=data;btn.disabled=true;await refreshQuotes();$('puMessage').textContent='Job created successfully. Opening job details…';document.dispatchEvent(new CustomEvent('powerup:open-converted-job',{detail:{jobId:data}}));}catch(e){$('puMessage').textContent='Conversion stopped: '+e.message;btn.disabled=!!currentQuoteJobId;} };
 $('puStatus').onchange=()=>{$('puConvert').disabled=$('puStatus').value!=='accepted'||!!currentQuoteJobId;};
 
 function currentSnapshot(){return JSON.stringify({name:$('puName').value.trim(),email:$('puEmail').value.trim(),phone:$('puPhone').value.trim(),address:$('puAddress').value.trim(),ref:$('puRef').value.trim(),valid:$('puValid').value,notes:$('puNotes').value.trim(),status:$('puStatus').value,lines:state.lines.map(l=>({...l}))});}
