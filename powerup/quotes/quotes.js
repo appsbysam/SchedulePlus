@@ -29,13 +29,30 @@ const printSheet=document.createElement('div');printSheet.id='puPrintSheet';docu
 function printQuotation(){
  const preview=$('puQuotePreview');
  if(!preview.innerHTML.trim()){$('puMessage').textContent='Generate a preview before printing.';return;}
- // iOS blocks repeated script-initiated print calls. Open a standalone document instead;
- // printing is triggered by a separate user tap in that document.
  const page=window.open('','_blank');
  if(!page){$('puMessage').textContent='Please allow pop-ups to open the printable quotation.';return;}
- const styles='body{margin:0;background:#fff;color:#17202b;font:14px Arial,sans-serif} .print-tools{position:sticky;top:0;padding:12px;background:#20242d;color:white;text-align:center;z-index:5} .print-tools button{font-size:16px;padding:12px 20px} .pu-preview{max-width:800px;margin:20px auto;padding:20px} @media print{.print-tools{display:none!important}.pu-preview{margin:0;max-width:none;padding:0}}';
+ const styles=`
+ *{box-sizing:border-box}
+ html{font-size:16px;-webkit-text-size-adjust:100%}
+ body{margin:0;background:#edf0f4;color:#17202b;font:14px/1.5 Arial,Helvetica,sans-serif}
+ .print-tools{position:sticky;top:0;display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;padding:12px;background:#20242d;color:white;z-index:5}
+ .print-tools button{appearance:none;background:#ed008d;color:white;border:0;border-radius:8px;font:600 15px Arial,sans-serif;padding:12px 18px;min-height:44px}
+ .print-tools button.close{background:#424b5a}
+ .pu-preview{width:min(100% - 24px,794px);margin:18px auto;padding:clamp(16px,4vw,38px);background:white;box-shadow:0 3px 22px #0002;border-radius:5px;overflow-wrap:anywhere}
+ .pu-preview .pu-quote-logo{display:block!important;width:auto!important;height:auto!important;max-width:min(100%,340px)!important;max-height:125px!important;object-fit:contain!important;object-position:left center!important;margin:0 0 18px!important}
+ .pu-preview table{width:100%;border-collapse:collapse;table-layout:auto;font-size:clamp(11px,2.8vw,14px)}
+ .pu-preview th,.pu-preview td{padding:7px 5px;border-bottom:1px solid #ddd;text-align:left;overflow-wrap:anywhere}
+ .pu-preview h1{font-size:24px}.pu-preview h2{font-size:19px}
+ @page{size:A4;margin:15mm}
+ @media print{html,body{background:white!important;margin:0!important;padding:0!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+ .print-tools{display:none!important}
+ .pu-preview{width:100%!important;max-width:none!important;margin:0!important;padding:0!important;border:0!important;box-shadow:none!important;font-size:12pt!important}
+ .pu-preview .pu-quote-logo{max-width:85mm!important;max-height:32mm!important}
+ .pu-preview table{font-size:10pt!important}
+ .pu-preview tr{break-inside:avoid}}
+ `;
  page.document.open();
- page.document.write('<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><title>Quotation - Print or Save PDF</title><style>'+styles+'</style></head><body><div class="print-tools"><button type="button" onclick="window.print()">Print / Save PDF</button></div><main class="pu-preview">'+preview.innerHTML+'</main></body></html>');
+ page.document.write('<!doctype html><html lang="en-AU"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Power Up quotation</title><style>'+styles+'</style></head><body><nav class="print-tools"><button type="button" onclick="window.print()">Print / Save PDF</button><button class="close" type="button" onclick="window.close()">Close</button></nav><main class="pu-preview">'+preview.innerHTML+'</main></body></html>');
  page.document.close();
 }
 $('puClosePreview').onclick=hidePreview;$('puModalClose').onclick=hidePreview;$('puModalPrint').onclick=printQuotation;
