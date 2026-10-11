@@ -26,7 +26,18 @@ $('puListNew').onclick=()=>{$('puNew').click();switchQuoteTab('editor');};
 switchQuoteTab('list');
 const previewDialog=$('puPreviewDialog');document.body.appendChild(previewDialog);const showPreview=()=>{previewDialog.setAttribute('open','');previewDialog.classList.add('pu-preview-visible');document.body.classList.add('pu-preview-open');};const hidePreview=()=>{previewDialog.removeAttribute('open');previewDialog.classList.remove('pu-preview-visible');document.body.classList.remove('pu-preview-open');$('puPrint').disabled=true;};
 const printSheet=document.createElement('div');printSheet.id='puPrintSheet';document.body.appendChild(printSheet);
-function printQuotation(){const preview=$('puQuotePreview');if(!preview.innerHTML.trim()){ $('puMessage').textContent='Generate a preview before printing.';return;}printSheet.innerHTML=preview.innerHTML;window.print();}
+function printQuotation(){
+ const preview=$('puQuotePreview');
+ if(!preview.innerHTML.trim()){$('puMessage').textContent='Generate a preview before printing.';return;}
+ // iOS blocks repeated script-initiated print calls. Open a standalone document instead;
+ // printing is triggered by a separate user tap in that document.
+ const page=window.open('','_blank');
+ if(!page){$('puMessage').textContent='Please allow pop-ups to open the printable quotation.';return;}
+ const styles='body{margin:0;background:#fff;color:#17202b;font:14px Arial,sans-serif} .print-tools{position:sticky;top:0;padding:12px;background:#20242d;color:white;text-align:center;z-index:5} .print-tools button{font-size:16px;padding:12px 20px} .pu-preview{max-width:800px;margin:20px auto;padding:20px} @media print{.print-tools{display:none!important}.pu-preview{margin:0;max-width:none;padding:0}}';
+ page.document.open();
+ page.document.write('<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><title>Quotation - Print or Save PDF</title><style>'+styles+'</style></head><body><div class="print-tools"><button type="button" onclick="window.print()">Print / Save PDF</button></div><main class="pu-preview">'+preview.innerHTML+'</main></body></html>');
+ page.document.close();
+}
 $('puClosePreview').onclick=hidePreview;$('puModalClose').onclick=hidePreview;$('puModalPrint').onclick=printQuotation;
 const renderLines = () => {$('puLines').innerHTML=state.lines.map(lineRow).join('');const total=state.lines.reduce((a,l)=>a+Number(l.quantity||0)*Number(l.unit_price||0),0);$('puTotal').textContent='Total: '+money(total);if(typeof renderWizard==='function')renderWizard();};
 $('puLines').addEventListener('input',e=>{const i=Number(e.target.dataset.line),field=e.target.dataset.field;if(!field)return;state.lines[i][field]=field==='description'?e.target.value:(e.target.value===''?'':Number(e.target.value));e.target.setAttribute('aria-invalid','false');e.target.closest('.pu-line')?.classList.remove('pu-line-invalid');const amount=e.target.closest('.pu-line')?.querySelector('.pu-line-amount strong');if(amount)amount.textContent=money(Number(state.lines[i].quantity||0)*Number(state.lines[i].unit_price||0));const total=state.lines.reduce((a,l)=>a+Number(l.quantity||0)*Number(l.unit_price||0),0);$('puTotal').textContent='Subtotal: '+money(total);$('puPrint').disabled=true;$('puQuotePreview').classList.remove('hidden');});
@@ -313,11 +324,13 @@ wizard.addEventListener('click',async e=>{
  if(action==='removeitem'){if(confirm('Remove this item?')){state.lines.splice(editingItem,1);if(!state.lines.length)state.lines.push({description:'',quantity:1,unit_price:0});renderLines();wizardPage('main');}}
  if(action==='preview')$('puPreviewBtn').click();
  if(action==='savequote'){if(wizardStep==='client')syncWizardClient();$('puSave').click();}
+ if(action==='duplicate'){$('puDuplicate').click();currentQuoteArchived=false;currentQuoteReadonly=false;applyQuoteAccess();wizardPage('main');$('puLegacyActions').hidden=true;}
  if(action==='actions'){$('puLegacyActions').hidden=!$('puLegacyActions').hidden;}
 });
 $('puRef').addEventListener('change',renderWizard);
 const legacyEditor=root.querySelector('[data-pu-panel="editor"]');
 const actions=$('puPreviewBtn').closest('.pu-actions');actions.id='puLegacyActions';actions.hidden=true;
+const duplicateAction=document.createElement('button');duplicateAction.type='button';duplicateAction.textContent='Duplicate quote';duplicateAction.onclick=()=>{ $('puDuplicate').click();currentQuoteArchived=false;currentQuoteReadonly=false;applyQuoteAccess();wizardPage('main');actions.hidden=true; };actions.appendChild(duplicateAction);
 ['puPreviewBtn','puPrint','puSave'].forEach(id=>$(id).classList.add('pu-wiz-secondary-hidden'));
 const legacyPanels=[...legacyEditor.children].filter(el=>el!==wizard&&el!==actions&&el.id!=='puMessage');
 legacyPanels.forEach(el=>el.classList.add('pu-wiz-legacy'));
