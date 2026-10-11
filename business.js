@@ -50,7 +50,7 @@
     if(!requestedBusinessId){applyVanillaBranding();showCentralHub();return false}
     state.membership=state.memberships.find(m=>m.business_id===requestedBusinessId)||null;
     if(!state.membership){applyVanillaBranding();showAccessDenied();return false}
-    const {data:b,error:e}=await supabaseClient.from('businesses').select('*').eq('id',state.membership.business_id).single();if(e)return false;state.business=b;applyBranding(b);
+    const {data:b,error:e}=await supabaseClient.from('businesses').select('*').eq('id',state.membership.business_id).single();if(e)return false;state.business=b;applyBranding(b);window.dispatchEvent(new CustomEvent('scheduleplus:business-ready',{detail:{businessId:b.id}}));
     if(VANILLA_MODE)history.replaceState({},'',location.pathname);
     const fresh=(await supabaseClient.auth.getUser()).data?.user;if(fresh?.user_metadata?.schedule_plus_invited&&!fresh?.user_metadata?.schedule_plus_password_set)showInvitePassword();
     return true
