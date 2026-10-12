@@ -240,8 +240,8 @@ function filtered() {
   return jobs.filter(j => {
     if (status && j.status !== status) return false;
     if (typeFilter !== 'all' && j.title !== typeFilter) return false;
-    if (quickFilter === 'scheduled' && (!j.scheduled_date || j.status === 'waiting')) return false;
-    if (quickFilter === 'unscheduled' && j.scheduled_date) return false;
+    if (quickFilter === 'scheduled' && (j.status !== 'scheduled' || !j.scheduled_date)) return false;
+    if (quickFilter === 'unscheduled' && (j.scheduled_date || j.status === 'completed')) return false;
     if (quickFilter === 'followup' && j.status !== 'waiting') return false;
     const searchText = `${j.title} ${j.customer_name} ${j.customer_phone || ''} ${j.suburb || ''} ${j.address_line || ''} ${j.description || ''} ${j.panel_brand || ''} ${j.panel_type || ''} ${j.battery_brand || ''} ${j.battery_type || ''} ${j.inverter_brand || ''} ${j.inverter_type || ''} ${j.work_involved || ''}`.toLowerCase();
     if (q && !searchText.includes(q)) return false;
@@ -291,7 +291,7 @@ function jobCardHtml(j) {
 }
 
 function render() {
-  const scheduled = jobs.filter(j => j.scheduled_date && j.status !== 'waiting' && j.status !== 'completed').length;
+  const scheduled = jobs.filter(j => j.status === 'scheduled' && j.scheduled_date).length;
   const unscheduled = jobs.filter(j => !j.scheduled_date && j.status !== 'completed').length;
   const followup = jobs.filter(j => j.status === 'waiting').length;
   $('#countAll').textContent = jobs.length;
@@ -484,6 +484,7 @@ document.querySelectorAll('.stat').forEach(b => b.onclick = () => {
   document.querySelectorAll('.stat').forEach(x => x.classList.remove('active'));
   b.classList.add('active');
   quickFilter = b.dataset.filter;
+  $('#statusFilter').value = '';
   render();
 });
 document.querySelectorAll('.type-filter').forEach(b => b.onclick = () => {
