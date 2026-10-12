@@ -3,8 +3,8 @@
  const CAL='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 2v4M18 2v4M3 9h18M5 4h14a2 2 0 0 1 2 2v15H3V6a2 2 0 0 1 2-2z"/></svg>';
  const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
  const norm=v=>String(v||'').trim().toLowerCase().replace(/[\s_-]+/g,'');
- const statusLabel=j=>({new:'New',to_schedule:'To schedule',scheduled:'Scheduled',in_progress:'In Progress',waiting:'Follow-Up',completed:'Completed'}[j?.status]||String(j?.status||'').replace(/[_-]+/g,' ').replace(/\b\w/g,m=>m.toUpperCase())||'Unscheduled');
- const tone=j=>{const x=norm(statusLabel(j));return x.includes('site')?'site':x.includes('progress')?'progress':x.includes('follow')?'followup':x.includes('complete')?'completed':x.includes('schedule')?'scheduled':'new'};
+ const statusLabel=j=>window.SchedulePlusStatusLabels?.label(j?.status)||String(j?.status||'').replace(/[_-]+/g,' ').replace(/\b\w/g,m=>m.toUpperCase())||'Unscheduled';
+ const tone=j=>({in_progress:'progress',waiting:'followup',completed:'completed',scheduled:'scheduled',to_schedule:'scheduled',new:'new'})[j?.status]||'new';
  const suburb=j=>j?.suburb||(typeof suburbFromAddress==='function'?suburbFromAddress(j?.address_line||''):'')||'Suburb not set';
  const fmtDate=(v,t='')=>{if(!v)return'—';const d=new Date(`${v}T12:00:00`);return `${new Intl.DateTimeFormat('en-AU',{weekday:'short'}).format(d)} ${String(d.getDate()).padStart(2,'0')} ${new Intl.DateTimeFormat('en-AU',{month:'short'}).format(d)}${t?` [${t}]`:''}`};
  function card(j){
