@@ -5,6 +5,7 @@ const DEFAULT=['New','To Schedule','Scheduled','In Progress','Follow Up','Comple
 let labels={},positions={},businessId=null,loading=false;
 const id=()=>window.SchedulePlusBusiness?.business?.id||null;
 const label=k=>labels[k]||DEFAULT[KEYS.indexOf(k)]||k;
+const ready=()=>!!businessId&&businessId===id();
 const order=()=>[...KEYS].sort((a,b)=>(positions[a]??KEYS.indexOf(a)+1)-(positions[b]??KEYS.indexOf(b)+1));
 const escape=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','"':'&quot;',"'":'&#39;'}[c]));
 function refresh(){
@@ -87,5 +88,5 @@ function section(){
 const observer=new MutationObserver(()=>{if(document.getElementById('businessConfigBody'))section();if(id()!==businessId&&!loading)load()});
 function boot(){observer.observe(document.body,{childList:true,subtree:true});section();load();document.addEventListener('click',e=>{if(e.target.closest('#businessConfigBtn,#spConfig'))setTimeout(section,0)});document.addEventListener('change',e=>{if(e.target.id==='status'||e.target.id==='statusFilter')refresh()})}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
-window.SchedulePlusStatusLabels={label,order,refresh,load};
+window.SchedulePlusStatusLabels={label,order,refresh,load,ready};
 })();
