@@ -229,6 +229,8 @@ async function loadJobs() {
     return;
   }
   jobs = data || [];
+  window.jobs = jobs;
+  await window.SchedulePlusStatusLabels?.load?.();
   render();
   renderCalendar();
 }
@@ -472,6 +474,12 @@ if(jobSortSelect){
 }
 $('#searchInput').oninput = render;
 $('#statusFilter').onchange = render;
+// Refresh live jobs when returning to an open tab, so phone and desktop agree.
+let spLastJobsRefresh=0;
+async function spRefreshJobsIfActive(){if(document.hidden||!currentUser||!pinUnlocked||appView.classList.contains('hidden'))return;if(Date.now()-spLastJobsRefresh<5000)return;spLastJobsRefresh=Date.now();try{await loadJobs()}catch(e){console.warn('Could not refresh jobs',e)}}
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)spRefreshJobsIfActive()});
+window.addEventListener('focus',spRefreshJobsIfActive);
+window.addEventListener('pageshow',e=>{if(e.persisted)spRefreshJobsIfActive()});
 document.querySelectorAll('.stat').forEach(b => b.onclick = () => {
   document.querySelectorAll('.stat').forEach(x => x.classList.remove('active'));
   b.classList.add('active');
