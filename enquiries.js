@@ -50,12 +50,24 @@ function render(){
  const priority=sort==='workflow'?sequence:sort==='workflow_reverse'?[...sequence].reverse():['contacted','quoted','won','lost'].includes(sort)?[sort,...sequence.filter(v=>v!==sort)]:null;
  rows.sort((a,b)=>priority?(priority.indexOf(a.status)<0?99:priority.indexOf(a.status))-(priority.indexOf(b.status)<0?99:priority.indexOf(b.status))||date(b)-date(a):sort==='oldest'?date(a)-date(b):date(b)-date(a));
  root.innerHTML=rows.length?rows.map(card).join(''):'<div class="empty">No enquiries here yet.</div>';
- root.querySelectorAll('.enquiry-status').forEach(s=>s.onchange=()=>setStatus(s.dataset.id,s.value)); root.querySelectorAll('.enquiry-read-toggle').forEach(b=>b.onclick=()=>setRead(b.dataset.id,b.dataset.read!=='true')); root.querySelectorAll('.enquiry-delete').forEach(b=>b.onclick=()=>deleteEnquiry(b.dataset.id));
+ root.querySelectorAll('.enquiry-status').forEach(s=>s.onchange=()=>setStatus(s.dataset.id,s.value)); root.querySelectorAll('.enquiry-read-toggle').forEach(b=>b.onclick=()=>setRead(b.dataset.id,b.dataset.read!=='true')); root.querySelectorAll('.enquiry-delete').forEach(b=>b.onclick=()=>deleteEnquiry(b.dataset.id)); root.querySelectorAll('.enquiry-convert').forEach(b=>b.onclick=()=>convertEnquiry(b.dataset.id));
 }
 function card(x){
  const when=new Intl.DateTimeFormat('en-AU',{dateStyle:'medium',timeStyle:'short'}).format(new Date(x.created_at));
  const email=x.customer_email?`<a href="mailto:${escE(x.customer_email)}">${escE(x.customer_email)}</a>`:'';
- return `<article class="enquiry-card ${x.read_at?'is-read':'is-unread'}"><div class="enquiry-head"><div><strong>${escE(x.customer_name)}</strong><div class="enquiry-time">Received ${escE(when)}</div></div><span class="enquiry-type">${escE(typeLabel(x.enquiry_type))}</span></div><div class="enquiry-contact"><a href="tel:${escE(x.customer_phone.replace(/\s+/g,''))}">${escE(x.customer_phone)}</a>${email}</div>${x.property_address?`<div class="enquiry-address"><strong>Property:</strong> ${escE(x.property_address)}</div>`:'' }${x.notes?`<div class="enquiry-notes">${escE(x.notes)}</div>`:''}<div class="enquiry-actions"><div class="enquiry-action-buttons"><button type="button" class="enquiry-read-toggle" data-id="${x.id}" data-read="${x.read_at?'true':'false'}">${x.read_at?'Mark unread':'Mark read'}</button><button type="button" class="enquiry-delete" data-id="${x.id}">Delete</button></div><label>Status <select class="enquiry-status" data-id="${x.id}">${['new','contacted','quoted','won','lost'].map(s=>`<option value="${s}" ${x.status===s?'selected':''}>${statusLabel(s)}</option>`).join('')}</select></label></div></article>`;
+ return `<article class="enquiry-card ${x.read_at?'is-read':'is-unread'}"><div class="enquiry-head"><div><strong>${escE(x.customer_name)}</strong><div class="enquiry-time">Received ${escE(when)}</div></div><span class="enquiry-type">${escE(typeLabel(x.enquiry_type))}</span></div><div class="enquiry-contact"><a href="tel:${escE(x.customer_phone.replace(/\s+/g,''))}">${escE(x.customer_phone)}</a>${email}</div>${x.property_address?`<div class="enquiry-address"><strong>Property:</strong> ${escE(x.property_address)}</div>`:'' }${x.notes?`<div class="enquiry-notes">${escE(x.notes)}</div>`:''}<div class="enquiry-actions"><div class="enquiry-action-buttons"><button type="button" class="enquiry-read-toggle" data-id="${x.id}" data-read="${x.read_at?'true':'false'}">${x.read_at?'Mark unread':'Mark read'}</button><button type="button" class="enquiry-delete" data-id="${x.id}">Delete</button>${x.converted_job_id?'<span class="enquiry-converted" title="Already converted">Job created ✓</span>':x.status==='won'?'<button type="button" class="enquiry-convert" data-id="'+escE(x.id)+'">Convert to Job</button>':''}</div><label>Status <select class="enquiry-status" data-id="${x.id}">${['new','contacted','quoted','won','lost'].map(s=>`<option value="${s}" ${x.status===s?'selected':''}>${statusLabel(s)}</option>`).join('')}</select></label></div></article>`;
+}
+async function convertEnquiry(id){
+ const x=enquiries.find(e=>e.id===id);if(!x||x.status!=='won'||x.converted_job_id)return;
+ if(!confirm('Create a Schedule+ job for '+x.customer_name+'? The enquiry will be retained.'))return;
+ const button=[...document.querySelectorAll('.enquiry-convert')].find(b=>b.dataset.id===id);if(button){button.disabled=true;button.textContent='Creating job…'}
+ try{
+  const {data,error}=await supabaseClient.rpc('convert_won_enquiry_to_job',{p_enquiry_id:id});
+  if(error)throw error;
+  x.converted_job_id=data;render();
+  alert('Job created successfully. Open Jobs to view and schedule it.');
+  if(typeof loadJobs==='function')loadJobs();
+ }catch(e){alert('Unable to convert enquiry: '+(e.message||e));render()}
 }
 async function setRead(id,read){const {error}=await supabaseClient.from('customer_enquiries').update({read_at:read?new Date().toISOString():null,updated_at:new Date().toISOString()}).eq('id',id).eq('business_id',JAYCO_BUSINESS_ID);if(error){alert(error.message);return}const x=enquiries.find(e=>e.id===id);if(x)x.read_at=read?new Date().toISOString():null;updateBadge();render()}
 async function deleteEnquiry(id){
