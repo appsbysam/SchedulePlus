@@ -96,3 +96,8 @@
 #enquiriesView .enquiry-filter-count{min-width:18px;height:18px;padding:0 4px;font-size:10px}
 @media(max-width:760px){#enquiriesView .enquiry-toolbar{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}#enquiriesView #enquirySearch{grid-column:1/-1}#enquiriesView #enquiryStatusFilter,#enquiriesView #enquiryStatusSort{min-width:0;width:100%;font-size:13px}}
 @media(max-width:370px){#enquiriesView .enquiry-type-filters{gap:3px!important}#enquiriesView .enquiry-type-filters button.enquiry-type-filter{padding:5px 2px!important}#enquiriesView .enquiry-filter-count{min-width:16px;height:16px}}
+
+/* Won enquiry conversion */
+.enquiry-convert{background:#1f754d!important;color:#fff!important;border:1px solid #39a875!important;border-radius:9px;padding:8px 10px;font-weight:700}
+.enquiry-convert:disabled{opacity:.6}
+.enquiry-converted{display:inline-flex;align-items:center;color:#79d9a4;font-size:12px;font-weight:700;padding:8px}
