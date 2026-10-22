@@ -64,7 +64,7 @@ async function deleteEnquiry(id){
  if(error){alert('Could not delete this enquiry: '+error.message);return}
  enquiries=enquiries.filter(e=>e.id!==id); updateBadge(); render();
 }
-async function setStatus(id,status){const {error}=await supabaseClient.from('customer_enquiries').update({status,updated_at:new Date().toISOString()}).eq('id',id).eq('business_id',JAYCO_BUSINESS_ID);if(error){alert(error.message);await load();return}const x=enquiries.find(e=>e.id===id);if(x)x.status=status;updateBadge();render()}
+async function setStatus(id,status){const x=enquiries.find(e=>e.id===id);if(!x)return;const previousStatus=x.status;const now=new Date().toISOString();const changes={status,updated_at:now};if(previousStatus!==status)changes.read_at=status==='new'?null:now;const {error}=await supabaseClient.from('customer_enquiries').update(changes).eq('id',id).eq('business_id',JAYCO_BUSINESS_ID);if(error){alert('Could not update enquiry: '+error.message);await load();return}x.status=status;if(Object.prototype.hasOwnProperty.call(changes,'read_at'))x.read_at=changes.read_at;updateBadge();render()}
 window.addEventListener('scheduleplus:enquiries-enabled',()=>{setup().then(load);});
 window.addEventListener('scheduleplus:show-enquiries',()=>{setup().then(load);});
 if(document.readyState==='loading')window.addEventListener('DOMContentLoaded',setup,{once:true});else setTimeout(setup,0);
