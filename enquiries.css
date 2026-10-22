@@ -87,3 +87,12 @@
 #enquiriesView .enquiry-filter-break{display:block!important}
 #enquiriesView .enquiry-filter-count{height:16px!important;min-width:17px!important;font-size:10px!important}
 @media(max-width:700px){#enquiriesView .enquiry-toolbar{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}#enquiriesView #enquirySearch{grid-column:1/-1}#enquiriesView .enquiry-toolbar select{min-width:0;width:100%;font-size:12px;padding:0 6px}}
+
+/* Jayco: compact two-line enquiry type filters and a dedicated sort selector. */
+#enquiriesView .enquiry-toolbar{grid-template-columns:minmax(0,1fr) minmax(125px,155px) minmax(150px,205px)}
+#enquiriesView .enquiry-type-filters button.enquiry-type-filter{padding:5px 3px!important;min-height:47px!important;gap:3px!important;border-radius:12px!important}
+#enquiriesView .enquiry-filter-label{display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.1;gap:1px;font-size:clamp(10px,2.4vw,12px)}
+#enquiriesView .enquiry-filter-break{display:block}
+#enquiriesView .enquiry-filter-count{min-width:18px;height:18px;padding:0 4px;font-size:10px}
+@media(max-width:760px){#enquiriesView .enquiry-toolbar{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}#enquiriesView #enquirySearch{grid-column:1/-1}#enquiriesView #enquiryStatusFilter,#enquiriesView #enquiryStatusSort{min-width:0;width:100%;font-size:13px}}
+@media(max-width:370px){#enquiriesView .enquiry-type-filters{gap:3px!important}#enquiriesView .enquiry-type-filters button.enquiry-type-filter{padding:5px 2px!important}#enquiriesView .enquiry-filter-count{min-width:16px;height:16px}}
