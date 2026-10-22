@@ -79,3 +79,11 @@
 #enquiriesView #enquiriesBackToTop{position:fixed;right:max(20px,env(safe-area-inset-right));bottom:calc(var(--sp-nav-h,78px) + env(safe-area-inset-bottom) + 24px);z-index:8990;width:48px;height:48px;border-radius:50%;border:1px solid #4cdd90;background:#176a42;color:white;font-size:28px;font-weight:700;line-height:1;box-shadow:0 6px 24px #0009;display:none;align-items:center;justify-content:center;cursor:pointer;touch-action:manipulation}
 #enquiriesView.sp-view.active #enquiriesBackToTop.visible{display:flex}
 #enquiriesView #enquiriesBackToTop:focus-visible{outline:3px solid white;outline-offset:3px}
+
+/* Jayco enquiries: compact, two-line category pills and independent status sorting. */
+#enquiriesView .enquiry-toolbar{grid-template-columns:minmax(0,1fr) minmax(125px,160px) minmax(155px,200px);gap:8px}
+#enquiriesView .enquiry-type-filters button.enquiry-type-filter{min-height:50px!important;padding:5px 3px!important;border-radius:13px!important;flex-direction:column!important;gap:3px!important;font-size:clamp(10px,2.5vw,12px)!important}
+#enquiriesView .enquiry-filter-label{display:block!important;line-height:1.12!important;text-align:center!important}
+#enquiriesView .enquiry-filter-break{display:block!important}
+#enquiriesView .enquiry-filter-count{height:16px!important;min-width:17px!important;font-size:10px!important}
+@media(max-width:700px){#enquiriesView .enquiry-toolbar{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}#enquiriesView #enquirySearch{grid-column:1/-1}#enquiriesView .enquiry-toolbar select{min-width:0;width:100%;font-size:12px;padding:0 6px}}
