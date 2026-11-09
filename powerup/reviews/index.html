@@ -5,4 +5,36 @@
 <div class="stars" aria-hidden="true">★★★★★</div><h1>We'd love your feedback</h1><p>Thank you for choosing Power Up Group. Scan the code or tap below to share your experience on Google.</p>
 <div class="qrbox"><img id="qr" alt="QR code for Power Up Group Google review" src="https://api.qrserver.com/v1/create-qr-code/?size=420x420&amp;margin=8&amp;data=https%3A%2F%2Fg.page%2Fr%2FCYpE1dFolaLqEAE%2Freview"></div>
 <div class="buttons"><button id="share" class="primary">Share Review Link</button></div><div id="status" role="status" aria-live="polite"></div><div class="muted">Power Up Group · Thank you for supporting our business</div></main>
-<script>const url='https://g.page/r/CYpE1dFolaLqEAE/review';const status=document.getElementById('status');function note(s){status.textContent=s}document.getElementById('share').onclick=async()=>{if(navigator.share){try{await navigator.share({title:'Review Power Up Group',text:'Thanks for choosing Power Up Group! We'd appreciate your feedback on Google. Please tap the link below to leave us a review.',url})}catch(e){if(e.name!=='AbortError')note('Sharing unavailable — copy the review link')}}else{try{await navigator.clipboard.writeText(url);note('Review link copied — ready to share')}catch{prompt('Copy the review link:',url)}}};</script></body></html>
+<script>
+const reviewUrl='https://g.page/r/CYpE1dFolaLqEAE/review';
+const shareMessage="Thanks for choosing Power Up Group! We'd appreciate your feedback on Google. Please tap the link below to leave us a review.";
+const statusEl=document.getElementById('status');
+function showStatus(message){statusEl.textContent=message;}
+async function copyReview(){
+  const message=shareMessage+'\n\n'+reviewUrl;
+  try{
+    await navigator.clipboard.writeText(message);
+    showStatus('Review message and link copied — ready to paste');
+  }catch(error){
+    const input=document.createElement('textarea');
+    input.value=message;input.style.position='fixed';input.style.opacity='0';
+    document.body.appendChild(input);input.select();
+    let copied=false;
+    try{copied=document.execCommand('copy');}catch(e){}
+    input.remove();
+    if(copied){showStatus('Review message and link copied — ready to paste');}
+    else{window.prompt('Copy this review message and link:',message);showStatus('Copy the review message to share it');}
+  }
+}
+document.getElementById('share').addEventListener('click',async function(){
+  if(typeof navigator.share==='function'){
+    try{
+      await navigator.share({title:'Review Power Up Group',text:shareMessage,url:reviewUrl});
+      return;
+    }catch(error){
+      if(error && error.name==='AbortError'){return;}
+    }
+  }
+  await copyReview();
+});
+</script></body></html>
